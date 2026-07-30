@@ -14,7 +14,7 @@ Uma plataforma que digitaliza a costura sob medida, eliminando barreiras de comu
 |---|---|---|
 | Carolina Giacchini Kloth | @carolinagkloth | back-end |
 | Livia de Cássia Protasiewicz Sebaje | @{{usuario2}} | front-end / banco de dados |
-| Maria Clara Anzuategui| @{{usuario3}} | {{ex.: diagramas / docs}} |
+| Maria Clara Anzuategui| @{{usuario3}} | diagramas / docs |
 ​
 ---
 ​
