@@ -1,10 +1,10 @@
 # Ateliê entre Linhas
 ​
-**Uma plataforma que digitaliza a costura sob medida, eliminando barreiras de comunicação para centralizar orçamentos, ordens de serviço e agendamentos com praticidade e segurança.**
+**Uma plataforma que digitaliza a costura sob medida, eliminando barreiras de comunicação para centralizar orçamentos, ordens de serviço e agendamentos com praticidade e segurança.**<br>
 ​
-**Disciplina:** Projeto e Desenvolvimento de Sistemas (PDS) · IFPR – Centro de Referência Ponta Grossa · 2026
-**Curso:** Técnico em Informática Integrado ao Ensino Médio
-**Orientador:** Prof. Dr. João Henrique Berssanette (GitHub: @Profe-Berssa-IFPR)
+**Disciplina:** Projeto e Desenvolvimento de Sistemas (PDS) · IFPR – Centro de Referência Ponta Grossa · 2026<br>
+**Curso:** Técnico em Informática Integrado ao Ensino Médio<br>
+**Orientador:** Prof. Dr. João Henrique Berssanette (GitHub: @Profe-Berssa-IFPR)<br>
 ​
 ---
 ​
