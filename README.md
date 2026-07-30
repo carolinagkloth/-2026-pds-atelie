@@ -1,7 +1,7 @@
 # Ateliê entre Linhas
 ​
 **Uma plataforma que digitaliza a costura sob medida, eliminando barreiras de comunicação para centralizar orçamentos, ordens de serviço e agendamentos com praticidade e segurança.**<br>
-​
+​<br>
 **Disciplina:** Projeto e Desenvolvimento de Sistemas (PDS) · IFPR – Centro de Referência Ponta Grossa · 2026<br>
 **Curso:** Técnico em Informática Integrado ao Ensino Médio<br>
 **Orientador:** Prof. Dr. João Henrique Berssanette (GitHub: @Profe-Berssa-IFPR)<br>
@@ -23,7 +23,7 @@
 | O quê | Link |
 |---|---|
 | 📄 **Documento do Projeto Final (público)** | https://1drv.ms/w/c/f4526d03325e87ba/IQBSgheWC5-wQq6-dQOL_emeAQN-iDdfmgSV5H6Wg2kwxgI?e=lWOGg3 |
-| 🖥️ Sistema / deploy (se já houver) | {{link ou "em desenvolvimento"}} |
+| 🖥️ Sistema / deploy (se já houver) | em desenvolvimento |
 | 🎨 Protótipo no Figma | {{link do protótipo}} |
 ​
 ​
