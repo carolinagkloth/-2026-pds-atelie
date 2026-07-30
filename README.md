@@ -1,6 +1,6 @@
 # Ateliê entre Linhas
 ​
-> {{Uma frase: que problema o sistema resolve.}}
+Uma plataforma que digitaliza a costura sob medida, eliminando barreiras de comunicação para centralizar orçamentos, ordens de serviço e agendamentos com praticidade e segurança.
 ​
 **Disciplina:** Projeto e Desenvolvimento de Sistemas (PDS) · IFPR – Centro de Referência Ponta Grossa · 2026
 **Curso:** Técnico em Informática Integrado ao Ensino Médio
@@ -12,9 +12,9 @@
 ​
 | Nome | GitHub (@usuário) | Função no projeto |
 |---|---|---|
-| {{Integrante 1}} | @{{usuario1}} | {{ex.: front-end / líder}} |
-| {{Integrante 2}} | @{{usuario2}} | {{ex.: back-end}} |
-| {{Integrante 3}} | @{{usuario3}} | {{ex.: banco de dados / docs}} |
+| Carolina Giacchini Kloth | @carolinagkloth | back-end |
+| Livia de Cássia Protasiewicz Sebaje | @{{usuario2}} | front-end / banco de dados |
+| Maria Clara Anzuategui| @{{usuario3}} | {{ex.: diagramas / docs}} |
 ​
 ---
 ​
@@ -22,22 +22,20 @@
 ​
 | O quê | Link |
 |---|---|
-| 📄 **Documento do Projeto Final (público)** | {{COLE O LINK PÚBLICO — Google Docs/Office 365, "qualquer pessoa com o link pode ver"}} |
+| 📄 **Documento do Projeto Final (público)** | https://1drv.ms/w/c/f4526d03325e87ba/IQBSgheWC5-wQq6-dQOL_emeAQN-iDdfmgSV5H6Wg2kwxgI?e=lWOGg3 |
 | 🖥️ Sistema / deploy (se já houver) | {{link ou "em desenvolvimento"}} |
 | 🎨 Protótipo no Figma | {{link do protótipo}} |
-| 📋 Quadro de gestão (ClickUp) | {{link do board}} |
 ​
-> ⚠️ O link do **documento do Projeto Final** é obrigatório e deve estar **público**. É por ele que o professor acessa a versão de escrita mais recente.
 ​
 ---
 ​
 ## 🎯 Sobre o projeto
 ​
-**Problema:** {{descreva brevemente o problema/oportunidade.}}
-**Solução proposta:** {{o que o sistema faz, em poucas linhas.}}
-**Público-alvo:** {{quem usa.}}
+**Problema:** A falta de visibilidade no mercado de costura sob medida e a gestão informal e desorganizada de ateliês autônomos.
+**Solução proposta:** Plataforma web em que clientes publicam seus pedidos de costura e costureiras gerenciam o atendimento em um só ambiente, incluindo fichas de medidas, orçamentos, ordens de serviço.
+**Público-alvo:** Costureiras autônomas, pequenos ateliês e seus clientes.
 ​
-**Tecnologias (stack):** {{linguagens, frameworks, banco de dados, ferramentas.}}
+**Tecnologias (stack):** React, Node.js, MySQL e AWS.
 ​
 ---
 ​
