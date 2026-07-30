@@ -31,9 +31,9 @@
 ​
 ## 🎯 Sobre o projeto
 ​
-**Problema:** A falta de visibilidade no mercado de costura sob medida e a gestão informal e desorganizada de ateliês autônomos.
-**Solução proposta:** Plataforma web em que clientes publicam seus pedidos de costura e costureiras gerenciam o atendimento em um só ambiente, incluindo fichas de medidas, orçamentos, ordens de serviço.
-**Público-alvo:** Costureiras autônomas, pequenos ateliês e seus clientes.
+**Problema:** A falta de visibilidade no mercado de costura sob medida e a gestão informal e desorganizada de ateliês autônomos.<br>
+**Solução proposta:** Plataforma web em que clientes publicam seus pedidos de costura e costureiras gerenciam o atendimento em um só ambiente, incluindo fichas de medidas, orçamentos, ordens de serviço.<br>
+**Público-alvo:** Costureiras autônomas, pequenos ateliês e seus clientes.<br>
 ​
 **Tecnologias (stack):** React, Node.js, MySQL e AWS.
 ​
