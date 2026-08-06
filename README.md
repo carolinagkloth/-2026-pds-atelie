@@ -13,7 +13,7 @@
 | Nome | GitHub (@usuário) | Função no projeto |
 |---|---|---|
 | Carolina Giacchini Kloth | @carolinagkloth | back-end |
-| Livia de Cássia Protasiewicz Sebaje | @{{usuario2}} | front-end / banco de dados |
+| Livia de Cássia Protasiewicz Sebaje | @liviasebaje | front-end / banco de dados |
 | Maria Clara Anzuategui| @{{usuario3}} | diagramas / docs |
 ​
 ---
