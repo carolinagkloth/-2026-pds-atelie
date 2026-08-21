@@ -1,0 +1,9 @@
+const express = require('express');
+const router = express.Router();
+const PedidoController = require('../controllers/pedidoController');
+
+router.post('/', PedidoController.criar);
+router.get('/', PedidoController.listarTodos);
+router.patch('/:id/status', PedidoController.atualizarStatus);
+
+module.exports = router;
