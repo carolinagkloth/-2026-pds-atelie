@@ -9,6 +9,13 @@ class UsuarioModel {
     return result.insertId;
   }
 
+  // Buscar usuário por ID
+static async findById(id_usuario) {
+  const query = 'SELECT * FROM usuarios WHERE id_usuario = ?';
+  const [linhas] = await db.execute(query, [id_usuario]);
+  return linhas[0]; // Retorna o usuário encontrado ou undefined
+}
+
   static async findByEmail(email) {
     const [rows] = await db.query('SELECT * FROM usuarios WHERE email = ?', [email]);
     return rows[0];

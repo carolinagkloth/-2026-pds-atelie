@@ -1,18 +1,19 @@
 const express = require('express');
 const cors = require('cors');
-const authRoutes = require('./routes/authRoutes');
-// const servicoRoutes = require('./routes/servicoRoutes'); // Descomente quando criar este arquivo
-const pedidoRoutes = require('./routes/pedidoRoutes');
-require('dotenv').config();
-
 const app = express();
+
+require('dotenv').config();
 
 app.use(cors());
 app.use(express.json());
 
+const authRoutes = require('./routes/authRoutes');
+const pedidoRoutes = require('./routes/pedidoRoutes');
+const ordemServicoRoutes = require('./routes/ordemServicoRoutes');
+
 app.use('/api/auth', authRoutes);
-// app.use('/api/servicos', servicoRoutes); // Descomente quando criar este arquivo
 app.use('/api/pedidos', pedidoRoutes);
+app.use('/api/ordens-servico', ordemServicoRoutes);
 
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => console.log(`Servidor rodando na porta ${PORT}`));
