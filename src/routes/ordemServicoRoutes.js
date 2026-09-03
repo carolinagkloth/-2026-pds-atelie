@@ -7,7 +7,7 @@ const autenticarToken = require('../middlewares/authMiddleware');
 router.use(autenticarToken);
 
 router.post('/', OrdemServicoController.criar);
-router.get('/', OrdemServicoController.listarTodas);
+router.get('/', OrdemServicoController.listarTodos);
 router.get('/:id', OrdemServicoController.buscarPorId);
 router.patch('/:id/status', OrdemServicoController.atualizarStatus);
 

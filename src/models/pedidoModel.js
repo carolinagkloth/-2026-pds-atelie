@@ -9,7 +9,7 @@ class PedidoModel {
     return result.insertId;
   }
 
-  static async findAll() {
+  static async buscar() {
     const [rows] = await db.query(`
       SELECT p.*, u.nome as nome_cliente 
       FROM pedidos p
@@ -18,12 +18,12 @@ class PedidoModel {
     return rows;
   }
 
-  static async findById(id) {
+  static async buscarPorId(id) {
   const [rows] = await db.query('SELECT * FROM pedidos WHERE id_pedido = ?', [id]);
   return rows[0]; // Retorna apenas o objeto do pedido encontrado
 }
 
-  static async updateStatus(id_pedido, status_pedido) {
+  static async atualizarStatus(id_pedido, status_pedido) {
     await db.query(
       'UPDATE pedidos SET status_pedido = ? WHERE id_pedido = ?', 
       [status_pedido, id_pedido]

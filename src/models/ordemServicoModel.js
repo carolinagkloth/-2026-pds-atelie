@@ -27,7 +27,7 @@ if (!usuario || usuario.tipo_usuario !== 'Costureira') {
   }
 
   // Listar todas as ordens de serviço (com JOIN para trazer nomes do cliente e costureira)
-  static async listarTodas() {
+  static async listarTodos() {
     const query = `
       SELECT 
       os.*,

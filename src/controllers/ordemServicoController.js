@@ -41,9 +41,9 @@ class OrdemServicoController {
   }
 
   // GET /api/ordens-servico
-  static async listarTodas(req, res) {
+  static async listarTodos(req, res) {
     try {
-      const ordens = await OrdemServicoModel.listarTodas();
+      const ordens = await OrdemServicoModel.listarTodos();
       return res.status(200).json(ordens);
     } catch (error) {
       console.error('Erro ao listar Ordens de Serviço:', error);
