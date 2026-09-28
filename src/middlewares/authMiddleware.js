@@ -14,6 +14,7 @@ function autenticarToken(req, res, next) {
     }
 
     req.usuario = usuario;
+    req.usuarioId = usuario.id
     next();
   });
 }

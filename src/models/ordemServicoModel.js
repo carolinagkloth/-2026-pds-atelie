@@ -1,19 +1,17 @@
-const db = require('../config/database'); // Ajuste o caminho de conexão do seu banco se necessário
-const UsuarioModel = require('./usuarioModel'); //
+const db = require('../config/database');
+const UsuarioModel = require('./usuarioModel');
 
 class OrdemServicoModel {
-  // Criar uma nova Ordem de Serviço (vincular pedido à costureira)
   static async criar({ id_pedido, id_costureira, valor_total, previsao_entrega, status_kanban }) {
     const usuario = await UsuarioModel.buscarPorId(id_costureira);
 
-if (!usuario || usuario.tipo_usuario !== 'Costureira') {
-  return res.status(400).json({ 
-    error: 'O ID informado para a costureira não pertence a um perfil de Costureira.' 
-  });
-}
+    if (!usuario || usuario.tipo_usuario !== 'Costureira') {
+      throw new Error('O ID informado para a costureira não pertence a um perfil de Costureira.');
+    }
+
     const query = `
-      INSERT INTO ordens_servico (id_pedido, id_costureira, valor_total, previsao_entrega, status_kanban)
-      VALUES (?, ?, ?, ?, ?)
+      INSERT INTO ordens_servico (id_pedido, id_costureira, valor_total, data_inicio, previsao_entrega, status_kanban)
+      VALUES (?, ?, ?, NOW(), ?, ?)
     `;
     const statusInicial = status_kanban || 'A Fazer';
     const [resultado] = await db.execute(query, [
@@ -26,24 +24,22 @@ if (!usuario || usuario.tipo_usuario !== 'Costureira') {
     return resultado.insertId;
   }
 
-  // Listar todas as ordens de serviço (com JOIN para trazer nomes do cliente e costureira)
   static async listarTodos() {
     const query = `
       SELECT 
-      os.*,
-      p.descricao AS pedido_descricao,
-      u_cli.nome AS cliente_nome,
-      u_cos.nome AS costureira_nome
-    FROM ordens_servico os
-    INNER JOIN pedidos p ON os.id_pedido = p.id_pedido
-    LEFT JOIN usuarios u_cli ON p.id_cliente = u_cli.id_usuario
-    LEFT JOIN usuarios u_cos ON os.id_costureira = u_cos.id_usuario;
+        os.*,
+        p.descricao AS pedido_descricao,
+        u_cli.nome AS cliente_nome,
+        u_cos.nome AS costureira_nome
+      FROM ordens_servico os
+      INNER JOIN pedidos p ON os.id_pedido = p.id_pedido
+      LEFT JOIN usuarios u_cli ON p.id_cliente = u_cli.id_usuario
+      LEFT JOIN usuarios u_cos ON os.id_costureira = u_cos.id_usuario;
     `;
     const [linhas] = await db.execute(query);
     return linhas;
   }
 
-  // Buscar uma ordem por ID
   static async buscarPorId(id_ordem_servico) {
     const query = `
       SELECT 
@@ -61,7 +57,6 @@ if (!usuario || usuario.tipo_usuario !== 'Costureira') {
     return linhas[0];
   }
 
-  // Atualizar o status do Kanban ('A Fazer', 'Em Produção', 'Aguardando Prova', 'Concluído')
   static async atualizarStatus(id_ordem_servico, status_kanban) {
     const query = `
       UPDATE ordens_servico 
