@@ -1,0 +1,175 @@
+@import url("https://fonts.googleapis.com/css2?family=Playfair+Display+SC:wght@700&family=Poppins:wght@300;400;500;600&display=swap");
+
+:root {
+  --fundo: #F3F2ED;
+  --texto: #917687;
+  --destaque: #BB91AD;
+  --linha: rgba(145, 118, 135, 0.28);
+  --branco: #ffffff;
+  --sombra: rgba(145, 118, 135, 0.13);
+}
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  background: var(--fundo);
+  color: var(--texto);
+  font-family: "Poppins", sans-serif;
+}
+
+a {
+  color: inherit;
+}
+
+h1,
+h2 {
+  font-family: "Playfair Display SC", serif;
+}
+
+/* LOGIN */
+
+.login {
+  width: min(505px, 92%);
+  margin: 50px auto 90px;
+}
+
+.caminho {
+  text-align: center;
+  font-size: 10px;
+  margin-bottom: 14px;
+}
+
+.login h2 {
+  text-align: center;
+  font-size: 22px;
+  margin-bottom: 25px;
+}
+
+.login label {
+  display: block;
+  margin: 16px 0 8px;
+  font-size: 12px;
+}
+
+.login input {
+  width: 100%;
+  height: 40px;
+  border: 1px solid var(--linha);
+  background: transparent;
+  padding: 0 12px;
+  color: var(--texto);
+  outline: none;
+  font-family: inherit;
+}
+
+.login input::placeholder {
+  color: rgba(145, 118, 135, 0.45);
+}
+
+.senha {
+  position: relative;
+}
+
+.esqueci {
+  display: block;
+  text-align: right;
+  margin: 8px 0 20px;
+  font-size: 12px;
+}
+
+.login button {
+  width: 100%;
+  height: 45px;
+  border: none;
+  background: var(--destaque);
+  color: var(--branco);
+  cursor: pointer;
+  font-family: inherit;
+}
+
+.login button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.login p {
+  text-align: center;
+  margin-top: 12px;
+  font-size: 12px;
+}
+
+.header {
+  padding: 34px 6%;
+  text-align: center;
+}
+
+.header h1 {
+  font-size: 24px;
+  margin-bottom: 25px;
+}
+
+.header nav {
+  display: flex;
+  justify-content: center;
+  gap: 28px;
+  flex-wrap: wrap;
+}
+
+.header nav a {
+  text-decoration: none;
+  font-size: 14px;
+  transition: 0.3s;
+}
+
+.header nav a:hover {
+  color: var(--destaque);
+}
+.cadastro-page {
+  width: min(505px, 92%);
+  margin: 50px auto 90px;
+}
+
+.cadastro-page h2 {
+  text-align: center;
+  font-size: 22px;
+  margin-bottom: 25px;
+}
+
+.cadastro-page label {
+  display: block;
+  margin: 16px 0 8px;
+  font-size: 12px;
+}
+
+.cadastro-page input,
+.cadastro-page select {
+  width: 100%;
+  height: 40px;
+  border: 1px solid var(--linha);
+  background: transparent;
+  padding: 0 12px;
+  color: var(--texto);
+  outline: none;
+  font-family: inherit;
+}
+
+.cadastro-page button {
+  width: 100%;
+  height: 45px;
+  border: none;
+  background: var(--destaque);
+  color: var(--branco);
+  cursor: pointer;
+  font-family: inherit;
+  margin-top: 22px;
+}
+
+.cadastro-page p {
+  text-align: center;
+  margin-top: 12px;
+  font-size: 12px;
+}
