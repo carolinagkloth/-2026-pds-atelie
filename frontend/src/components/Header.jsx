@@ -10,6 +10,7 @@ function Header() {
         <Link to="/pedidos">Pedidos disponíveis</Link>
         <Link to="/login">Entrar</Link>
         <a href="/#contato">Contato</a>
+        <Link to="/perfil-costureira">Meu perfil</Link>
       </nav>
     </header>
   );

@@ -173,3 +173,1138 @@ h2 {
   margin-top: 12px;
   font-size: 12px;
 }
+
+/* PEDIDOS */
+
+.pedidos-page {
+  width: min(1180px, 90%);
+  margin: 20px auto 80px;
+}
+
+.pedidos-titulo {
+  text-align: center;
+  margin-bottom: 30px;
+}
+
+.pedidos-titulo h2 {
+  font-size: 25px;
+  margin-bottom: 10px;
+}
+
+.pedidos-titulo p {
+  font-size: 13px;
+  line-height: 1.7;
+}
+
+.pedidos-aviso {
+  background: rgba(255, 255, 255, 0.58);
+  border: 1px solid var(--linha);
+  padding: 18px 24px;
+  margin-bottom: 28px;
+  text-align: center;
+  font-size: 13px;
+}
+
+.pedidos-filtros {
+  display: flex;
+  justify-content: center;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin-bottom: 32px;
+}
+
+.pedidos-filtros input,
+.pedidos-filtros select {
+  height: 42px;
+  min-width: 185px;
+  padding: 0 14px;
+  border: 1px solid var(--linha);
+  background: transparent;
+  color: var(--texto);
+  outline: none;
+  font-family: inherit;
+}
+
+.pedidos-filtros button {
+  height: 42px;
+  padding: 0 28px;
+  border: none;
+  background: var(--destaque);
+  color: white;
+  cursor: pointer;
+  font-family: inherit;
+}
+
+.pedidos-feed {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 24px;
+}
+
+.pedido-card {
+  background: rgba(255, 255, 255, 0.72);
+  border: 1px solid var(--linha);
+  box-shadow: 0 10px 22px var(--sombra);
+  padding: 25px;
+  min-height: 300px;
+
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+}
+
+.pedido-card h2 {
+  font-size: 18px;
+  margin-bottom: 10px;
+}
+
+.pedido-card p {
+  font-size: 13px;
+  line-height: 1.7;
+  margin-bottom: 12px;
+}
+
+.pedido-status {
+  display: inline-block;
+  padding: 6px 13px;
+  margin-bottom: 14px;
+  font-size: 11px;
+  background: #f4dceb;
+}
+
+.pedido-status.urgente {
+  background: #e8d7e2;
+}
+
+.pedido-info {
+  font-size: 12px;
+  margin-top: 8px;
+}
+
+.pedido-info strong {
+  color: var(--destaque);
+}
+
+.pedido-acoes {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin-top: 20px;
+}
+
+.pedido-acoes button {
+  padding: 10px 16px;
+  border: 1px solid var(--destaque);
+  background: var(--destaque);
+  color: white;
+  cursor: pointer;
+  font-family: inherit;
+  font-size: 12px;
+}
+
+.pedido-acoes .secundario {
+  background: transparent;
+  color: var(--texto);
+}
+
+.sem-pedidos {
+  grid-column: 1 / -1;
+  text-align: center;
+  padding: 40px;
+}
+
+@media (max-width: 900px) {
+  .pedidos-feed {
+    grid-template-columns: 1fr;
+  }
+}
+/* PERFIL DA COSTUREIRA */
+
+.perfil-costureira-page {
+  width: min(1100px, 90%);
+  margin: 20px auto 80px;
+}
+
+.perfil-topo {
+  background: rgba(255, 255, 255, 0.7);
+  border: 1px solid var(--linha);
+  padding: 30px;
+  display: flex;
+  align-items: flex-start;
+  gap: 25px;
+}
+
+.perfil-foto {
+  width: 120px;
+  height: 120px;
+  min-width: 120px;
+  border-radius: 50%;
+  background: #eadde6;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: "Playfair Display SC", serif;
+  font-size: 30px;
+}
+
+.perfil-dados {
+  flex: 1;
+}
+
+.perfil-dados h2 {
+  font-size: 24px;
+  margin-bottom: 5px;
+}
+
+.perfil-localizacao {
+  font-size: 13px;
+  margin-bottom: 14px;
+}
+
+.perfil-especialidades {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-bottom: 15px;
+}
+
+.perfil-especialidades span {
+  border: 1px solid var(--linha);
+  padding: 5px 12px;
+  font-size: 11px;
+  border-radius: 20px;
+}
+
+.perfil-descricao {
+  font-size: 13px;
+  line-height: 1.7;
+  max-width: 650px;
+}
+
+.perfil-avaliacao-resumo {
+  margin-top: 14px;
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  font-size: 13px;
+}
+
+.perfil-avaliacao-resumo strong {
+  color: var(--destaque);
+  font-size: 17px;
+}
+
+.btn-editar-perfil,
+.perfil-bloco button,
+.portfolio-titulo button {
+  border: 1px solid var(--destaque);
+  background: transparent;
+  color: var(--texto);
+  padding: 9px 15px;
+  cursor: pointer;
+  font-family: inherit;
+}
+
+.perfil-informacoes {
+  display: grid;
+  grid-template-columns: 1.3fr 1fr;
+  gap: 24px;
+  margin-top: 24px;
+}
+
+.perfil-bloco {
+  background: rgba(255, 255, 255, 0.7);
+  border: 1px solid var(--linha);
+  padding: 25px;
+}
+
+.perfil-bloco-titulo {
+  display: flex;
+  justify-content: space-between;
+  gap: 20px;
+  align-items: center;
+  margin-bottom: 18px;
+}
+
+.perfil-bloco h3 {
+  font-family: "Playfair Display SC", serif;
+}
+
+.preco-item {
+  display: flex;
+  justify-content: space-between;
+  gap: 20px;
+  padding: 11px 0;
+  border-bottom: 1px solid var(--linha);
+  font-size: 13px;
+}
+
+.preco-observacao {
+  font-size: 11px;
+  line-height: 1.6;
+  margin-top: 15px;
+}
+
+.avaliacao-bloco {
+  text-align: center;
+}
+
+.avaliacao-nota {
+  margin: 25px 0 8px;
+}
+
+.avaliacao-nota strong {
+  display: block;
+  font-size: 38px;
+  color: var(--destaque);
+}
+
+.avaliacao-nota span {
+  letter-spacing: 3px;
+  font-size: 20px;
+}
+
+.avaliacao-bloco p {
+  font-size: 13px;
+  margin-bottom: 8px;
+}
+
+.avaliacao-bloco small {
+  font-size: 11px;
+}
+
+.portfolio-section {
+  margin-top: 35px;
+}
+
+.portfolio-titulo {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 20px;
+}
+
+.portfolio-titulo h2 {
+  font-size: 23px;
+}
+
+.portfolio-titulo p {
+  font-size: 12px;
+  margin-top: 5px;
+}
+
+.portfolio-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 20px;
+}
+
+.portfolio-card {
+  background: rgba(255, 255, 255, 0.7);
+  border: 1px solid var(--linha);
+}
+
+.portfolio-imagem {
+  aspect-ratio: 1 / 1;
+  background: #e8dce4;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+}
+
+.portfolio-conteudo {
+  padding: 15px;
+}
+
+.portfolio-conteudo h3 {
+  font-family: "Playfair Display SC", serif;
+  font-size: 15px;
+  margin-bottom: 6px;
+}
+
+.portfolio-conteudo p {
+  font-size: 11px;
+  line-height: 1.6;
+}
+
+@media (max-width: 800px) {
+  .perfil-topo {
+    flex-direction: column;
+  }
+
+  .perfil-informacoes {
+    grid-template-columns: 1fr;
+  }
+
+  .portfolio-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 500px) {
+  .portfolio-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+
+.perfil-localizacao {
+  margin: 12px 0 16px;
+  padding: 12px 15px;
+  border-left: 3px solid var(--destaque);
+  background: rgba(187, 145, 173, 0.08);
+}
+
+.perfil-localizacao h4 {
+  font-size: 12px;
+  margin-bottom: 6px;
+}
+
+.perfil-localizacao p {
+  font-size: 12px;
+  line-height: 1.6;
+  margin: 1px 0;
+}
+
+.perfil-especialidades-texto {
+  font-size: 13px;
+  margin: 12px 0;
+  line-height: 1.6;
+}
+
+
+.perfil-foto {
+  overflow: hidden;
+}
+
+.perfil-foto img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+
+.portfolio-imagem {
+  overflow: hidden;
+}
+
+.portfolio-imagem img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+
+  background: rgba(40, 32, 38, 0.45);
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  padding: 20px;
+
+  z-index: 1000;
+}
+
+.modal-conteudo {
+  background: #f3f2ed;
+
+  width: min(650px, 100%);
+  max-height: 90vh;
+
+  overflow-y: auto;
+
+  padding: 28px;
+
+  border: 1px solid var(--linha);
+}
+
+.modal-cabecalho {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+
+  margin-bottom: 25px;
+}
+
+.modal-cabecalho h2 {
+  font-family: "Playfair Display SC", serif;
+  font-size: 21px;
+}
+
+.modal-fechar {
+  border: none;
+  background: transparent;
+
+  font-size: 27px;
+  cursor: pointer;
+
+  color: var(--texto);
+}
+
+
+.form-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+
+  gap: 15px;
+}
+
+.form-campo {
+  display: flex;
+  flex-direction: column;
+
+  gap: 6px;
+
+  margin-bottom: 16px;
+}
+
+.form-campo-completo {
+  grid-column: 1 / -1;
+}
+
+.form-campo label {
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.form-campo input,
+.form-campo textarea {
+  width: 100%;
+
+  border: 1px solid var(--linha);
+
+  background: white;
+
+  padding: 10px 12px;
+
+  font-family: inherit;
+  font-size: 13px;
+
+  color: var(--texto);
+
+  outline: none;
+}
+
+.form-campo input:focus,
+.form-campo textarea:focus {
+  border-color: var(--destaque);
+}
+
+.form-subtitulo {
+  font-family: "Playfair Display SC", serif;
+
+  font-size: 15px;
+
+  margin: 22px 0 15px;
+}
+
+
+.modal-acoes {
+  display: flex;
+  justify-content: flex-end;
+
+  gap: 10px;
+
+  margin-top: 25px;
+}
+
+.btn-cancelar,
+.btn-salvar,
+.btn-adicionar-linha,
+.btn-remover {
+  padding: 9px 16px;
+
+  font-family: inherit;
+  font-size: 12px;
+
+  cursor: pointer;
+}
+
+.btn-cancelar {
+  background: transparent;
+
+  border: 1px solid var(--linha);
+
+  color: var(--texto);
+}
+
+.btn-salvar {
+  background: var(--destaque);
+
+  border: 1px solid var(--destaque);
+
+  color: white;
+}
+
+.btn-adicionar-linha {
+  background: transparent;
+
+  border: 1px solid var(--destaque);
+
+  color: var(--texto);
+
+  margin-top: 12px;
+}
+
+.btn-remover {
+  background: transparent;
+
+  border: none;
+
+  color: #995c68;
+}
+
+
+.editar-precos-lista {
+  display: flex;
+  flex-direction: column;
+
+  gap: 10px;
+}
+
+.editar-preco-item {
+  display: grid;
+
+  grid-template-columns:
+    minmax(0, 1fr)
+    150px
+    auto;
+
+  gap: 10px;
+
+  align-items: center;
+}
+
+.editar-preco-item input {
+  border: 1px solid var(--linha);
+
+  background: white;
+
+  padding: 10px;
+
+  font-family: inherit;
+}
+
+
+.preview-trabalho {
+  width: 180px;
+  height: 180px;
+
+  margin-bottom: 20px;
+
+  border: 1px solid var(--linha);
+
+  overflow: hidden;
+}
+
+.preview-trabalho img {
+  width: 100%;
+  height: 100%;
+
+  object-fit: cover;
+}
+
+
+
+@media (max-width: 600px) {
+
+  .form-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .form-campo-completo {
+    grid-column: auto;
+  }
+
+  .editar-preco-item {
+    grid-template-columns: 1fr;
+  }
+
+  .modal-conteudo {
+    padding: 20px;
+  }
+
+}
+
+/* =====================================
+   INÍCIO DA COSTUREIRA
+===================================== */
+
+.inicio-costureira {
+  width: min(1120px, 90%);
+  margin: 35px auto 90px;
+}
+
+
+/* HEADER COSTUREIRA */
+
+.header-costureira {
+  border-bottom: 1px solid var(--linha);
+  background: var(--fundo);
+}
+
+.header-costureira-conteudo {
+  width: min(1120px, 90%);
+  min-height: 78px;
+  margin: auto;
+
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+
+  gap: 30px;
+}
+
+.marca-costureira {
+  text-decoration: none;
+
+  display: flex;
+  flex-direction: column;
+
+  line-height: 1;
+}
+
+.marca-costureira span {
+  font-family: "Playfair Display SC", serif;
+  font-size: 23px;
+}
+
+.marca-costureira small {
+  margin-top: 5px;
+
+  font-size: 9px;
+  letter-spacing: 2px;
+
+  text-transform: uppercase;
+}
+
+.menu-costureira {
+  display: flex;
+  align-items: center;
+  gap: 26px;
+}
+
+.menu-costureira a {
+  text-decoration: none;
+  font-size: 12px;
+
+  padding: 29px 0;
+
+  border-bottom: 2px solid transparent;
+}
+
+.menu-costureira a:hover,
+.menu-costureira a.active {
+  border-bottom-color: var(--destaque);
+}
+
+
+/* BOAS-VINDAS */
+
+.boas-vindas-costureira {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+
+  gap: 30px;
+
+  padding: 25px 0 30px;
+}
+
+.boas-vindas-legenda,
+.secao-legenda {
+  text-transform: uppercase;
+
+  font-size: 9px;
+  letter-spacing: 2px;
+
+  color: var(--destaque);
+}
+
+.boas-vindas-costureira h1 {
+  font-family: "Playfair Display SC", serif;
+
+  font-size: 31px;
+
+  margin: 4px 0 6px;
+}
+
+.boas-vindas-costureira p {
+  font-size: 13px;
+}
+
+.atalho-perfil {
+  border: 1px solid var(--destaque);
+
+  padding: 10px 17px;
+
+  text-decoration: none;
+
+  font-size: 11px;
+}
+
+
+/* RESUMO */
+
+.resumo-costureira {
+  display: grid;
+
+  grid-template-columns:
+    repeat(3, 1fr);
+
+  gap: 18px;
+
+  margin-bottom: 50px;
+}
+
+.resumo-card {
+  background:
+    rgba(255, 255, 255, 0.65);
+
+  border: 1px solid var(--linha);
+
+  padding: 21px;
+}
+
+.resumo-card span {
+  display: block;
+
+  font-size: 10px;
+
+  text-transform: uppercase;
+
+  letter-spacing: 1px;
+}
+
+.resumo-card strong {
+  display: block;
+
+  margin: 10px 0 5px;
+
+  font-family:
+    "Playfair Display SC", serif;
+
+  font-size: 25px;
+}
+
+.resumo-card small {
+  font-size: 10px;
+}
+
+
+/* CABEÇALHO PEDIDOS */
+
+.inicio-pedidos-cabecalho {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+
+  gap: 20px;
+
+  margin-bottom: 20px;
+}
+
+.inicio-pedidos-cabecalho h2 {
+  margin: 4px 0 5px;
+
+  font-size: 25px;
+}
+
+.inicio-pedidos-cabecalho p {
+  font-size: 12px;
+}
+
+.quantidade-pedidos {
+  font-size: 10px;
+}
+
+
+/* BUSCA */
+
+.barra-busca-pedidos {
+  margin-bottom: 12px;
+}
+
+.barra-busca-pedidos input {
+  width: 100%;
+  height: 45px;
+
+  border: 1px solid var(--linha);
+
+  background:
+    rgba(255, 255, 255, 0.55);
+
+  padding: 0 15px;
+
+  font-family: inherit;
+
+  color: var(--texto);
+
+  outline: none;
+}
+
+
+/* FILTROS */
+
+.filtros-inicio {
+  display: grid;
+
+  grid-template-columns:
+    1fr
+    1fr
+    1fr
+    auto;
+
+  gap: 10px;
+
+  margin-bottom: 26px;
+}
+
+.filtros-inicio input,
+.filtros-inicio select {
+  height: 42px;
+
+  border: 1px solid var(--linha);
+
+  background: transparent;
+
+  padding: 0 12px;
+
+  font-family: inherit;
+
+  color: var(--texto);
+
+  outline: none;
+}
+
+.filtros-inicio button {
+  padding: 0 20px;
+
+  border: 1px solid var(--destaque);
+
+  background: transparent;
+
+  color: var(--texto);
+
+  cursor: pointer;
+
+  font-family: inherit;
+
+  font-size: 11px;
+}
+
+
+/* FEED */
+
+.feed-inicio-costureira {
+  display: grid;
+
+  grid-template-columns:
+    repeat(2, 1fr);
+
+  gap: 20px;
+}
+
+
+/* CARD */
+
+.pedido-inicio-card {
+  min-height: 310px;
+
+  background:
+    rgba(255, 255, 255, 0.72);
+
+  border: 1px solid var(--linha);
+
+  padding: 24px;
+
+  display: flex;
+
+  flex-direction: column;
+
+  justify-content: space-between;
+}
+
+.pedido-card-cabecalho {
+  display: flex;
+
+  justify-content: space-between;
+
+  align-items: center;
+
+  margin-bottom: 17px;
+}
+
+.status-pedido {
+  padding: 5px 10px;
+
+  background: #f4dceb;
+
+  font-size: 9px;
+
+  text-transform: uppercase;
+}
+
+.status-pedido.urgente {
+  background: #ead7dc;
+}
+
+.pedido-card-cabecalho small {
+  font-size: 9px;
+}
+
+.pedido-inicio-card h3 {
+  font-family:
+    "Playfair Display SC", serif;
+
+  font-size: 18px;
+
+  margin-bottom: 8px;
+}
+
+.pedido-resumo {
+  font-size: 12px;
+
+  line-height: 1.7;
+
+  margin-bottom: 19px;
+}
+
+.pedido-dados {
+  border-top: 1px solid var(--linha);
+
+  padding-top: 14px;
+}
+
+.pedido-dados p {
+  display: flex;
+
+  justify-content: space-between;
+
+  gap: 15px;
+
+  margin: 7px 0;
+
+  font-size: 10px;
+}
+
+.pedido-dados strong {
+  font-weight: 500;
+}
+
+.pedido-dados span {
+  text-align: right;
+}
+
+
+.pedido-card-acoes {
+  display: grid;
+
+  grid-template-columns:
+    1fr 1fr;
+
+  gap: 9px;
+
+  margin-top: 22px;
+}
+
+.pedido-card-acoes button {
+  min-height: 40px;
+
+  font-family: inherit;
+
+  font-size: 10px;
+
+  cursor: pointer;
+}
+
+.btn-interesse {
+  background: var(--destaque);
+
+  border: 1px solid
+    var(--destaque);
+
+  color: white;
+}
+
+.btn-ver-detalhes {
+  background: transparent;
+
+  border: 1px solid
+    var(--linha);
+
+  color: var(--texto);
+}
+
+
+
+.nenhum-pedido {
+  grid-column: 1 / -1;
+
+  text-align: center;
+
+  padding: 50px;
+
+  border: 1px solid var(--linha);
+}
+
+
+
+@media (max-width: 800px) {
+
+  .menu-costureira {
+    gap: 13px;
+  }
+
+  .resumo-costureira {
+    grid-template-columns: 1fr;
+  }
+
+  .filtros-inicio {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .feed-inicio-costureira {
+    grid-template-columns: 1fr;
+  }
+
+}
+
+
+@media (max-width: 600px) {
+
+  .header-costureira-conteudo {
+    flex-direction: column;
+
+    padding: 20px 0;
+  }
+
+  .menu-costureira {
+    width: 100%;
+
+    justify-content: center;
+
+    flex-wrap: wrap;
+  }
+
+  .menu-costureira a {
+    padding: 5px 0;
+  }
+
+  .boas-vindas-costureira {
+    align-items: flex-start;
+
+    flex-direction: column;
+  }
+
+  .filtros-inicio {
+    grid-template-columns: 1fr;
+  }
+
+}
