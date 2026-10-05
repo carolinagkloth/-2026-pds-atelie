@@ -2,20 +2,34 @@ const AvaliacaoModel = require('../models/avaliacaoModel');
 
 class AvaliacaoController {
   static async criar(req, res, next) {
-    try {
-      const { ordem_servico_id, nota, comentario } = req.body;
-      const cliente_id = req.usuarioId;
+  try {
+    const { id_ordem_servico, nota, comentario } = req.body;
+    
+    // Captura o ID do cliente tratando possíveis variações no token
+    const id_cliente = req.usuarioId || req.usuario?.id || req.usuario?.id_usuario;
 
-      if (!ordem_servico_id || !nota) {
-        return res.status(400).json({ error: 'Ordem de serviço e nota são obrigatórias.' });
-      }
-
-      const id_avaliacao = await AvaliacaoModel.criar({ ordem_servico_id, cliente_id, nota, comentario });
-      return res.status(201).json({ message: 'Avaliação registrada!', id_avaliacao });
-    } catch (error) {
-      next(error);
+    if (!id_ordem_servico || nota === undefined) {
+      return res.status(400).json({ error: 'Ordem de serviço e nota são obrigatórias.' });
     }
+
+    if (!id_cliente) {
+      return res.status(400).json({ error: 'Identificação do cliente não encontrada no token.' });
+    }
+
+    // Envia id_cliente para a Model
+    const id_avaliacao = await AvaliacaoModel.criar({ 
+      id_ordem_servico, 
+      id_cliente, 
+      cliente_id: id_cliente, 
+      nota, 
+      comentario 
+    });
+
+    return res.status(201).json({ message: 'Avaliação registrada com sucesso!', id_avaliacao });
+  } catch (error) {
+    next(error);
   }
+}
 
   static async listarPorCostureira(req, res, next) {
     try {
