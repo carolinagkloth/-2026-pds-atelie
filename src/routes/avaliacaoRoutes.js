@@ -8,5 +8,6 @@ router.use(authMiddleware);
 
 router.post('/', autorizarPerfis('Cliente'), AvaliacaoController.criar);
 router.get('/costureira/:costureiraId', AvaliacaoController.listarPorCostureira);
+router.get('/media/costureira/:costureiraId', AvaliacaoController.obterMediaCostureira);
 
 module.exports = router;
