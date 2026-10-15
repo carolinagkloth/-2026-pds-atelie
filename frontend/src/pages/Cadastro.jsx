@@ -84,8 +84,8 @@ function Cadastro() {
             required
           >
             <option value="">Selecione</option>
-            <option value="cliente">Cliente</option>
-            <option value="costureira">Costureira</option>
+            <option value="Cliente">Cliente</option>
+            <option value="Costureira">Costureira</option>
           </select>
 
           <button type="submit" disabled={carregando}>

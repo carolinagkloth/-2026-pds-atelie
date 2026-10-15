@@ -3,6 +3,7 @@ import Login from "./pages/Login";
 import Cadastro from "./pages/Cadastro";
 import Pedidos from "./pages/Pedidos";
 import PerfilCostureira from "./pages/PerfilCostureira";
+import Cliente from "./pages/Cliente";
 
 
 function App() {
@@ -15,6 +16,7 @@ function App() {
         path="/perfil-costureira"
         element={<PerfilCostureira />} />
       <Route path="/costureira" element={<Pedidos />} />
+      <Route path="/cliente" element={<Cliente />} />
     </Routes>
   );
 }

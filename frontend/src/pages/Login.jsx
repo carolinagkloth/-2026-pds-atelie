@@ -1,13 +1,15 @@
 import { useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { loginUsuario } from "../services/api";
 import Header from "../components/Header";
 
 function Login() {
+  const navigate = useNavigate();
   const [email, setEmail] = useState("");
   const [senha, setSenha] = useState("");
   const [mensagem, setMensagem] = useState("");
   const [carregando, setCarregando] = useState(false);
+  
 
   async function handleSubmit(event) {
     event.preventDefault();
@@ -19,11 +21,21 @@ function Login() {
       const dados = await loginUsuario(email, senha);
 
       localStorage.setItem("token", dados.token);
-      localStorage.setItem("usuario", JSON.stringify(dados.user));
+      localStorage.setItem(
+        "usuario",
+        JSON.stringify(dados.user)
+      );
 
       setMensagem(`Bem-vinda, ${dados.user.nome}!`);
 
       console.log("Usuário logado:", dados.user);
+
+      if (dados.user.tipo_usuario === "Costureira") {
+        navigate("/costureira");
+      } else if (dados.user.tipo_usuario === "Cliente") {
+        navigate("/cliente");
+      }
+      
     } catch (erro) {
       setMensagem(erro.message);
     } finally {
