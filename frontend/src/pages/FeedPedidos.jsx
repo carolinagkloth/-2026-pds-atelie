@@ -4,6 +4,7 @@ import HeaderCostureira from "../components/HeaderCostureira";
 
 function FeedPedidos() {
   const navigate = useNavigate();
+
   const usuarioSalvo =
     localStorage.getItem("usuario");
 
@@ -46,8 +47,10 @@ function FeedPedidos() {
 
     });
 
-  const [pedidoSelecionado, setPedidoSelecionado] =
-    useState(null);
+  const [
+    pedidoSelecionado,
+    setPedidoSelecionado
+  ] = useState(null);
 
 
   const pedidosFiltrados =
@@ -105,11 +108,11 @@ function FeedPedidos() {
             status: "Em negociação",
 
             id_costureira:
-                idCostureira,
+              idCostureira,
 
             costureiraNome:
-                nomeCostureira,
-            };
+              nomeCostureira,
+          };
         }
 
         return pedido;
@@ -293,103 +296,6 @@ function FeedPedidos() {
                   >
 
                     <div>
-                        {pedidoSelecionado?.id === pedido.id && (
-
-  <div className="detalhes-pedido-expandido">
-
-    <div className="detalhes-pedido-expandido-titulo">
-      <span>
-        Detalhes do pedido
-      </span>
-    </div>
-
-    <div className="detalhes-pedido-grid">
-
-      <div className="detalhe-item">
-        <strong>Cliente</strong>
-
-        <span>
-          {pedido.clienteNome || "Cliente"}
-        </span>
-      </div>
-
-
-      <div className="detalhe-item">
-        <strong>Tipo de serviço</strong>
-
-        <span>
-          {pedido.tipoServico ||
-            pedido.categoria}
-        </span>
-      </div>
-
-
-      <div className="detalhe-item detalhe-completo">
-
-        <strong>Descrição</strong>
-
-        <p>
-          {pedido.descricao}
-        </p>
-
-      </div>
-
-
-      <div className="detalhe-item">
-        <strong>Localização</strong>
-
-        <span>
-          {pedido.localizacao}
-        </span>
-      </div>
-
-
-      <div className="detalhe-item">
-        <strong>Prazo desejado</strong>
-
-        <span>
-          {pedido.prazo}
-        </span>
-      </div>
-
-
-      <div className="detalhe-item detalhe-completo">
-
-        <strong>
-          Imagens de referência
-        </strong>
-
-        {pedido.imagens?.length > 0 ? (
-
-          <div className="detalhes-arquivos-inline">
-
-            {pedido.imagens.map(
-              (imagem, index) => (
-
-                <span key={index}>
-                  📎 {imagem}
-                </span>
-
-              )
-            )}
-
-          </div>
-
-        ) : (
-
-          <p className="sem-imagem-pedido">
-            Nenhuma imagem de referência.
-          </p>
-
-        )}
-
-      </div>
-
-    </div>
-
-  </div>
-
-)}
 
                       <div className="pedido-card-cabecalho">
 
@@ -494,19 +400,143 @@ function FeedPedidos() {
                         type="button"
                         className="btn-ver-detalhes"
                         onClick={() =>
-                            setPedidoSelecionado(
-                            pedidoSelecionado?.id === pedido.id
-                                ? null
-                                : pedido
-                            )
+                          setPedidoSelecionado(
+                            pedidoSelecionado?.id ===
+                              pedido.id
+                              ? null
+                              : pedido
+                          )
                         }
-                        >
-                        {pedidoSelecionado?.id === pedido.id
-                            ? "Ocultar detalhes"
-                            : "Ver detalhes"}
-                       </button>
+                      >
+                        {pedidoSelecionado?.id ===
+                        pedido.id
+                          ? "Ocultar detalhes"
+                          : "Ver detalhes"}
+                      </button>
 
                     </div>
+
+
+                    {pedidoSelecionado?.id ===
+                      pedido.id && (
+
+                      <div className="detalhes-pedido-expandido">
+
+                        <div className="detalhes-pedido-expandido-titulo">
+
+                          <span>
+                            Detalhes do pedido
+                          </span>
+
+                        </div>
+
+
+                        <div className="detalhes-pedido-grid">
+
+                          <div className="detalhe-item">
+
+                            <strong>
+                              Cliente
+                            </strong>
+
+                            <span>
+                              {pedido.clienteNome ||
+                                "Cliente"}
+                            </span>
+
+                          </div>
+
+
+                          <div className="detalhe-item">
+
+                            <strong>
+                              Tipo de serviço
+                            </strong>
+
+                            <span>
+                              {pedido.tipoServico ||
+                                pedido.categoria}
+                            </span>
+
+                          </div>
+
+
+                          <div className="detalhe-item detalhe-completo">
+
+                            <strong>
+                              Descrição
+                            </strong>
+
+                            <p>
+                              {pedido.descricao}
+                            </p>
+
+                          </div>
+
+
+                          <div className="detalhe-item">
+
+                            <strong>
+                              Localização
+                            </strong>
+
+                            <span>
+                              {pedido.localizacao}
+                            </span>
+
+                          </div>
+
+
+                          <div className="detalhe-item">
+
+                            <strong>
+                              Prazo desejado
+                            </strong>
+
+                            <span>
+                              {pedido.prazo}
+                            </span>
+
+                          </div>
+
+
+                          <div className="detalhe-item detalhe-completo">
+
+                            <strong>
+                              Imagens de referência
+                            </strong>
+
+                            {pedido.imagens?.length > 0 ? (
+
+                              <div className="detalhes-arquivos-inline">
+
+                                {pedido.imagens.map(
+                                  (imagem, index) => (
+
+                                    <span key={index}>
+                                      📎 {imagem}
+                                    </span>
+
+                                  )
+                                )}
+
+                              </div>
+
+                            ) : (
+
+                              <p className="sem-imagem-pedido">
+                                Nenhuma imagem de referência.
+                              </p>
+
+                            )}
+
+                          </div>
+
+                        </div>
+
+                      </div>
+
+                    )}
 
                   </article>
 
@@ -534,163 +564,8 @@ function FeedPedidos() {
 
         </section>
 
-        {pedidoSelecionado && (
-
-  <div
-    className="detalhes-pedido-overlay"
-    onClick={() =>
-      setPedidoSelecionado(null)
-    }
-  >
-
-    <div
-      className="detalhes-pedido-modal"
-      onClick={(event) =>
-        event.stopPropagation()
-      }
-    >
-
-      <div className="detalhes-pedido-topo">
-
-        <div>
-          <span>
-            Pedido #{pedidoSelecionado.id}
-          </span>
-
-          <h2>
-            {pedidoSelecionado.titulo}
-          </h2>
-        </div>
-
-        <button
-          type="button"
-          className="detalhes-fechar"
-          onClick={() =>
-            setPedidoSelecionado(null)
-          }
-        >
-          ×
-        </button>
-
-      </div>
-
-
-      <div className="detalhes-pedido-conteudo">
-
-        <div className="detalhes-linha">
-          <strong>Cliente</strong>
-
-          <span>
-            {pedidoSelecionado.clienteNome ||
-              "Cliente"}
-          </span>
-        </div>
-
-
-        <div className="detalhes-linha">
-          <strong>Tipo de serviço</strong>
-
-          <span>
-            {pedidoSelecionado.tipoServico ||
-              pedidoSelecionado.categoria}
-          </span>
-        </div>
-
-
-        <div className="detalhes-descricao">
-
-          <strong>
-            Descrição
-          </strong>
-
-          <p>
-            {pedidoSelecionado.descricao}
-          </p>
-
-        </div>
-
-
-        <div className="detalhes-linha">
-          <strong>Localização</strong>
-
-          <span>
-            {pedidoSelecionado.localizacao}
-          </span>
-        </div>
-
-
-        <div className="detalhes-linha">
-          <strong>Prazo desejado</strong>
-
-          <span>
-            {pedidoSelecionado.prazo}
-          </span>
-        </div>
-
-
-        <div className="detalhes-imagens">
-
-          <strong>
-            Imagens de referência
-          </strong>
-
-          {pedidoSelecionado.imagens?.length > 0 ? (
-
-            <div className="detalhes-arquivos">
-
-              {pedidoSelecionado.imagens.map(
-                (imagem, index) => (
-
-                  <span key={index}>
-                    📎 {imagem}
-                  </span>
-
-                )
-              )}
-
-            </div>
-
-          ) : (
-
-            <p>
-              Nenhuma imagem de referência.
-            </p>
-
-          )}
-
-        </div>
-
-      </div>
-
-
-        {pedidoSelecionado.status ===
-            "Disponível" && (
-
-            <button
-            type="button"
-            className="detalhes-interesse"
-            onClick={() => {
-
-                demonstrarInteresse(
-                pedidoSelecionado.id
-                );
-
-                setPedidoSelecionado(null);
-
-            }}
-            >
-            Tenho interesse
-            </button>
-
-        )}
-
-        </div>
-
-    </div>
-
-    )}
-
       </main>
+
     </>
   );
 }
