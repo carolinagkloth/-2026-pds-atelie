@@ -2076,3 +2076,720 @@ h2 {
 .botao-calendario:hover {
   color: #bb91ad;
 }
+
+/* =========================================
+   MENSAGENS - CLIENTE
+========================================= */
+
+.mensagens-cliente {
+  width: 100%;
+}
+
+.mensagens-cabecalho {
+  margin-bottom: 28px;
+}
+
+.mensagens-cabecalho > span {
+  color: #bb91ad;
+  font-size: 12px;
+  font-weight: 600;
+
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+.mensagens-cabecalho h1 {
+  margin: 5px 0 7px;
+
+  color: #6c5865;
+
+  font-size: 30px;
+}
+
+.mensagens-cabecalho p {
+  color: #887b83;
+  font-size: 14px;
+}
+
+
+/* ESTRUTURA */
+
+.mensagens-layout {
+  display: grid;
+
+  grid-template-columns:
+    300px minmax(0, 1fr);
+
+  min-height: 560px;
+
+  background: #ffffff;
+
+  border: 1px solid
+    rgba(145, 118, 135, 0.18);
+
+  border-radius: 14px;
+
+  overflow: hidden;
+
+  box-shadow:
+    0 7px 24px
+    rgba(145, 118, 135, 0.07);
+}
+
+
+/* LISTA DE CONVERSAS */
+
+.conversas-lista {
+  border-right: 1px solid
+    rgba(145, 118, 135, 0.18);
+
+  background: #fbf9fa;
+}
+
+.conversas-lista-titulo {
+  padding: 20px;
+
+  border-bottom: 1px solid
+    rgba(145, 118, 135, 0.16);
+}
+
+.conversas-lista-titulo h2 {
+  margin: 0 0 4px;
+
+  color: #705d68;
+
+  font-size: 17px;
+}
+
+.conversas-lista-titulo small {
+  color: #9b8e96;
+}
+
+.conversa-item {
+  width: 100%;
+
+  padding: 18px 20px;
+
+  border: none;
+  border-bottom: 1px solid
+    rgba(145, 118, 135, 0.12);
+
+  background: transparent;
+
+  text-align: left;
+
+  font-family: inherit;
+
+  cursor: pointer;
+
+  transition: 0.2s;
+}
+
+.conversa-item:hover {
+  background: #f6f0f4;
+}
+
+.conversa-item.ativo {
+  background: #f2e8ee;
+
+  border-left: 3px solid #bb91ad;
+}
+
+.conversa-item-topo {
+  display: flex;
+
+  justify-content: space-between;
+
+  gap: 10px;
+
+  margin-bottom: 5px;
+}
+
+.conversa-item-topo strong {
+  color: #6f5b68;
+
+  font-size: 13px;
+}
+
+.conversa-item-topo small {
+  color: #a1949c;
+
+  font-size: 10px;
+}
+
+.conversa-item p {
+  margin: 0 0 8px;
+
+  color: #8a7d85;
+
+  font-size: 12px;
+}
+
+.conversa-item > span {
+  color: #a06e8f;
+
+  font-size: 10px;
+
+  text-transform: uppercase;
+
+  letter-spacing: 0.5px;
+}
+
+.conversas-vazio {
+  padding: 25px 20px;
+
+  color: #93878e;
+
+  font-size: 12px;
+
+  line-height: 1.6;
+}
+
+
+/* CHAT */
+
+.chat-cliente {
+  display: flex;
+
+  flex-direction: column;
+
+  min-width: 0;
+}
+
+.chat-cabecalho {
+  min-height: 78px;
+
+  padding: 17px 22px;
+
+  display: flex;
+
+  justify-content: space-between;
+  align-items: center;
+
+  gap: 20px;
+
+  border-bottom: 1px solid
+    rgba(145, 118, 135, 0.16);
+}
+
+.chat-cabecalho small {
+  color: #9b8e96;
+
+  font-size: 10px;
+}
+
+.chat-cabecalho h2 {
+  margin: 3px 0 0;
+
+  color: #6c5865;
+
+  font-size: 17px;
+}
+
+.chat-status {
+  padding: 5px 9px;
+
+  border-radius: 6px;
+
+  background: #f3e9ef;
+
+  color: #9d6f8d;
+
+  font-size: 10px;
+}
+
+
+/* MENSAGENS */
+
+.chat-mensagens {
+  flex: 1;
+
+  min-height: 390px;
+
+  padding: 25px;
+
+  overflow-y: auto;
+
+  background: #fdfcfc;
+}
+
+.chat-inicio-conversa {
+  height: 100%;
+
+  min-height: 330px;
+
+  display: flex;
+
+  flex-direction: column;
+
+  align-items: center;
+  justify-content: center;
+
+  text-align: center;
+}
+
+.chat-inicio-conversa p {
+  margin-bottom: 5px;
+
+  color: #776670;
+
+  font-size: 14px;
+}
+
+.chat-inicio-conversa small {
+  max-width: 330px;
+
+  color: #9a8f95;
+
+  line-height: 1.6;
+}
+
+.mensagem-balao {
+  max-width: 70%;
+
+  margin-bottom: 12px;
+
+  padding: 11px 13px;
+
+  border-radius: 12px;
+}
+
+.mensagem-cliente-balao {
+  margin-left: auto;
+
+  background: #bb91ad;
+
+  color: #ffffff;
+
+  border-bottom-right-radius: 4px;
+}
+
+.mensagem-balao p {
+  margin: 0;
+
+  font-size: 13px;
+
+  line-height: 1.5;
+}
+
+.mensagem-balao small {
+  display: block;
+
+  margin-top: 5px;
+
+  text-align: right;
+
+  font-size: 9px;
+
+  opacity: 0.8;
+}
+
+
+.chat-envio {
+  padding: 16px;
+
+  display: grid;
+
+  grid-template-columns:
+    minmax(0, 1fr) auto;
+
+  gap: 10px;
+
+  border-top: 1px solid
+    rgba(145, 118, 135, 0.16);
+
+  background: #ffffff;
+}
+
+.chat-envio input {
+  width: 100%;
+
+  padding: 11px 13px;
+
+  border: 1px solid
+    rgba(145, 118, 135, 0.28);
+
+  border-radius: 8px;
+
+  font-family: inherit;
+
+  color: #695c64;
+
+  outline: none;
+}
+
+.chat-envio input:focus {
+  border-color: #bb91ad;
+}
+
+.chat-envio button {
+  padding: 0 20px;
+
+  border: none;
+
+  border-radius: 8px;
+
+  background: #bb91ad;
+
+  color: #ffffff;
+
+  font-family: inherit;
+  font-weight: 600;
+
+  cursor: pointer;
+}
+
+
+.chat-sem-conversa {
+  flex: 1;
+
+  display: flex;
+
+  flex-direction: column;
+
+  align-items: center;
+  justify-content: center;
+
+  padding: 40px;
+
+  text-align: center;
+}
+
+.chat-sem-conversa-icone {
+  margin-bottom: 12px;
+
+  font-size: 30px;
+}
+
+.chat-sem-conversa h2 {
+  margin-bottom: 7px;
+
+  color: #705d68;
+
+  font-size: 19px;
+}
+
+.chat-sem-conversa p {
+  max-width: 340px;
+
+  color: #978b92;
+
+  font-size: 13px;
+
+  line-height: 1.6;
+}
+
+
+@media (max-width: 750px) {
+
+  .mensagens-layout {
+    grid-template-columns: 1fr;
+  }
+
+  .conversas-lista {
+    border-right: none;
+
+    border-bottom: 1px solid
+      rgba(145, 118, 135, 0.18);
+  }
+
+  .chat-mensagens {
+    min-height: 300px;
+  }
+
+  /* =========================================
+   HEADER COSTUREIRA - PADRÃO CLIENTE
+========================================= */
+
+.header-costureira {
+  background: #ffffff;
+
+  border-bottom:
+    1px solid
+    rgba(145, 118, 135, 0.22);
+}
+
+.header-costureira-conteudo {
+  width: min(1120px, 90%);
+
+  margin: 0 auto;
+
+  min-height: 82px;
+
+  display: flex;
+
+  align-items: center;
+  justify-content: space-between;
+
+  gap: 30px;
+}
+
+
+/* LOGO */
+
+.marca-costureira {
+  color: #917687;
+
+  display: flex;
+  flex-direction: column;
+
+  line-height: 1;
+
+  cursor: default;
+}
+
+.marca-costureira span {
+  font-family:
+    "Playfair Display SC",
+    serif;
+
+  font-size: 25px;
+}
+
+.marca-costureira small {
+  margin-top: 4px;
+
+  font-size: 12px;
+
+  letter-spacing: 2px;
+}
+
+
+/* MENU */
+
+.menu-costureira {
+  display: flex;
+
+  align-items: center;
+
+  gap: 28px;
+
+  margin-left: auto;
+}
+
+.menu-costureira a {
+  padding: 0;
+
+  border-bottom: none;
+
+  color: #6f6069;
+
+  text-decoration: none;
+
+  font-family: inherit;
+
+  font-size: 14px;
+
+  transition: 0.2s;
+}
+
+.menu-costureira a:hover {
+  color: #bb91ad;
+
+  border-bottom: none;
+}
+
+.menu-costureira a.active {
+  color: #bb91ad;
+
+  font-weight: 600;
+
+  border-bottom: none;
+}
+
+@media (max-width: 900px) {
+
+  .menu-costureira {
+    gap: 15px;
+  }
+
+  .menu-costureira a {
+    font-size: 12px;
+  }
+
+}
+
+/* =========================================
+   DETALHES DO PEDIDO
+========================================= */
+
+.detalhes-pedido-overlay {
+  position: fixed;
+  inset: 0;
+
+  background: rgba(48, 38, 44, 0.42);
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  padding: 25px;
+
+  z-index: 1000;
+}
+
+.detalhes-pedido-modal {
+  width: min(680px, 100%);
+  max-height: 90vh;
+
+  overflow-y: auto;
+
+  background: #ffffff;
+
+  border-radius: 14px;
+
+  padding: 28px 30px;
+
+  box-shadow:
+    0 20px 60px
+    rgba(70, 50, 65, 0.18);
+}
+
+.detalhes-pedido-topo {
+  display: flex;
+
+  justify-content: space-between;
+  align-items: flex-start;
+
+  gap: 20px;
+
+  padding-bottom: 20px;
+
+  border-bottom:
+    1px solid
+    rgba(145, 118, 135, 0.18);
+}
+
+.detalhes-pedido-topo span {
+  color: #bb91ad;
+
+  font-size: 11px;
+
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+.detalhes-pedido-topo h2 {
+  margin-top: 5px;
+
+  color: #6c5865;
+
+  font-size: 23px;
+}
+
+.detalhes-fechar {
+  border: none;
+  background: transparent;
+
+  color: #806c78;
+
+  font-size: 28px;
+
+  cursor: pointer;
+}
+
+.detalhes-pedido-conteudo {
+  padding: 22px 0;
+}
+
+.detalhes-linha {
+  display: flex;
+
+  justify-content: space-between;
+
+  gap: 25px;
+
+  padding: 12px 0;
+
+  border-bottom:
+    1px solid
+    rgba(145, 118, 135, 0.12);
+}
+
+.detalhes-linha strong,
+.detalhes-descricao strong,
+.detalhes-imagens strong {
+  color: #705d68;
+
+  font-size: 13px;
+}
+
+.detalhes-linha span {
+  color: #857781;
+
+  font-size: 13px;
+
+  text-align: right;
+}
+
+.detalhes-descricao,
+.detalhes-imagens {
+  padding: 16px 0;
+
+  border-bottom:
+    1px solid
+    rgba(145, 118, 135, 0.12);
+}
+
+.detalhes-descricao p,
+.detalhes-imagens p {
+  margin-top: 8px;
+
+  color: #857781;
+
+  font-size: 13px;
+
+  line-height: 1.7;
+}
+
+.detalhes-arquivos {
+  display: flex;
+  flex-direction: column;
+
+  gap: 7px;
+
+  margin-top: 10px;
+
+  color: #8a7582;
+
+  font-size: 12px;
+}
+
+.detalhes-interesse {
+  width: 100%;
+
+  padding: 13px;
+
+  border: none;
+  border-radius: 8px;
+
+  background: #bb91ad;
+
+  color: white;
+
+  font-family: inherit;
+  font-weight: 600;
+
+  cursor: pointer;
+}
+.mensagem-outro-balao {
+  margin-right: auto;
+
+  background: #f1ecef;
+
+  color: #705d68;
+
+  border-bottom-left-radius: 4px;
+}
+
+.mensagem-remetente {
+  display: block;
+
+  margin-bottom: 4px;
+
+  font-size: 10px;
+
+  opacity: 0.75;
+}
+
+}

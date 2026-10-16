@@ -1,17 +1,24 @@
-import { Link, NavLink } from "react-router-dom";
+import { NavLink } from "react-router-dom";
 
 function HeaderCostureira() {
   return (
     <header className="header-costureira">
+
       <div className="header-costureira-conteudo">
-        <Link to="/costureira" className="marca-costureira">
+
+        <div className="marca-costureira">
           <span>Ateliê</span>
           <small>entre Linhas</small>
-        </Link>
+        </div>
 
         <nav className="menu-costureira">
+
           <NavLink to="/costureira">
             Início
+          </NavLink>
+
+          <NavLink to="/feed-pedidos">
+            Feed de pedidos
           </NavLink>
 
           <a href="#meus-trabalhos">
@@ -22,15 +29,18 @@ function HeaderCostureira() {
             Agenda
           </a>
 
-          <a href="#mensagens">
+          <NavLink to="/mensagens-costureira">
             Mensagens
-          </a>
+          </NavLink>
 
           <NavLink to="/perfil-costureira">
             Meu perfil
           </NavLink>
+
         </nav>
+
       </div>
+
     </header>
   );
 }

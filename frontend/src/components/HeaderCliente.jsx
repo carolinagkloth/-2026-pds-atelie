@@ -4,11 +4,10 @@ function HeaderCliente({
   telaAtual,
   onAbrirInicio,
   onAbrirMeusPedidos,
+  onAbrirMensagens,
 }) {
-  const [
-    notificacoesAbertas,
-    setNotificacoesAbertas,
-  ] = useState(false);
+  const [notificacoesAbertas, setNotificacoesAbertas] =
+    useState(false);
 
   return (
     <header className="header-cliente">
@@ -47,7 +46,12 @@ function HeaderCliente({
 
           <button
             type="button"
-            className="menu-cliente-link"
+            className={
+              telaAtual === "mensagens"
+                ? "menu-cliente-link ativo"
+                : "menu-cliente-link"
+            }
+            onClick={onAbrirMensagens}
           >
             Mensagens
           </button>

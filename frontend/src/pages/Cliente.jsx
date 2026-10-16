@@ -3,12 +3,30 @@ import HeaderCliente from "../components/HeaderCliente";
 
 function Cliente() {
   const [tela, setTela] = useState("inicio");
-
   const [formularioAberto, setFormularioAberto] =
     useState(false);
+  const [salvando, setSalvando] = useState(false);
 
-  const [salvando, setSalvando] =
-    useState(false);
+  const [pedidoConversaId, setPedidoConversaId] =
+    useState(null);
+
+  const [textoMensagem, setTextoMensagem] =
+    useState("");
+
+  const [mensagensLocais, setMensagensLocais] =
+  useState(() => {
+
+    const mensagensSalvas =
+      localStorage.getItem(
+        "mensagensPedidos"
+      );
+
+    return mensagensSalvas
+      ? JSON.parse(
+          mensagensSalvas
+        )
+      : {};
+  });
 
   const calendarioRef = useRef(null);
 
@@ -51,6 +69,22 @@ function Cliente() {
       pedido.status === "Concluído"
   );
 
+  const pedidosEmNegociacao = pedidos.filter(
+  (pedido) =>
+    pedido.status === "Em negociação"
+);
+
+
+  function obterIdPedido(pedido) {
+    return pedido.id ?? pedido.id_pedido;
+  }
+
+  const pedidoConversa = pedidosEmNegociacao.find(
+  (pedido) =>
+    String(obterIdPedido(pedido)) ===
+    String(pedidoConversaId)
+);
+
   function alterarCampo(event) {
     const { name, value } = event.target;
 
@@ -61,9 +95,8 @@ function Cliente() {
   }
 
   function selecionarImagens(event) {
-    const arquivos = Array.from(
-      event.target.files
-    );
+    const arquivos =
+      Array.from(event.target.files);
 
     setFormulario((anterior) => ({
       ...anterior,
@@ -75,9 +108,7 @@ function Cliente() {
     const calendario =
       calendarioRef.current;
 
-    if (!calendario) {
-      return;
-    }
+    if (!calendario) return;
 
     if (calendario.showPicker) {
       calendario.showPicker();
@@ -87,7 +118,8 @@ function Cliente() {
   }
 
   function selecionarPrazo(event) {
-    const valor = event.target.value;
+    const valor =
+      event.target.value;
 
     if (!valor) {
       setFormulario((anterior) => ({
@@ -104,11 +136,79 @@ function Cliente() {
 
     setFormulario((anterior) => ({
       ...anterior,
-
       prazo: `${dia}/${mes}/${ano}`,
-
       prazoISO: valor,
     }));
+  }
+
+  function enviarMensagem(event) {
+    event.preventDefault();
+
+    const texto =
+      textoMensagem.trim();
+
+    if (!texto || !pedidoConversaId) {
+      return;
+    }
+
+    const novaMensagem = {
+
+    id_mensagem:
+      Date.now(),
+
+    id_pedido:
+      pedidoConversaId,
+
+    id_remetente:
+      usuario?.id_usuario ||
+      usuario?.id ||
+      "cliente-local",
+
+    nome_remetente:
+      usuario?.nome ||
+      "Cliente",
+
+    tipo_remetente:
+      "Cliente",
+
+    conteudo:
+      texto,
+
+    data_hora_envio:
+      new Date().toISOString(),
+
+  };
+
+    setMensagensLocais((anterior) => {
+
+      const atualizadas = {
+
+        ...anterior,
+
+        [pedidoConversaId]: [
+
+          ...(anterior[
+            pedidoConversaId
+          ] || []),
+
+          novaMensagem,
+
+        ],
+      };
+
+
+      localStorage.setItem(
+        "mensagensPedidos",
+        JSON.stringify(
+          atualizadas
+        )
+      );
+
+
+      return atualizadas;
+    });
+
+    setTextoMensagem("");
   }
 
   async function publicarPedido(event) {
@@ -123,6 +223,14 @@ function Cliente() {
 
     const novoPedido = {
       id: Date.now(),
+      id_cliente:
+        usuario?.id_usuario ||
+        usuario?.id ||
+        null,
+
+      clienteNome:
+        usuario?.nome ||
+        "Cliente",
 
       titulo:
         formulario.titulo,
@@ -230,9 +338,7 @@ function Cliente() {
     });
 
     setSalvando(false);
-
     setFormularioAberto(false);
-
     setTela("pedidos");
   }
 
@@ -240,14 +346,22 @@ function Cliente() {
     <>
       <HeaderCliente
         telaAtual={tela}
+
         onAbrirInicio={() => {
           setTela("inicio");
           setFormularioAberto(false);
         }}
+
         onAbrirMeusPedidos={() => {
           setTela("pedidos");
           setFormularioAberto(false);
         }}
+
+        onAbrirMensagens={() => {
+          setTela("mensagens");
+          setFormularioAberto(false);
+        }}
+
       />
 
       <main className="cliente-page">
@@ -262,7 +376,6 @@ function Cliente() {
               <>
 
                 <section className="cliente-topo">
-
                   <div>
 
                     <span className="cliente-legenda">
@@ -293,7 +406,6 @@ function Cliente() {
                     </button>
 
                   </div>
-
                 </section>
 
                 <section className="cliente-resumo">
@@ -334,6 +446,7 @@ function Cliente() {
 
               </>
             ) : (
+
               <section className="novo-pedido-area">
 
                 <div className="novo-pedido-cabecalho">
@@ -577,7 +690,6 @@ function Cliente() {
 
               </section>
             )}
-
           </>
         )}
 
@@ -635,13 +747,14 @@ function Cliente() {
 
                       <article
                         className="cliente-pedido-card"
-                        key={pedido.id}
+                        key={obterIdPedido(pedido)}
                       >
 
                         <div className="cliente-pedido-topo">
 
                           <span>
-                            Pedido #{pedido.id}
+                            Pedido #
+                            {obterIdPedido(pedido)}
                           </span>
 
                           <strong>
@@ -676,20 +789,16 @@ function Cliente() {
 
                         {pedido.imagens?.length > 0 && (
                           <div className="pedido-imagens-info">
-
                             {pedido.imagens.length}{" "}
                             imagem(ns) de referência
-
                           </div>
                         )}
 
                       </article>
-
                     )
                   )}
 
                 </div>
-
               )}
 
             </section>
@@ -732,7 +841,7 @@ function Cliente() {
 
                       <article
                         className="cliente-pedido-card"
-                        key={pedido.id}
+                        key={obterIdPedido(pedido)}
                       >
 
                         <h3>
@@ -748,17 +857,255 @@ function Cliente() {
                         </span>
 
                       </article>
-
                     )
                   )}
 
                 </div>
-
               )}
 
             </section>
 
           </>
+        )}
+
+        {/* =========================
+            MENSAGENS
+        ========================= */}
+
+        {tela === "mensagens" && (
+          <section className="mensagens-cliente">
+
+            <div className="mensagens-cabecalho">
+
+              <span>
+                Conversas
+              </span>
+
+              <h1>
+                Mensagens
+              </h1>
+
+              <p>
+                Converse sobre detalhes,
+                prazos e andamento dos seus pedidos.
+              </p>
+
+            </div>
+
+            <div className="mensagens-layout">
+
+              {/* LISTA DE CONVERSAS */}
+
+              <aside className="conversas-lista">
+
+                <div className="conversas-lista-titulo">
+                  <h2>Seus pedidos</h2>
+                  <small>
+                    {pedidosEmNegociacao.length} conversa(s)
+                  </small>
+                </div>
+
+                {pedidosEmNegociacao.length === 0 ? (
+
+                  <div className="conversas-vazio">
+                    <p>
+                      Você ainda não possui pedidos
+                      para iniciar uma conversa.
+                    </p>
+                  </div>
+
+                ) : (
+
+                  pedidosEmNegociacao.map((pedido) => {
+
+                    const id =
+                      obterIdPedido(pedido);
+
+                    return (
+                      <button
+                        type="button"
+                        key={id}
+                        className={
+                          String(pedidoConversaId) ===
+                          String(id)
+                            ? "conversa-item ativo"
+                            : "conversa-item"
+                        }
+                        onClick={() =>
+                          setPedidoConversaId(id)
+                        }
+                      >
+
+                        <div className="conversa-item-topo">
+
+                          <strong>
+                            {pedido.titulo ||
+                              `Pedido #${id}`}
+                            {" - "}
+                            {pedido.clienteNome ||
+                              usuario?.nome ||
+                              "Cliente"}
+                          </strong>
+
+                          <small>
+                            #{id}
+                          </small>
+
+                        </div>
+
+                        <p>
+                          {pedido.tipoServico ||
+                            pedido.categoria ||
+                            "Serviço"}
+                        </p>
+
+                        <span>
+                          {pedido.status}
+                        </span>
+
+                      </button>
+                    );
+                  })
+
+                )}
+
+              </aside>
+
+              {/* ÁREA DO CHAT */}
+
+              <div className="chat-cliente">
+
+                {!pedidoConversa ? (
+
+                  <div className="chat-sem-conversa">
+
+                    <div className="chat-sem-conversa-icone">
+                      💬
+                    </div>
+
+                    <h2>
+                      Selecione uma conversa
+                    </h2>
+
+                    <p>
+                      Escolha um pedido ao lado para
+                      visualizar e enviar mensagens.
+                    </p>
+
+                  </div>
+
+                ) : (
+                  <>
+
+                    <div className="chat-cabecalho">
+
+                      <div>
+
+                        <small>
+                          Pedido #
+                          {obterIdPedido(
+                            pedidoConversa
+                          )}
+                        </small>
+
+                        <h2>
+                          {pedidoConversa.titulo ||
+                            "Conversa do pedido"}
+                        </h2>
+
+                      </div>
+
+                      <span className="chat-status">
+                        {pedidoConversa.status}
+                      </span>
+
+                    </div>
+
+                    <div className="chat-mensagens">
+
+                      {(mensagensLocais[
+                        pedidoConversaId
+                      ] || []).length === 0 ? (
+
+                        <div className="chat-inicio-conversa">
+
+                          <p>
+                            Nenhuma mensagem nesta
+                            conversa ainda.
+                          </p>
+
+                          <small>
+                            Envie uma mensagem para
+                            iniciar a conversa sobre
+                            este pedido.
+                          </small>
+
+                        </div>
+
+                      ) : (
+
+                        mensagensLocais[
+                          pedidoConversaId
+                        ].map((mensagem) => (
+
+                          <div
+                            key={mensagem.id}
+                            className="mensagem-balao mensagem-cliente-balao"
+                          >
+
+                            <p>
+                              {mensagem.conteudo}
+                            </p>
+
+                            <small>
+                              {new Date(
+                                  mensagem.data_hora_envio).toLocaleTimeString(
+                                  "pt-BR",
+                                  {
+                                    hour: "2-digit",
+                                    minute: "2-digit",
+                                  }
+                                )}
+                            </small>
+
+                          </div>
+
+                        ))
+
+                      )}
+
+                    </div>
+
+                    <form
+                      className="chat-envio"
+                      onSubmit={enviarMensagem}
+                    >
+
+                      <input
+                        type="text"
+                        value={textoMensagem}
+                        onChange={(event) =>
+                          setTextoMensagem(
+                            event.target.value
+                          )
+                        }
+                        placeholder="Digite uma mensagem..."
+                      />
+
+                      <button type="submit">
+                        Enviar
+                      </button>
+
+                    </form>
+
+                  </>
+                )}
+
+              </div>
+
+            </div>
+
+          </section>
         )}
 
       </main>
