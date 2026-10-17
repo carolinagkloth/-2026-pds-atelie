@@ -15,9 +15,9 @@ function MensagensCostureira() {
     : null;
 
   const idCostureira =
-    usuario?.id_usuario ||
-    usuario?.id ||
-    "costureira-local";
+  usuario?.tipo_usuario === "Costureira"
+    ? usuario?.id_usuario || usuario?.id
+    : "costureira-local";
 
 
   const pedidosSalvos =
@@ -29,16 +29,34 @@ function MensagensCostureira() {
 
 
   const pedidosEmNegociacao =
-    pedidosSalvos.filter(
-      (pedido) =>
-        pedido.status ===
-          "Em negociação" &&
+  pedidosSalvos.filter((pedido) => {
 
-        String(
-          pedido.id_costureira
-        ) ===
-          String(idCostureira)
+    if (
+      pedido.status !==
+      "Em negociação"
+    ) {
+      return false;
+    }
+
+    const pedidoSemCostureira =
+      !pedido.id_costureira;
+
+    const pedidoTesteAntigo =
+      pedido.id_costureira ===
+      "costureira-local";
+
+    const pedidoDaCostureiraAtual =
+      String(
+        pedido.id_costureira
+      ) ===
+      String(idCostureira);
+
+    return (
+      pedidoSemCostureira ||
+      pedidoTesteAntigo ||
+      pedidoDaCostureiraAtual
     );
+  });
 
 
   const pedidoInicial =

@@ -6,25 +6,84 @@ import PerfilCostureira from "./pages/PerfilCostureira";
 import Cliente from "./pages/Cliente";
 import FeedPedidos from "./pages/FeedPedidos";
 import MensagensCostureira from "./pages/MensagensCostureira";
-
+import RotaProtegida from "./components/RotaProtegida";
 
 function App() {
   return (
     <Routes>
-      <Route path="/login" element={<Login />} />
-      <Route path="/cadastro" element={<Cadastro />} />
-      <Route path="/pedidos" element={<Pedidos />} />
+
+      {/* ROTAS PÚBLICAS */}
+
       <Route
-        path="/perfil-costureira"
-        element={<PerfilCostureira />} />
-      <Route path="/costureira" element={<Pedidos />} />
-      <Route path="/cliente" element={<Cliente />} />
+        path="/login"
+        element={<Login />}
+      />
+
+      <Route
+        path="/cadastro"
+        element={<Cadastro />}
+      />
+
+
+      {/* ÁREA DO CLIENTE */}
+
+      <Route
+        path="/cliente"
+        element={
+          <RotaProtegida tipoPermitido="Cliente">
+            <Cliente />
+          </RotaProtegida>
+        }
+      />
+
+
+      {/* ÁREA DA COSTUREIRA */}
+
+      <Route
+        path="/costureira"
+        element={
+          <RotaProtegida tipoPermitido="Costureira">
+            <Pedidos />
+          </RotaProtegida>
+        }
+      />
+
+      <Route
+        path="/pedidos"
+        element={
+          <RotaProtegida tipoPermitido="Costureira">
+            <Pedidos />
+          </RotaProtegida>
+        }
+      />
+
       <Route
         path="/feed-pedidos"
-        element={<FeedPedidos />} />
+        element={
+          <RotaProtegida tipoPermitido="Costureira">
+            <FeedPedidos />
+          </RotaProtegida>
+        }
+      />
+
       <Route
         path="/mensagens-costureira"
-        element={<MensagensCostureira />}/>
+        element={
+          <RotaProtegida tipoPermitido="Costureira">
+            <MensagensCostureira />
+          </RotaProtegida>
+        }
+      />
+
+      <Route
+        path="/perfil-costureira"
+        element={
+          <RotaProtegida tipoPermitido="Costureira">
+            <PerfilCostureira />
+          </RotaProtegida>
+        }
+      />
+
     </Routes>
   );
 }

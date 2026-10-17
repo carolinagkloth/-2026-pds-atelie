@@ -13,13 +13,14 @@ function FeedPedidos() {
     : null;
 
   const idCostureira =
-    usuario?.id_usuario ||
-    usuario?.id ||
-    "costureira-local";
+    usuario?.tipo_usuario === "Costureira"
+      ? usuario?.id_usuario || usuario?.id
+      : "costureira-local";
 
   const nomeCostureira =
-    usuario?.nome ||
-    "Costureira";
+    usuario?.tipo_usuario === "Costureira"
+      ? usuario?.nome
+      : "Costureira";
 
   const [categoria, setCategoria] =
     useState("");
@@ -97,43 +98,45 @@ function FeedPedidos() {
 
   function demonstrarInteresse(idPedido) {
 
-    const pedidosAtualizados =
-      pedidos.map((pedido) => {
+  const pedidosAtualizados =
+    pedidos.map((pedido) => {
 
-        if (pedido.id === idPedido) {
+      if (pedido.id === idPedido) {
 
-          return {
-            ...pedido,
+        return {
+          ...pedido,
 
-            status: "Em negociação",
+          status: "Em negociação",
 
-            id_costureira:
-              idCostureira,
+          id_costureira:
+            idCostureira,
 
-            costureiraNome:
-              nomeCostureira,
-          };
-        }
+          costureiraNome:
+            nomeCostureira,
+        };
+      }
 
-        return pedido;
-      });
+      return pedido;
+    });
 
 
-    setPedidos(
+  setPedidos(
+    pedidosAtualizados
+  );
+
+
+  localStorage.setItem(
+    "pedidosCliente",
+    JSON.stringify(
       pedidosAtualizados
-    );
+    )
+  );
 
-    navigate(
-      `/mensagens-costureira?pedido=${idPedido}`
-    );
 
-    localStorage.setItem(
-      "pedidosCliente",
-      JSON.stringify(
-        pedidosAtualizados
-      )
-    );
-  }
+  navigate(
+    `/mensagens-costureira?pedido=${idPedido}`
+  );
+}
 
 
   return (
