@@ -1,67 +1,104 @@
-import React, { useState, useEffect } from 'react';
-import '../styles/FeedPedidos.css';
+import React, { useState } from 'react';
 
-export default function FeedPedidos({ pedidos: pedidosProp = [] }) {
-  const [pedidosServidor, setPedidosServidor] = useState([]);
-  const [busca, setBusca] = useState('');
+function FeedPedidos({ pedidos, usuarioLogado, onDemonstrarInteresse }) {
+  const [filtroServico, setFiltroServico] = useState('Todos');
+  const [buscaLocalizacao, setBuscaLocalizacao] = useState('');
 
-  // Busca os pedidos diretamente da API do Node ao carregar
-  useEffect(() => {
-    async function carregarPedidos() {
-      try {
-        const response = await fetch('http://localhost:3000/api/pedidos');
-        if (response.ok) {
-          const data = await response.json();
-          setPedidosServidor(Array.isArray(data) ? data : []);
-        }
-      } catch (error) {
-        console.error('Erro ao buscar pedidos do servidor:', error);
-      }
-    }
-
-    carregarPedidos();
-  }, []);
-
-  // Junta os pedidos recém-criados no App com os pedidos vindos do servidor
-  const todosPedidos = [...pedidosProp, ...pedidosServidor];
-
-  // Filtra por termo de busca e remove duplicatas
-  const pedidosFiltrados = todosPedidos
-    .filter((pedido, index, self) =>
-      index === self.findIndex((p) => (p.id && p.id === pedido.id) || p.titulo === pedido.titulo)
-    )
-    .filter((pedido) =>
-      pedido.titulo?.toLowerCase().includes(busca.toLowerCase()) ||
-      pedido.categoria?.toLowerCase().includes(busca.toLowerCase()) ||
-      pedido.descricao?.toLowerCase().includes(busca.toLowerCase())
-    );
+  // Filtra apenas pedidos disponíveis
+  const pedidosDisponiveis = pedidos.filter((ped) => {
+    const atendeStatus = ped.status === 'Disponível';
+    const atendeServico = filtroServico === 'Todos' || ped.tiposervico === filtroServico;
+    const atendeLocal = ped.localizacao.toLowerCase().includes(buscaLocalizacao.toLowerCase());
+    return atendeStatus && atendeServico && atendeLocal;
+  });
 
   return (
-    <div className="feed-pedidos-container">
-      <h2>Pedidos Disponíveis</h2>
-
-      <div className="busca-container" style={{ marginBottom: '1rem' }}>
-        <input
-          type="text"
-          placeholder="Buscar pedidos por título ou categoria..."
-          value={busca}
-          onChange={(e) => setBusca(e.target.value)}
-          style={{ width: '100%', padding: '0.5rem' }}
-        />
+    <div style={{ maxWidth: '900px', margin: '20px auto', fontFamily: 'sans-serif' }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
+        <h2 style={{ color: '#3E2445', margin: 0 }}>Mural Público de Pedidos</h2>
+        <span style={{ fontSize: '14px', color: '#666' }}>{pedidosDisponiveis.length} solicitações disponíveis</span>
       </div>
 
-      {pedidosFiltrados.length === 0 ? (
-        <p>Nenhum pedido encontrado.</p>
+      {/* BARRA DE FILTROS */}
+      <div style={{ background: '#fff', padding: '15px', borderRadius: '8px', boxShadow: '0 2px 8px rgba(0,0,0,0.08)', marginBottom: '20px', display: 'flex', gap: '15px', alignItems: 'center' }}>
+        <div style={{ flex: 1 }}>
+          <label style={{ fontSize: '12px', fontWeight: 'bold', color: '#555', display: 'block', marginBottom: '4px' }}>Tipo de Serviço:</label>
+          <select value={filtroServico} onChange={(e) => setFiltroServico(e.target.value)} style={{ width: '100%', padding: '8px', borderRadius: '4px', border: '1px solid #ccc' }}>
+            <option value="Todos">Todos os Serviços</option>
+            <option value="Ajuste">Ajuste / Conserto</option>
+            <option value="Confecção sob medida">Confecção sob Medida</option>
+            <option value="Customização">Customização / Bordado</option>
+            <option value="Vestido de Festa">Vestido de Festa</option>
+          </select>
+        </div>
+
+        <div style={{ flex: 1 }}>
+          <label style={{ fontSize: '12px', fontWeight: 'bold', color: '#555', display: 'block', marginBottom: '4px' }}>Buscar por Localização:</label>
+          <input
+            type="text"
+            placeholder="Ex: Centro, Ponta Grossa..."
+            value={buscaLocalizacao}
+            onChange={(e) => setBuscaLocalizacao(e.target.value)}
+            style={{ width: '100%', padding: '8px', borderRadius: '4px', border: '1px solid #ccc', boxSizing: 'border-box' }}
+          />
+        </div>
+      </div>
+
+      {/* LISTAGEM DE CARDS DE PEDIDOS */}
+      {pedidosDisponiveis.length === 0 ? (
+        <div style={{ background: '#fff', padding: '40px', borderRadius: '8px', textAlign: 'center', color: '#777' }}>
+          <h3>Nenhum pedido disponível no momento com esses filtros.</h3>
+          <p>Tente mudar os filtros de busca ou aguarde novas publicações dos clientes.</p>
+        </div>
       ) : (
-        <div className="lista-pedidos">
-          {pedidosFiltrados.map((pedido, index) => (
-            <div key={pedido.id || index} className="card-pedido" style={{ border: '1px solid #ccc', padding: '1rem', marginBottom: '1rem', borderRadius: '4px' }}>
-              <h3>{pedido.titulo}</h3>
-              <p><strong>Categoria:</strong> {pedido.categoria}</p>
-              <p><strong>Descrição:</strong> {pedido.descricao}</p>
-              {pedido.localizacao && <p><strong>Localização:</strong> {pedido.localizacao}</p>}
-              {pedido.prazo && <p><strong>Prazo:</strong> {pedido.prazo}</p>}
-              <p><strong>Status:</strong> {pedido.status || 'Disponível'}</p>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(380px, 1fr))', gap: '20px' }}>
+          {pedidosDisponiveis.map((pedido) => (
+            <div key={pedido.id} style={{ background: '#fff', padding: '20px', borderRadius: '8px', boxShadow: '0 2px 8px rgba(0,0,0,0.1)', display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
+              <div>
+                {/* RENDERIZAÇÃO DA FOTO ENVIADA PELA CLIENTE */}
+                {pedido.fotoReferencia && !pedido.fotoReferencia.includes('placeholder') && (
+                  <div style={{ width: '100%', height: '200px', overflow: 'hidden', borderRadius: '6px', marginBottom: '15px', background: '#f5f5f5' }}>
+                    <img
+                      src={pedido.fotoReferencia}
+                      alt="Referência da peça"
+                      style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                    />
+                  </div>
+                )}
+
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px' }}>
+                  <span style={{ background: '#EAE3EA', color: '#3E2445', padding: '4px 8px', borderRadius: '12px', fontSize: '12px', fontWeight: 'bold' }}>
+                    {pedido.tiposervico}
+                  </span>
+                  <small style={{ color: '#888' }}>{pedido.dataPublicacao}</small>
+                </div>
+
+                <h3 style={{ margin: '0 0 10px 0', color: '#3E2445', fontSize: '18px' }}>
+                  Pedido de {pedido.clienteNome}
+                </h3>
+
+                <p style={{ fontSize: '14px', color: '#444', lineHeight: '1.5', marginBottom: '15px' }}>
+                  {pedido.descricao}
+                </p>
+
+                <div style={{ fontSize: '13px', color: '#666', marginBottom: '15px', lineHeight: '1.6' }}>
+                  <div>📍 <strong>Localização:</strong> {pedido.localizacao}</div>
+                  <div>📅 <strong>Prazo limite:</strong> {pedido.prazoDesejado}</div>
+                </div>
+              </div>
+
+              {usuarioLogado?.tipo_usuario === 'Costureira' ? (
+                <button
+                  onClick={() => onDemonstrarInteresse(pedido)}
+                  style={{ width: '100%', padding: '10px', background: '#3E2445', color: '#fff', border: 'none', borderRadius: '4px', cursor: 'pointer', fontWeight: 'bold', fontSize: '14px' }}
+                >
+                  💬 Demonstrar Interesse e Iniciar Chat
+                </button>
+              ) : (
+                <div style={{ fontSize: '12px', color: '#888', fontStyle: 'italic', textAlign: 'center' }}>
+                  Apenas contas de Costureira podem demonstrar interesse neste pedido.
+                </div>
+              )}
             </div>
           ))}
         </div>
@@ -69,3 +106,5 @@ export default function FeedPedidos({ pedidos: pedidosProp = [] }) {
     </div>
   );
 }
+
+export default FeedPedidos;

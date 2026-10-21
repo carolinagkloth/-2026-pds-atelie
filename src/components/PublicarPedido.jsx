@@ -1,151 +1,133 @@
 import React, { useState } from 'react';
-import '../styles/PublicarPedido.css';
 
-export default function PublicarPedido({ onSubmit }) {
-  const [formData, setFormData] = useState({
-    titulo: '',
-    categoria: '',
-    descricao: '',
-    localizacao: '', // Armazena Cidade e Estado (ex: Ponta Grossa - PR)
-    prazo: ''
-  });
-  const [loading, setLoading] = useState(false);
+function PublicarPedido({ usuarioLogado, onPublicarSucesso }) {
+  const [tiposervico, setTiposervico] = useState('Ajuste');
+  const [descricao, setDescricao] = useState('');
+  const [prazoDesejado, setPrazoDesejado] = useState('');
+  const [localizacao, setLocalizacao] = useState('');
+  const [fotoReferencia, setFotoReferencia] = useState(null);
+  const [previewFoto, setPreviewFoto] = useState('');
 
-  const handleChange = (e) => {
-    const { name, value } = e.target;
-    setFormData((prev) => ({ ...prev, [name]: value }));
-  };
+  // Pega a data atual no formato YYYY-MM-DD para bloquear datas passadas no calendário
+  const hoje = new Date().toISOString().split('T')[0];
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    setLoading(true);
-
-    try {
-      const token = localStorage.getItem('token');
-      const response = await fetch('http://localhost:3000/api/pedidos', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
-        },
-        body: JSON.stringify(formData),
-      });
-
-      if (!response.ok) {
-        throw new Error('Falha ao cadastrar no servidor');
-      }
-
-      const data = await response.json();
-      alert('Pedido publicado com sucesso!');
-
-      if (onSubmit) {
-        onSubmit(data.pedido || formData);
-      }
-    } catch (error) {
-      console.error('Erro ao conectar com a API:', error);
-      if (onSubmit) {
-        onSubmit(formData);
-      }
-      alert('Pedido publicado na tela local!');
-    } finally {
-      setLoading(false);
-      setFormData({
-        titulo: '',
-        categoria: '',
-        descricao: '',
-        localizacao: '',
-        prazo: ''
-      });
+  // Manipula o arquivo de imagem enviado pelo usuário (PNG / JPG)
+  const handleFileChange = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      setFotoReferencia(file);
+      setPreviewFoto(URL.createObjectURL(file)); // Gera pré-visualização local da imagem
     }
   };
 
+  const handleSubmit = (e) => {
+    e.preventDefault();
+
+    if (!descricao || !prazoDesejado || !localizacao) {
+      alert('Por favor, preencha todos os campos obrigatórios!');
+      return;
+    }
+
+    const novoPedido = {
+      id: Date.now(),
+      clienteId: usuarioLogado?.id || 1,
+      clienteNome: usuarioLogado?.nome || 'Cliente',
+      tiposervico,
+      descricao,
+      prazoDesejado,
+      localizacao,
+      fotoReferencia: previewFoto || 'https://via.placeholder.com/150?text=Sem+Foto',
+      status: 'Disponível',
+      dataPublicacao: new Date().toLocaleDateString()
+    };
+
+    onPublicarSucesso(novoPedido);
+    alert('Pedido publicado com sucesso no Mural!');
+  };
+
   return (
-    <div className="publicar-container">
-      <div className="publicar-card">
-        <header className="publicar-header">
-          <h2>Publicar Novo Pedido</h2>
-          <p>Preencha os detalhes da sua solicitação para os costureiros do ateliê</p>
-        </header>
+    <div style={{ maxWidth: '600px', margin: '20px auto', background: '#fff', padding: '25px', borderRadius: '8px', boxShadow: '0 2px 8px rgba(0,0,0,0.1)' }}>
+      <h2 style={{ color: '#3E2445', marginTop: 0 }}>Publicar Novo Pedido</h2>
+      <p style={{ color: '#666', fontSize: '14px', marginBottom: '20px' }}>
+        Descreva o serviço de costura ou ajuste que você precisa para que as costureiras da região possam visualizar.
+      </p>
 
-        <form onSubmit={handleSubmit} className="publicar-form">
-          <div className="form-group">
-            <label htmlFor="titulo">Título do Pedido *</label>
+      <form onSubmit={handleSubmit}>
+        <div style={{ marginBottom: '15px' }}>
+          <label style={{ display: 'block', marginBottom: '5px', fontWeight: 'bold', fontSize: '14px' }}>Tipo de Serviço *</label>
+          <select value={tiposervico} onChange={(e) => setTiposervico(e.target.value)} style={{ width: '100%', padding: '10px', borderRadius: '4px', border: '1px solid #ccc' }}>
+            <option value="Ajuste">Ajuste / Conserto</option>
+            <option value="Confecção sob medida">Confecção sob Medida</option>
+            <option value="Customização">Customização / Bordado</option>
+            <option value="Vestido de Festa">Vestido de Festa</option>
+          </select>
+        </div>
+
+        <div style={{ marginBottom: '15px' }}>
+          <label style={{ display: 'block', marginBottom: '5px', fontWeight: 'bold', fontSize: '14px' }}>Descrição Detalhada *</label>
+          <textarea
+            rows="4"
+            value={descricao}
+            onChange={(e) => setDescricao(e.target.value)}
+            placeholder="Ex: Preciso fazer a barra de uma calça jeans e apertar 2cm na cintura de um vestido..."
+            style={{ width: '100%', padding: '10px', borderRadius: '4px', border: '1px solid #ccc', boxSizing: 'border-box' }}
+            required
+          />
+        </div>
+
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '15px', marginBottom: '15px' }}>
+          <div>
+            <label style={{ display: 'block', marginBottom: '5px', fontWeight: 'bold', fontSize: '14px' }}>Prazo Desejado *</label>
             <input
-              id="titulo"
-              type="text"
-              name="titulo"
-              placeholder="Ex: Ajuste de bainha em calça jeans"
-              value={formData.titulo}
-              onChange={handleChange}
+              type="date"
+              min={hoje} /* Bloqueia seleção de datas anteriores a hoje */
+              value={prazoDesejado}
+              onChange={(e) => setPrazoDesejado(e.target.value)}
+              style={{ width: '100%', padding: '10px', borderRadius: '4px', border: '1px solid #ccc', boxSizing: 'border-box' }}
               required
             />
           </div>
 
-          <div className="form-row">
-            <div className="form-group flex-1">
-              <label htmlFor="categoria">Categoria do Serviço *</label>
-              <select
-                id="categoria"
-                name="categoria"
-                value={formData.categoria}
-                onChange={handleChange}
-                required
-              >
-                <option value="">Selecione uma opção...</option>
-                <option value="Ajustes e Reparos">Ajustes e Reparos</option>
-                <option value="Confecção Sob Medida">Confecção Sob Medida</option>
-                <option value="Reformas e Customização">Reformas e Customização</option>
-                <option value="Bordados e Acabamentos">Bordados e Acabamentos</option>
-                <option value="Vestidos de Festa">Vestidos de Festa</option>
-                <option value="Outros">Outros</option>
-              </select>
-            </div>
-
-            <div className="form-group flex-1">
-              <label htmlFor="prazo">Prazo Desejado</label>
-              <input
-                id="prazo"
-                type="date"
-                name="prazo"
-                value={formData.prazo}
-                onChange={handleChange}
-              />
-            </div>
-          </div>
-
-          {/* Campo Único de Cidade e Estado */}
-          <div className="form-group">
-            <label htmlFor="localizacao">Cidade e Estado</label>
+          <div>
+            <label style={{ display: 'block', marginBottom: '5px', fontWeight: 'bold', fontSize: '14px' }}>Bairro / Localização *</label>
             <input
-              id="localizacao"
               type="text"
-              name="localizacao"
-              placeholder="Ex: Ponta Grossa - PR"
-              value={formData.localizacao}
-              onChange={handleChange}
-            />
-          </div>
-
-          {/* Campo de Descrição Expandido */}
-          <div className="form-group">
-            <label htmlFor="descricao">Descrição Detalhada *</label>
-            <textarea
-              id="descricao"
-              name="descricao"
-              rows="6"
-              className="textarea-descricao"
-              placeholder="Descreva os detalhes do serviço: tecidos, medidas, quantidade de peças ou observações importantes..."
-              value={formData.descricao}
-              onChange={handleChange}
+              value={localizacao}
+              onChange={(e) => setLocalizacao(e.target.value)}
+              placeholder="Ex: Centro - Ponta Grossa"
+              style={{ width: '100%', padding: '10px', borderRadius: '4px', border: '1px solid #ccc', boxSizing: 'border-box' }}
               required
             />
           </div>
+        </div>
 
-          <button type="submit" className="btn-submit" disabled={loading}>
-            {loading ? 'Enviando...' : 'Publicar Pedido'}
-          </button>
-        </form>
-      </div>
+        {/* UPLOAD REAL DE FOTO DA PEÇA */}
+        <div style={{ marginBottom: '20px' }}>
+          <label style={{ display: 'block', marginBottom: '5px', fontWeight: 'bold', fontSize: '14px' }}>
+            Foto de Referência da Peça (Opcional - PNG ou JPG)
+          </label>
+          <input
+            type="file"
+            accept="image/png, image/jpeg, image/jpg"
+            onChange={handleFileChange}
+            style={{ width: '100%', padding: '8px', border: '1px solid #ccc', borderRadius: '4px', background: '#fafafa' }}
+          />
+
+          {/* PRÉ-VISUALIZAÇÃO DA IMAGEM SELECIONADA */}
+          {previewFoto && (
+            <div style={{ marginTop: '10px', textAlign: 'center' }}>
+              <p style={{ fontSize: '12px', color: '#666', margin: '4px 0' }}>Pré-visualização:</p>
+              <img src={previewFoto} alt="Pré-visualização" style={{ maxHeight: '150px', borderRadius: '6px', border: '1px solid #ddd' }} />
+            </div>
+          )}
+        </div>
+
+        <button type="submit" style={{ width: '100%', padding: '12px', background: '#3E2445', color: '#fff', border: 'none', borderRadius: '4px', cursor: 'pointer', fontWeight: 'bold', fontSize: '15px' }}>
+          Publicar no Mural de Pedidos
+        </button>
+      </form>
     </div>
   );
 }
+
+export default PublicarPedido;
