@@ -10,10 +10,27 @@ import FeedPedidos from './components/FeedPedidos';
 import MeusPedidos from './components/MeusPedidos';
 import Chat from './components/Chat';
 import TabelaPrecos from './components/TabelaPrecos';
+import RotaProtegida from './components/RotaProtegida';
 
 function App() {
   const navigate = useNavigate();
-  const [usuarioLogado, setUsuarioLogado] = useState(null);
+  const [usuarioLogado, setUsuarioLogado] = useState(() => {
+  const usuarioSalvo =
+    localStorage.getItem("usuario");
+
+  if (!usuarioSalvo) {
+    return null;
+  }
+
+  try {
+    return JSON.parse(usuarioSalvo);
+  } catch {
+    localStorage.removeItem("usuario");
+    localStorage.removeItem("token");
+    return null;
+  }
+});
+
   const [pedidos, setPedidos] = useState([]);
   const [pedidoAtivoChat, setPedidoAtivoChat] = useState(null);
 
@@ -27,10 +44,14 @@ function App() {
   };
 
   const handleLogout = () => {
-    setUsuarioLogado(null);
-    setPedidoAtivoChat(null);
-    navigate('/');
-  };
+  localStorage.removeItem("token");
+  localStorage.removeItem("usuario");
+  setUsuarioLogado(null);
+  setPedidoAtivoChat(null);
+
+  navigate("/");
+};
+
 
   const handlePublicarPedidoSucesso = (novoPedido) => {
     setPedidos((prev) => [novoPedido, ...prev]);
@@ -106,17 +127,140 @@ function App() {
 
       {/* DEFINIÇÃO DAS ROTAS */}
       <main style={{ padding: '20px' }}>
+        
         <Routes>
-          <Route path="/" element={<Inicio onNavigate={(path) => navigate(`/${path}`)} />} />
-          <Route path="/login" element={<Login onNavigate={(path) => navigate(`/${path}`)} onLoginSucesso={handleLoginSucesso} />} />
-          <Route path="/cadastro" element={<Cadastro onNavigate={(path) => navigate(`/${path}`)} onCadastroSucesso={handleLoginSucesso} />} />
-          <Route path="/recuperar-senha" element={<RecuperarSenha onNavigate={(path) => navigate(`/${path}`)} />} />
-          <Route path="/publicar-pedido" element={<PublicarPedido usuarioLogado={usuarioLogado} onPublicarSucesso={handlePublicarPedidoSucesso} />} />
-          <Route path="/mural" element={<FeedPedidos pedidos={pedidos} usuarioLogado={usuarioLogado} onDemonstrarInteresse={handleDemonstrarInteresse} />} />
-          <Route path="/meus-pedidos" element={<MeusPedidos pedidos={pedidos} usuarioLogado={usuarioLogado} onAbrirChat={handleAbrirChatCliente} />} />
-          <Route path="/chat" element={<Chat usuarioLogado={usuarioLogado} pedidoAtivo={pedidoAtivoChat} onNavigate={(path) => navigate(`/${path}`)} />} />
-          <Route path="/tabela-precos" element={<TabelaPrecos usuarioLogado={usuarioLogado} />} />
-        </Routes>
+  <Route
+    path="/"
+    element={
+      <Inicio
+        onNavigate={(path) =>
+          navigate(`/${path}`)
+        }
+      />
+    }
+  />
+
+  <Route
+    path="/login"
+    element={
+      <Login
+        onNavigate={(path) =>
+          navigate(`/${path}`)
+        }
+        onLoginSucesso={handleLoginSucesso}
+      />
+    }
+  />
+
+  <Route
+    path="/cadastro"
+    element={
+      <Cadastro
+        onNavigate={(path) =>
+          navigate(`/${path}`)
+        }
+      />
+    }
+  />
+
+  <Route
+    path="/recuperar-senha"
+    element={
+      <RecuperarSenha
+        onNavigate={(path) =>
+          navigate(`/${path}`)
+        }
+      />
+    }
+  />
+
+  <Route
+    path="/publicar-pedido"
+    element={
+      <RotaProtegida
+        usuarioLogado={usuarioLogado}
+        tiposPermitidos={["Cliente"]}
+      >
+        <PublicarPedido
+          usuarioLogado={usuarioLogado}
+          onPublicarSucesso={
+            handlePublicarPedidoSucesso
+          }
+        />
+      </RotaProtegida>
+    }
+  />
+
+  <Route
+    path="/meus-pedidos"
+    element={
+      <RotaProtegida
+        usuarioLogado={usuarioLogado}
+        tiposPermitidos={["Cliente"]}
+      >
+        <MeusPedidos
+          pedidos={pedidos}
+          usuarioLogado={usuarioLogado}
+          onAbrirChat={handleAbrirChatCliente}
+        />
+      </RotaProtegida>
+    }
+  />
+
+  <Route
+    path="/mural"
+    element={
+      <RotaProtegida
+        usuarioLogado={usuarioLogado}
+        tiposPermitidos={["Costureira"]}
+      >
+        <FeedPedidos
+          pedidos={pedidos}
+          usuarioLogado={usuarioLogado}
+          onDemonstrarInteresse={
+            handleDemonstrarInteresse
+          }
+        />
+      </RotaProtegida>
+    }
+  />
+
+  <Route
+    path="/chat"
+    element={
+      <RotaProtegida
+        usuarioLogado={usuarioLogado}
+        tiposPermitidos={[
+          "Cliente",
+          "Costureira",
+        ]}
+      >
+        <Chat
+          usuarioLogado={usuarioLogado}
+          pedidoAtivo={pedidoAtivoChat}
+          onNavigate={(path) =>
+            navigate(`/${path}`)
+          }
+        />
+      </RotaProtegida>
+    }
+  />
+
+  <Route
+    path="/tabela-precos"
+    element={
+      <RotaProtegida
+        usuarioLogado={usuarioLogado}
+        tiposPermitidos={["Costureira"]}
+      >
+        <TabelaPrecos
+          usuarioLogado={usuarioLogado}
+        />
+      </RotaProtegida>
+    }
+  />
+</Routes>
+
       </main>
     </div>
   );

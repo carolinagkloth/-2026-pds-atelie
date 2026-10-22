@@ -9,6 +9,7 @@ class UsuarioController {
         usuario 
       });
     } catch (error) {
+      console.error("ERRO NO CADASTRO", error)
       return res.status(400).json({ 
         error: error.message || 'Erro ao cadastrar usuário.' 
       });

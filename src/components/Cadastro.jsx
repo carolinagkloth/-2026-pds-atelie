@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+/* import React, { useState } from 'react';
 
 function Cadastro({ onNavigate, onCadastroSucesso }) {
   const [formData, setFormData] = useState({
@@ -77,7 +77,6 @@ function Cadastro({ onNavigate, onCadastroSucesso }) {
           <input type="text" name="endereco" value={formData.endereco} onChange={handleChange} style={{ width: '100%', padding: '8px', boxSizing: 'border-box' }} />
         </div>
 
-        {/* Campos extras para Costureira */}
         {formData.tipo_usuario === 'Costureira' && (
           <>
             <div style={{ marginBottom: '10px' }}>
@@ -100,6 +99,219 @@ function Cadastro({ onNavigate, onCadastroSucesso }) {
       <p style={{ textAlign: 'center', marginTop: '15px', fontSize: '14px' }}>
         Já tem uma conta?{' '}
         <a href="#login" onClick={(e) => { e.preventDefault(); onNavigate('login'); }} style={{ color: '#3E2445', fontWeight: 'bold' }}>
+          Faça Login
+        </a>
+      </p>
+    </div>
+  );
+}
+
+export default Cadastro; 
+*/
+
+import React, { useState } from "react";
+import { cadastrarUsuario } from "../services/apiFrontend";
+
+function Cadastro({ onNavigate }) {
+  const [formData, setFormData] = useState({
+    nome: "",
+    email: "",
+    senha: "",
+    tipo_usuario: "Cliente",
+  });
+
+  const [mensagem, setMensagem] = useState("");
+  const [carregando, setCarregando] = useState(false);
+
+  const handleChange = (e) => {
+    const { name, value } = e.target;
+
+    setFormData((prev) => ({
+      ...prev,
+      [name]: value,
+    }));
+  };
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+
+    setMensagem("");
+    setCarregando(true);
+
+    try {
+      await cadastrarUsuario(
+        formData.nome,
+        formData.email,
+        formData.senha,
+        formData.tipo_usuario
+      );
+
+      setMensagem(
+        "Cadastro realizado com sucesso!"
+      );
+
+      setTimeout(() => {
+        onNavigate("login");
+      }, 1000);
+    } catch (erro) {
+      setMensagem(erro.message);
+    } finally {
+      setCarregando(false);
+    }
+  };
+
+  return (
+    <div
+      style={{
+        maxWidth: "500px",
+        margin: "30px auto",
+        padding: "20px",
+        background: "#fff",
+        borderRadius: "8px",
+        boxShadow:
+          "0 2px 8px rgba(0,0,0,0.1)",
+      }}
+    >
+      <h2
+        style={{
+          color: "#3E2445",
+          textAlign: "center",
+        }}
+      >
+        Criar Nova Conta
+      </h2>
+
+      <form onSubmit={handleSubmit}>
+        <div style={{ marginBottom: "15px" }}>
+          <label
+            style={{
+              display: "block",
+              marginBottom: "5px",
+            }}
+          >
+            Eu sou:
+          </label>
+
+          <select
+            name="tipo_usuario"
+            value={formData.tipo_usuario}
+            onChange={handleChange}
+            style={{
+              width: "100%",
+              padding: "8px",
+            }}
+          >
+            <option value="Cliente">
+              Cliente
+            </option>
+
+            <option value="Costureira">
+              Costureira
+            </option>
+          </select>
+        </div>
+
+        <div style={{ marginBottom: "10px" }}>
+          <label>Nome Completo *</label>
+
+          <input
+            type="text"
+            name="nome"
+            value={formData.nome}
+            onChange={handleChange}
+            style={{
+              width: "100%",
+              padding: "8px",
+              boxSizing: "border-box",
+            }}
+            required
+          />
+        </div>
+
+        <div style={{ marginBottom: "10px" }}>
+          <label>E-mail *</label>
+
+          <input
+            type="email"
+            name="email"
+            value={formData.email}
+            onChange={handleChange}
+            style={{
+              width: "100%",
+              padding: "8px",
+              boxSizing: "border-box",
+            }}
+            required
+          />
+        </div>
+
+        <div style={{ marginBottom: "10px" }}>
+          <label>Senha *</label>
+
+          <input
+            type="password"
+            name="senha"
+            value={formData.senha}
+            onChange={handleChange}
+            style={{
+              width: "100%",
+              padding: "8px",
+              boxSizing: "border-box",
+            }}
+            required
+          />
+        </div>
+
+        <button
+          type="submit"
+          disabled={carregando}
+          style={{
+            width: "100%",
+            padding: "10px",
+            backgroundColor: "#7A5B72",
+            color: "#fff",
+            border: "none",
+            borderRadius: "4px",
+            cursor: "pointer",
+            marginTop: "10px",
+          }}
+        >
+          {carregando
+            ? "Cadastrando..."
+            : "Finalizar Cadastro"}
+        </button>
+
+        {mensagem && (
+          <p
+            style={{
+              textAlign: "center",
+              marginTop: "10px",
+            }}
+          >
+            {mensagem}
+          </p>
+        )}
+      </form>
+
+      <p
+        style={{
+          textAlign: "center",
+          marginTop: "15px",
+          fontSize: "14px",
+        }}
+      >
+        Já tem uma conta?{" "}
+        <a
+          href="#login"
+          onClick={(e) => {
+            e.preventDefault();
+            onNavigate("login");
+          }}
+          style={{
+            color: "#3E2445",
+            fontWeight: "bold",
+          }}
+        >
           Faça Login
         </a>
       </p>

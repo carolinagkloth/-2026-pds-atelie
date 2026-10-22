@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+/* import React, { useState } from 'react';
 
 function Login({ onNavigate, onLoginSucesso }) {
   const [email, setEmail] = useState('');
@@ -63,6 +63,191 @@ function Login({ onNavigate, onLoginSucesso }) {
         <p>
           Não tem conta?{' '}
           <a href="#cadastro" onClick={(e) => { e.preventDefault(); onNavigate('cadastro'); }} style={{ color: '#3E2445', fontWeight: 'bold' }}>
+            Cadastre-se
+          </a>
+        </p>
+      </div>
+    </div>
+  );
+}
+
+export default Login; */
+
+import React, { useState } from "react";
+import { loginUsuario } from "../services/apiFrontend";
+
+function Login({ onNavigate, onLoginSucesso }) {
+  const [email, setEmail] = useState("");
+  const [senha, setSenha] = useState("");
+  const [mensagem, setMensagem] = useState("");
+  const [carregando, setCarregando] = useState(false);
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+
+    if (!email || !senha) {
+      setMensagem("Preencha e-mail e senha!");
+      return;
+    }
+
+    setMensagem("");
+    setCarregando(true);
+
+    try {
+      const dados = await loginUsuario(email, senha);
+
+      localStorage.setItem("token", dados.token);
+      localStorage.setItem(
+        "usuario",
+        JSON.stringify(dados.user)
+      );
+
+      onLoginSucesso(dados.user);
+    } catch (erro) {
+      setMensagem(erro.message);
+    } finally {
+      setCarregando(false);
+    }
+  };
+
+  return (
+    <div
+      style={{
+        maxWidth: "400px",
+        margin: "40px auto",
+        padding: "20px",
+        background: "#fff",
+        borderRadius: "8px",
+        boxShadow: "0 2px 8px rgba(0,0,0,0.1)",
+      }}
+    >
+      <h2
+        style={{
+          color: "#3E2445",
+          textAlign: "center",
+        }}
+      >
+        Acessar Conta
+      </h2>
+
+      <form onSubmit={handleSubmit}>
+        <div style={{ marginBottom: "15px" }}>
+          <label
+            style={{
+              display: "block",
+              marginBottom: "5px",
+            }}
+          >
+            E-mail:
+          </label>
+
+          <input
+            type="email"
+            value={email}
+            onChange={(e) =>
+              setEmail(e.target.value)
+            }
+            placeholder="exemplo@email.com"
+            style={{
+              width: "100%",
+              padding: "8px",
+              boxSizing: "border-box",
+            }}
+            required
+          />
+        </div>
+
+        <div style={{ marginBottom: "15px" }}>
+          <label
+            style={{
+              display: "block",
+              marginBottom: "5px",
+            }}
+          >
+            Senha:
+          </label>
+
+          <input
+            type="password"
+            value={senha}
+            onChange={(e) =>
+              setSenha(e.target.value)
+            }
+            placeholder="Sua senha"
+            style={{
+              width: "100%",
+              padding: "8px",
+              boxSizing: "border-box",
+            }}
+            required
+          />
+        </div>
+
+        <button
+          type="submit"
+          disabled={carregando}
+          style={{
+            width: "100%",
+            padding: "10px",
+            backgroundColor: "#3E2445",
+            color: "#fff",
+            border: "none",
+            borderRadius: "4px",
+            cursor: "pointer",
+          }}
+        >
+          {carregando
+            ? "Entrando..."
+            : "Entrar"}
+        </button>
+
+        {mensagem && (
+          <p
+            style={{
+              textAlign: "center",
+              marginTop: "10px",
+            }}
+          >
+            {mensagem}
+          </p>
+        )}
+      </form>
+
+      <div
+        style={{
+          marginTop: "15px",
+          textAlign: "center",
+          fontSize: "14px",
+        }}
+      >
+        <p>
+          <a
+            href="#recuperar"
+            onClick={(e) => {
+              e.preventDefault();
+              onNavigate("recuperar-senha");
+            }}
+            style={{
+              color: "#7A5B72",
+            }}
+          >
+            Esqueceu sua senha?
+          </a>
+        </p>
+
+        <p>
+          Não tem conta?{" "}
+          <a
+            href="#cadastro"
+            onClick={(e) => {
+              e.preventDefault();
+              onNavigate("cadastro");
+            }}
+            style={{
+              color: "#3E2445",
+              fontWeight: "bold",
+            }}
+          >
             Cadastre-se
           </a>
         </p>
