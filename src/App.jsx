@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Routes, Route, useNavigate, Link } from 'react-router-dom';
 
+import RedefinirSenha from './components/RedefinirSenha';
 import Inicio from './components/Inicio';
 import Login from './components/Login';
 import Cadastro from './components/Cadastro';
@@ -108,6 +109,7 @@ function App() {
       <main style={{ padding: '20px' }}>
         <Routes>
           <Route path="/" element={<Inicio onNavigate={(path) => navigate(`/${path}`)} />} />
+          <Route path="/redefinir-senha" element={<RedefinirSenha />} />
           <Route path="/login" element={<Login onNavigate={(path) => navigate(`/${path}`)} onLoginSucesso={handleLoginSucesso} />} />
           <Route path="/cadastro" element={<Cadastro onNavigate={(path) => navigate(`/${path}`)} onCadastroSucesso={handleLoginSucesso} />} />
           <Route path="/recuperar-senha" element={<RecuperarSenha onNavigate={(path) => navigate(`/${path}`)} />} />
