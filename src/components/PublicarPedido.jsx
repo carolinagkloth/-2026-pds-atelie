@@ -1,48 +1,96 @@
 import React, { useState } from 'react';
 
-function PublicarPedido({ usuarioLogado, onPublicarSucesso }) {
-  const [tiposervico, setTiposervico] = useState('Ajuste');
+function PublicarPedido({ usuario, usuarioLogado, onNavigate, onPublicarSucesso }) {
+  const sessaoSalva = JSON.parse(localStorage.getItem('usuarioAtelie') || '{}');
+  const user = usuario || usuarioLogado || sessaoSalva;
+
+  const [tiposervico, setTiposervico] = useState('Ajuste / Conserto');
   const [descricao, setDescricao] = useState('');
   const [prazoDesejado, setPrazoDesejado] = useState('');
   const [localizacao, setLocalizacao] = useState('');
-  const [fotoReferencia, setFotoReferencia] = useState(null);
   const [previewFoto, setPreviewFoto] = useState('');
+  const [carregando, setCarregando] = useState(false);
+  const [erro, setErro] = useState('');
 
-  // Pega a data atual no formato YYYY-MM-DD para bloquear datas passadas no calendário
   const hoje = new Date().toISOString().split('T')[0];
 
-  // Manipula o arquivo de imagem enviado pelo usuário (PNG / JPG)
   const handleFileChange = (e) => {
     const file = e.target.files[0];
     if (file) {
-      setFotoReferencia(file);
-      setPreviewFoto(URL.createObjectURL(file)); // Gera pré-visualização local da imagem
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setPreviewFoto(reader.result);
+      };
+      reader.readAsDataURL(file);
     }
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
+    setErro('');
 
     if (!descricao || !prazoDesejado || !localizacao) {
       alert('Por favor, preencha todos os campos obrigatórios!');
       return;
     }
 
-    const novoPedido = {
-      id: Date.now(),
-      clienteId: usuarioLogado?.id || 1,
-      clienteNome: usuarioLogado?.nome || 'Cliente',
-      tiposervico,
-      descricao,
-      prazoDesejado,
-      localizacao,
-      fotoReferencia: previewFoto || 'https://via.placeholder.com/150?text=Sem+Foto',
-      status: 'Disponível',
-      dataPublicacao: new Date().toLocaleDateString()
-    };
+    const idCliente = user?.id_usuario || user?.id;
 
-    onPublicarSucesso(novoPedido);
-    alert('Pedido publicado com sucesso no Mural!');
+    if (!idCliente) {
+      alert('Sessão expirada ou usuário não identificado. Faça login novamente.');
+      return;
+    }
+
+    setCarregando(true);
+
+    try {
+      const descricaoFormatada = `[${tiposervico}] - Localização: ${localizacao}\n\n${descricao}`;
+
+      const response = await fetch('http://localhost:3000/api/pedidos', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          id_cliente: idCliente,
+          descricao: descricaoFormatada,
+          fotos_referencia: previewFoto || null,
+          prazo_desejado: prazoDesejado
+        })
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.erro || 'Erro ao publicar o pedido.');
+      }
+
+      const novoPedido = data.pedido || {
+        id: Date.now(),
+        clienteId: idCliente,
+        clienteNome: user?.nome || 'Cliente',
+        tiposervico,
+        descricao,
+        prazoDesejado,
+        localizacao,
+        fotoReferencia: previewFoto || null,
+        status: 'Aberto',
+        dataPublicacao: new Date().toLocaleDateString()
+      };
+
+      if (onPublicarSucesso) {
+        onPublicarSucesso(novoPedido);
+      }
+
+      alert('Pedido publicado com sucesso!');
+
+      if (onNavigate) {
+        onNavigate('pedidos');
+      }
+    } catch (err) {
+      setErro(err.message);
+      alert(`Erro: ${err.message}`);
+    } finally {
+      setCarregando(false);
+    }
   };
 
   return (
@@ -52,13 +100,19 @@ function PublicarPedido({ usuarioLogado, onPublicarSucesso }) {
         Descreva o serviço de costura ou ajuste que você precisa para que as costureiras da região possam visualizar.
       </p>
 
+      {erro && <div style={{ background: '#ffebee', color: '#c62828', padding: '10px', borderRadius: '4px', marginBottom: '15px' }}>{erro}</div>}
+
       <form onSubmit={handleSubmit}>
         <div style={{ marginBottom: '15px' }}>
           <label style={{ display: 'block', marginBottom: '5px', fontWeight: 'bold', fontSize: '14px' }}>Tipo de Serviço *</label>
-          <select value={tiposervico} onChange={(e) => setTiposervico(e.target.value)} style={{ width: '100%', padding: '10px', borderRadius: '4px', border: '1px solid #ccc' }}>
-            <option value="Ajuste">Ajuste / Conserto</option>
-            <option value="Confecção sob medida">Confecção sob Medida</option>
-            <option value="Customização">Customização / Bordado</option>
+          <select 
+            value={tiposervico} 
+            onChange={(e) => setTiposervico(e.target.value)} 
+            style={{ width: '100%', padding: '10px', borderRadius: '4px', border: '1px solid #ccc' }}
+          >
+            <option value="Ajuste / Conserto">Ajuste / Conserto</option>
+            <option value="Confecção sob Medida">Confecção sob Medida</option>
+            <option value="Customização / Bordado">Customização / Bordado</option>
             <option value="Vestido de Festa">Vestido de Festa</option>
           </select>
         </div>
@@ -80,7 +134,7 @@ function PublicarPedido({ usuarioLogado, onPublicarSucesso }) {
             <label style={{ display: 'block', marginBottom: '5px', fontWeight: 'bold', fontSize: '14px' }}>Prazo Desejado *</label>
             <input
               type="date"
-              min={hoje} /* Bloqueia seleção de datas anteriores a hoje */
+              min={hoje}
               value={prazoDesejado}
               onChange={(e) => setPrazoDesejado(e.target.value)}
               style={{ width: '100%', padding: '10px', borderRadius: '4px', border: '1px solid #ccc', boxSizing: 'border-box' }}
@@ -101,7 +155,6 @@ function PublicarPedido({ usuarioLogado, onPublicarSucesso }) {
           </div>
         </div>
 
-        {/* UPLOAD REAL DE FOTO DA PEÇA */}
         <div style={{ marginBottom: '20px' }}>
           <label style={{ display: 'block', marginBottom: '5px', fontWeight: 'bold', fontSize: '14px' }}>
             Foto de Referência da Peça (Opcional - PNG ou JPG)
@@ -113,7 +166,6 @@ function PublicarPedido({ usuarioLogado, onPublicarSucesso }) {
             style={{ width: '100%', padding: '8px', border: '1px solid #ccc', borderRadius: '4px', background: '#fafafa' }}
           />
 
-          {/* PRÉ-VISUALIZAÇÃO DA IMAGEM SELECIONADA */}
           {previewFoto && (
             <div style={{ marginTop: '10px', textAlign: 'center' }}>
               <p style={{ fontSize: '12px', color: '#666', margin: '4px 0' }}>Pré-visualização:</p>
@@ -122,9 +174,25 @@ function PublicarPedido({ usuarioLogado, onPublicarSucesso }) {
           )}
         </div>
 
-        <button type="submit" style={{ width: '100%', padding: '12px', background: '#3E2445', color: '#fff', border: 'none', borderRadius: '4px', cursor: 'pointer', fontWeight: 'bold', fontSize: '15px' }}>
-          Publicar no Mural de Pedidos
-        </button>
+        <div style={{ display: 'flex', gap: '10px' }}>
+          <button 
+            type="submit" 
+            disabled={carregando}
+            style={{ flex: 1, padding: '12px', background: '#3E2445', color: '#fff', border: 'none', borderRadius: '4px', cursor: 'pointer', fontWeight: 'bold', fontSize: '15px' }}
+          >
+            {carregando ? 'Publicando...' : 'Publicar no Mural de Pedidos'}
+          </button>
+          
+          {onNavigate && (
+            <button
+              type="button"
+              onClick={() => onNavigate('pedidos')}
+              style={{ padding: '12px 20px', background: '#757575', color: '#fff', border: 'none', borderRadius: '4px', cursor: 'pointer', fontWeight: 'bold' }}
+            >
+              Cancelar
+            </button>
+          )}
+        </div>
       </form>
     </div>
   );

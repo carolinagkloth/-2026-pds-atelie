@@ -1,124 +1,120 @@
-import React, { useState } from 'react';
-import { Routes, Route, useNavigate, Link } from 'react-router-dom';
-
-import RedefinirSenha from './components/RedefinirSenha';
-import Inicio from './components/Inicio';
+import React, { useState, useEffect } from 'react';
 import Login from './components/Login';
 import Cadastro from './components/Cadastro';
-import RecuperarSenha from './components/RecuperarSenha';
-import PublicarPedido from './components/PublicarPedido';
-import FeedPedidos from './components/FeedPedidos';
+import Perfil from './components/Perfil';
 import MeusPedidos from './components/MeusPedidos';
-import Chat from './components/Chat';
-import TabelaPrecos from './components/TabelaPrecos';
+import PublicarPedido from './components/PublicarPedido';
+import RecuperarSenha from './components/RecuperarSenha';
+import RedefinirSenha from './components/RedefinirSenha';
 
 function App() {
-  const navigate = useNavigate();
+  const [telaAtual, setTelaAtual] = useState('login');
   const [usuarioLogado, setUsuarioLogado] = useState(null);
-  const [pedidos, setPedidos] = useState([]);
-  const [pedidoAtivoChat, setPedidoAtivoChat] = useState(null);
 
-  const handleLoginSucesso = (dadosUsuario) => {
-    setUsuarioLogado(dadosUsuario);
-    if (dadosUsuario.tipo_usuario === 'Costureira') {
-      navigate('/mural');
-    } else {
-      navigate('/meus-pedidos');
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    if (params.get('token')) {
+      setTelaAtual('redefinirSenha');
+      return;
     }
+
+    const usuarioSalvo = localStorage.getItem('usuarioAtelie');
+    if (usuarioSalvo) {
+      setUsuarioLogado(JSON.parse(usuarioSalvo));
+      setTelaAtual('pedidos');
+    }
+  }, []);
+
+  const handleLoginSucesso = (usuario) => {
+    setUsuarioLogado(usuario);
+    setTelaAtual('pedidos');
   };
 
   const handleLogout = () => {
+    localStorage.removeItem('usuarioAtelie');
     setUsuarioLogado(null);
-    setPedidoAtivoChat(null);
-    navigate('/');
-  };
-
-  const handlePublicarPedidoSucesso = (novoPedido) => {
-    setPedidos((prev) => [novoPedido, ...prev]);
-    navigate('/meus-pedidos');
-  };
-
-  const handleDemonstrarInteresse = (pedido) => {
-    setPedidos((prev) =>
-      prev.map((p) => (p.id === pedido.id ? { ...p, status: 'Em Negociação', costureiraNome: usuarioLogado?.nome } : p))
-    );
-    setPedidoAtivoChat(pedido);
-    navigate('/chat');
-  };
-
-  const handleAbrirChatCliente = (pedido) => {
-    setPedidoAtivoChat(pedido);
-    navigate('/chat');
+    setTelaAtual('login');
   };
 
   return (
-    <div style={{ fontFamily: 'sans-serif', minHeight: '100vh', backgroundColor: '#FAF7F5' }}>
-      {/* CABEÇALHO COM LINKS DE NAVEGAÇÃO */}
-      <header style={{ padding: '12px 20px', background: '#3E2445', color: '#fff', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-        <h3 style={{ margin: 0, cursor: 'pointer' }} onClick={() => navigate('/')}>
+    <div style={{ fontFamily: 'Poppins, sans-serif', minHeight: '100vh', backgroundColor: '#f9f9f9' }}>
+      <nav style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '15px 30px', background: '#3E2445', color: '#fff' }}>
+        <h3 
+          style={{ margin: 0, cursor: 'pointer' }} 
+          onClick={() => setTelaAtual(usuarioLogado ? 'pedidos' : 'login')}
+        >
           Ateliê Entre Linhas
         </h3>
 
-        <nav style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
+        <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
           {usuarioLogado ? (
             <>
-              {usuarioLogado.tipo_usuario === 'Cliente' && (
-                <>
-                  <button onClick={() => navigate('/publicar-pedido')} style={{ padding: '6px 12px', background: '#7A5B72', color: '#fff', border: 'none', borderRadius: '4px', cursor: 'pointer' }}>
-                    + Publicar Pedido
-                  </button>
-                  <button onClick={() => navigate('/meus-pedidos')} style={{ padding: '6px 12px', background: 'transparent', color: '#fff', border: '1px solid #7A5B72', borderRadius: '4px', cursor: 'pointer' }}>
-                    📋 Meus Pedidos
-                  </button>
-                </>
-              )}
-
-              {usuarioLogado.tipo_usuario === 'Costureira' && (
-                <>
-                  <button onClick={() => navigate('/mural')} style={{ padding: '6px 12px', background: '#7A5B72', color: '#fff', border: 'none', borderRadius: '4px', cursor: 'pointer' }}>
-                    Mural de Pedidos
-                  </button>
-                  <button onClick={() => navigate('/tabela-precos')} style={{ padding: '6px 12px', background: 'transparent', color: '#fff', border: '1px solid #7A5B72', borderRadius: '4px', cursor: 'pointer' }}>
-                    🏷️ Minha Tabela de Preços
-                  </button>
-                </>
-              )}
-
-              <span style={{ marginLeft: '10px', fontSize: '13px' }}>
-                {usuarioLogado.nome} ({usuarioLogado.tipo_usuario})
-              </span>
-
-              <button onClick={handleLogout} style={{ cursor: 'pointer', background: '#7A5B72', color: '#fff', border: 'none', padding: '6px 10px', borderRadius: '4px' }}>
+              <button 
+                onClick={() => setTelaAtual('pedidos')} 
+                style={{
+                  padding: '6px 12px',
+                  background: telaAtual === 'pedidos' ? '#fff' : 'transparent',
+                  color: telaAtual === 'pedidos' ? '#3E2445' : '#fff',
+                  border: '1px solid #fff',
+                  borderRadius: '4px',
+                  fontWeight: 'bold',
+                  cursor: 'pointer'
+                }}
+              >
+                Meus Pedidos
+              </button>
+              <button 
+                onClick={() => setTelaAtual('perfil')} 
+                style={{
+                  padding: '6px 12px',
+                  background: telaAtual === 'perfil' ? '#fff' : 'transparent',
+                  color: telaAtual === 'perfil' ? '#3E2445' : '#fff',
+                  border: '1px solid #fff',
+                  borderRadius: '4px',
+                  fontWeight: 'bold',
+                  cursor: 'pointer'
+                }}
+              >
+                Meu Perfil ({usuarioLogado.nome ? usuarioLogado.nome.split(' ')[0] : 'Usuário'})
+              </button>
+              <button 
+                onClick={handleLogout} 
+                style={{ padding: '6px 12px', background: '#c62828', color: '#fff', border: 'none', borderRadius: '4px', cursor: 'pointer' }}
+              >
                 Sair
               </button>
             </>
           ) : (
             <>
-              <button onClick={() => navigate('/login')} style={{ padding: '6px 14px', background: '#7A5B72', color: '#fff', border: 'none', borderRadius: '4px', cursor: 'pointer' }}>
-                Entrar
-              </button>
-              <button onClick={() => navigate('/cadastro')} style={{ padding: '6px 14px', background: '#fff', color: '#3E2445', border: 'none', borderRadius: '4px', fontWeight: 'bold', cursor: 'pointer' }}>
-                Cadastre-se
-              </button>
+              {telaAtual !== 'login' && (
+                <button 
+                  onClick={() => setTelaAtual('login')} 
+                  style={{ padding: '6px 12px', background: 'transparent', color: '#fff', border: '1px solid #fff', borderRadius: '4px', cursor: 'pointer' }}
+                >
+                  Entrar
+                </button>
+              )}
+              {telaAtual !== 'cadastro' && (
+                <button 
+                  onClick={() => setTelaAtual('cadastro')} 
+                  style={{ padding: '6px 12px', background: '#fff', color: '#3E2445', border: 'none', borderRadius: '4px', fontWeight: 'bold', cursor: 'pointer' }}
+                >
+                  Cadastrar
+                </button>
+              )}
             </>
           )}
-        </nav>
-      </header>
+        </div>
+      </nav>
 
-      {/* DEFINIÇÃO DAS ROTAS */}
       <main style={{ padding: '20px' }}>
-        <Routes>
-          <Route path="/" element={<Inicio onNavigate={(path) => navigate(`/${path}`)} />} />
-          <Route path="/redefinir-senha" element={<RedefinirSenha />} />
-          <Route path="/login" element={<Login onNavigate={(path) => navigate(`/${path}`)} onLoginSucesso={handleLoginSucesso} />} />
-          <Route path="/cadastro" element={<Cadastro onNavigate={(path) => navigate(`/${path}`)} onCadastroSucesso={handleLoginSucesso} />} />
-          <Route path="/recuperar-senha" element={<RecuperarSenha onNavigate={(path) => navigate(`/${path}`)} />} />
-          <Route path="/publicar-pedido" element={<PublicarPedido usuarioLogado={usuarioLogado} onPublicarSucesso={handlePublicarPedidoSucesso} />} />
-          <Route path="/mural" element={<FeedPedidos pedidos={pedidos} usuarioLogado={usuarioLogado} onDemonstrarInteresse={handleDemonstrarInteresse} />} />
-          <Route path="/meus-pedidos" element={<MeusPedidos pedidos={pedidos} usuarioLogado={usuarioLogado} onAbrirChat={handleAbrirChatCliente} />} />
-          <Route path="/chat" element={<Chat usuarioLogado={usuarioLogado} pedidoAtivo={pedidoAtivoChat} onNavigate={(path) => navigate(`/${path}`)} />} />
-          <Route path="/tabela-precos" element={<TabelaPrecos usuarioLogado={usuarioLogado} />} />
-        </Routes>
+        {telaAtual === 'login' && <Login onNavigate={setTelaAtual} onLoginSucesso={handleLoginSucesso} />}
+        {telaAtual === 'cadastro' && <Cadastro onNavigate={setTelaAtual} />}
+        {telaAtual === 'recuperarSenha' && <RecuperarSenha onNavigate={setTelaAtual} />}
+        {telaAtual === 'redefinirSenha' && <RedefinirSenha onNavigate={setTelaAtual} />}
+        {telaAtual === 'pedidos' && <MeusPedidos usuario={usuarioLogado} onNavigate={setTelaAtual} />}
+        {telaAtual === 'publicarPedido' && <PublicarPedido usuario={usuarioLogado} onNavigate={setTelaAtual} />}
+        {telaAtual === 'perfil' && <Perfil usuario={usuarioLogado} />}
       </main>
     </div>
   );

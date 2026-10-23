@@ -6,10 +6,14 @@ const bcrypt = require('bcryptjs');
 const { OAuth2Client } = require('google-auth-library');
 const nodemailer = require('nodemailer');
 const crypto = require('crypto');
-
 const app = express();
 const PORT = process.env.PORT || 3000;
 const googleClient = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
+
+// Middlewares
+app.use(cors());
+app.use(express.json({ limit: '10mb' }));
+app.use(express.urlencoded({ limit: '10mb', extended: true }));
 
 // Configuração da conexão com o banco de dados Neon (PostgreSQL)
 const pool = new Pool({
@@ -29,10 +33,6 @@ const transporter = nodemailer.createTransport({
     pass: process.env.EMAIL_PASS
   }
 });
-
-// Middlewares
-app.use(cors());
-app.use(express.json({ limit: '10mb' }));
 
 // --- FUNÇÕES AUXILIARES DE E-MAIL ---
 
@@ -60,36 +60,6 @@ async function enviarEmailNotificacaoLogin(emailUsuario, nomeUsuario) {
   } catch (err) {
     console.error('Erro ao enviar e-mail de notificação de login:', err.message);
   }
-}
-
-// Dispara e-mail com link único para redefinição de senha
-async function enviarEmailRecuperacao(emailUsuario, nomeUsuario, token) {
-  if (!process.env.EMAIL_USER || !process.env.EMAIL_PASS) return;
-
-  const linkRedefinicao = `http://localhost:5173/redefinir-senha?token=${token}`;
-
-  const mailOptions = {
-    from: `"Ateliê Entre Linhas" <${process.env.EMAIL_USER}>`,
-    to: emailUsuario,
-    subject: 'Redefinição de Senha - Ateliê Entre Linhas',
-    html: `
-      <div style="font-family: sans-serif; padding: 20px; color: #333; max-width: 500px; margin: 0 auto; border: 1px solid #eee; border-radius: 8px;">
-        <h2 style="color: #3E2445;">Ateliê Entre Linhas</h2>
-        <p>Olá, <strong>${nomeUsuario}</strong>!</p>
-        <p>Recebemos uma solicitação para redefinir a senha da sua conta.</p>
-        <p>Clique no botão abaixo para cadastrar uma nova senha:</p>
-        <div style="text-align: center; margin: 25px 0;">
-          <a href="${linkRedefinicao}" style="background: #3E2445; color: #ffffff; padding: 12px 24px; text-decoration: none; font-weight: bold; border-radius: 6px; display: inline-block;">
-            Redefinir Minha Senha
-          </a>
-        </div>
-        <p style="font-size: 12px; color: #777;">Ou copie e cole o link a seguir no navegador:<br><a href="${linkRedefinicao}">${linkRedefinicao}</a></p>
-        <p style="font-size: 13px; color: #666; margin-top: 20px;">Este link expira em 15 minutos. Se você não solicitou essa alteração, ignore este e-mail.</p>
-      </div>
-    `
-  };
-
-  await transporter.sendMail(mailOptions);
 }
 
 // --- ROTAS DE AUTENTICAÇÃO ---
@@ -246,7 +216,7 @@ async function enviarEmailRecuperacao(emailUsuario, nomeUsuario, token) {
   await transporter.sendMail(mailOptions);
 }
 
-// ROTA AJUSTADA: Bloqueia e-mails não existentes no banco
+// Bloqueia e-mails não existentes no banco
 app.post('/api/recuperar-senha', async (req, res) => {
   const { email } = req.body;
   if (!email) return res.status(400).json({ erro: 'Informe o seu e-mail.' });
@@ -311,6 +281,64 @@ app.post('/api/redefinir-senha', async (req, res) => {
   }
 });
 
+// --- ROTAS DE PERFIL ---
+
+// Buscar dados completos do perfil do usuário
+app.get('/api/usuarios/:id', async (req, res) => {
+  const { id } = req.params;
+
+  try {
+    const result = await pool.query(
+      'SELECT id_usuario AS id, nome, email, telefone, tipo_usuario, cpf_cnpj, endereco, bio, foto_perfil FROM usuarios WHERE id_usuario = $1',
+      [id]
+    );
+
+    if (result.rows.length === 0) {
+      return res.status(404).json({ erro: 'Usuário não encontrado.' });
+    }
+
+    return res.json(result.rows[0]);
+  } catch (err) {
+    console.error('Erro ao buscar perfil:', err);
+    return res.status(500).json({ erro: 'Erro ao carregar dados do perfil.' });
+  }
+});
+
+// Rota de atualizar perfil do usuário
+// Atualizar perfil do usuário
+app.put('/api/usuarios/:id', async (req, res) => {
+  const { id } = req.params;
+  const { nome, telefone, endereco, bio, foto_perfil } = req.body;
+
+  try {
+    const query = `
+      UPDATE usuarios 
+      SET nome = $1, telefone = $2, endereco = $3, bio = $4, foto_perfil = $5
+      WHERE id_usuario = $6
+      RETURNING id_usuario AS id, id_usuario, nome, email, tipo_usuario, telefone, endereco, bio, foto_perfil;
+    `;
+    const values = [
+      nome, 
+      telefone || null, 
+      endereco || null, 
+      bio || null, 
+      foto_perfil || null, 
+      id
+    ];
+
+    const result = await pool.query(query, values);
+
+    if (result.rowCount === 0) {
+      return res.status(404).json({ erro: 'Usuário não encontrado.' });
+    }
+
+    res.json({ mensagem: 'Perfil atualizado com sucesso!', usuario: result.rows[0] });
+  } catch (err) {
+    console.error('Erro ao atualizar perfil:', err);
+    res.status(500).json({ erro: 'Erro ao atualizar perfil no banco de dados.' });
+  }
+});
+
 // --- ROTAS DE PEDIDOS ---
 
 // 6. Listar todos os pedidos
@@ -339,30 +367,46 @@ app.get('/api/pedidos', async (req, res) => {
   }
 });
 
-// 7. Criar um novo pedido
+// Criar Novo Pedido
 app.post('/api/pedidos', async (req, res) => {
   const { id_cliente, descricao, fotos_referencia, prazo_desejado } = req.body;
 
   if (!id_cliente || !descricao || !prazo_desejado) {
-    return res.status(400).json({ erro: 'Por favor, preencha os campos obrigatórios do pedido.' });
+    return res.status(400).json({ erro: 'Campos obrigatórios em falta.' });
   }
 
   try {
-    const queryText = `
-      INSERT INTO pedidos (id_cliente, descricao, fotos_referencia, prazo_desejado)
-      VALUES ($1, $2, $3, $4)
-      RETURNING id_pedido AS id, descricao, fotos_referencia AS "fotoReferencia", prazo_desejado AS "prazoDesejado", status_pedido AS status;
+    const query = `
+      INSERT INTO pedidos (id_cliente, descricao, fotos_referencia, prazo_desejado, status_pedido)
+      VALUES ($1, $2, $3, $4, 'Aberto')
+      RETURNING *;
     `;
     const values = [id_cliente, descricao, fotos_referencia || null, prazo_desejado];
-    const result = await pool.query(queryText, values);
+    const result = await pool.query(query, values);
 
-    return res.status(201).json({
-      mensagem: 'Pedido publicado com sucesso!',
-      pedido: result.rows[0]
-    });
+    res.status(201).json({ mensagem: 'Pedido criado com sucesso!', pedido: result.rows[0] });
   } catch (err) {
-    console.error('Erro ao criar pedido:', err);
-    return res.status(500).json({ erro: 'Erro ao publicar pedido no servidor.' });
+    console.error('Erro ao registar pedido:', err);
+    res.status(500).json({ erro: 'Erro interno no servidor ao guardar o pedido.' });
+  }
+});
+
+// Cancelar / Excluir Pedido
+app.delete('/api/pedidos/:id', async (req, res) => {
+  const { id } = req.params;
+
+  try {
+    const query = 'DELETE FROM pedidos WHERE id_pedido = $1 RETURNING *;';
+    const result = await pool.query(query, [id]);
+
+    if (result.rowCount === 0) {
+      return res.status(404).json({ erro: 'Pedido não encontrado.' });
+    }
+
+    res.json({ mensagem: 'Pedido cancelado com sucesso!' });
+  } catch (err) {
+    console.error('Erro ao cancelar pedido:', err);
+    res.status(500).json({ erro: 'Erro ao cancelar o pedido no servidor.' });
   }
 });
 
