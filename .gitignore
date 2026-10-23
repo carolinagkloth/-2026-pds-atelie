@@ -2,3 +2,5 @@ node_modules/
 .vite/
 dist/
 .env
+backup_atelie.json
+backup_atelie.sql
