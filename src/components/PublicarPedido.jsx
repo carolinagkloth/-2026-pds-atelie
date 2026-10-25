@@ -61,21 +61,18 @@ function PublicarPedido({
       const descricaoFormatada =
         `[${tiposervico}] - Localização: ${localizacao}\n\n${descricao}`;
 
-      const response = await fetch(
-        'http://localhost:3000/api/pedidos',
-        {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json'
-          },
-          body: JSON.stringify({
-            id_cliente: idCliente,
-            descricao: descricaoFormatada,
-            fotos_referencia: previewFoto || null,
-            prazo_desejado: prazoDesejado
-          })
-        }
-      );
+      const response = await fetch('/api/pedidos', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          id_cliente: idCliente,
+          descricao: descricaoFormatada,
+          fotos_referencia: previewFoto || null,
+          prazo_desejado: prazoDesejado
+        })
+      });
 
       const data = await response.json();
 
@@ -105,7 +102,7 @@ function PublicarPedido({
       alert('Pedido publicado com sucesso!');
 
       if (onNavigate) {
-        onNavigate('pedidos');
+        onNavigate('meusPedidos');
       }
     } catch (err) {
       setErro(err.message);
@@ -245,7 +242,7 @@ function PublicarPedido({
           {onNavigate && (
             <button
               type="button"
-              onClick={() => onNavigate('pedidos')}
+              onClick={() => onNavigate('meusPedidos')}
               className="publicar-button-cancelar"
             >
               Cancelar
