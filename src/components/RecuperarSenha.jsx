@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import "../styles/RecuperarSenha.css";
 
 function RecuperarSenha({ onNavigate }) {
   const [email, setEmail] = useState('');
@@ -14,42 +15,42 @@ function RecuperarSenha({ onNavigate }) {
   };
 
   return (
-    <div style={{ maxWidth: '400px', margin: '40px auto', padding: '20px', background: '#fff', borderRadius: '8px', boxShadow: '0 2px 8px rgba(0,0,0,0.1)' }}>
-      <h2 style={{ color: '#3E2445', textAlign: 'center' }}>Recuperar Senha</h2>
+    <div className="recuperar-card">
+      <h2>Recuperar Senha</h2>
 
       {enviado ? (
-        <div style={{ textAlign: 'center' }}>
-          <p style={{ color: 'green', fontWeight: 'bold' }}>Instruções enviadas!</p>
+        <div className="recuperar-sucesso">
+          <p>Instruções enviadas!</p>
           <p>Verifique a caixa de entrada do e-mail <strong>{email}</strong> para redefinir sua senha.</p>
-          <button onClick={() => onNavigate('login')} style={{ padding: '8px 16px', backgroundColor: '#3E2445', color: '#fff', border: 'none', borderRadius: '4px', cursor: 'pointer', marginTop: '10px' }}>
+          <button onClick={() => onNavigate('login')} className="recuperar-button">
             Voltar para o Login
           </button>
         </div>
       ) : (
         <form onSubmit={handleSubmit}>
-          <p style={{ fontSize: '14px', color: '#555', marginBottom: '15px' }}>
+          <p className="recuperar-texto">
             Digite o e-mail associado à sua conta para receber o link de redefinição.
           </p>
-          <div style={{ marginBottom: '15px' }}>
-            <label style={{ display: 'block', marginBottom: '5px' }}>E-mail:</label>
+          <div className="recuperar-form-group">
+            <label>E-mail:</label>
             <input
               type="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               placeholder="seu@email.com"
-              style={{ width: '100%', padding: '8px', boxSizing: 'border-box' }}
-              required
-            />
+              required/>
           </div>
 
-          <button type="submit" style={{ width: '100%', padding: '10px', backgroundColor: '#3E2445', color: '#fff', border: 'none', borderRadius: '4px', cursor: 'pointer' }}>
+          <button type="submit" 
+          className="recuperar-button"
+          >
             Enviar Instruções
           </button>
         </form>
       )}
 
       {!enviado && (
-        <div style={{ marginTop: '15px', textAlign: 'center' }}>
+        <div className="recuperar-voltar">
           <a href="#login" onClick={(e) => { e.preventDefault(); onNavigate('login'); }} style={{ color: '#7A5B72', fontSize: '14px' }}>
             Voltar para o Login
           </a>

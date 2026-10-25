@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { GoogleLogin } from '@react-oauth/google';
+import "../styles/Login.css";
 
 function Login({ onNavigate, onLoginSucesso }) {
   const [email, setEmail] = useState('');
@@ -46,7 +47,10 @@ function Login({ onNavigate, onLoginSucesso }) {
       });
 
       const data = await response.json();
-      if (!response.ok) throw new Error(data.erro || 'Falha ao autenticar.');
+
+      if (!response.ok) {
+        throw new Error(data.erro || 'Falha ao autenticar.');
+      }
 
       onLoginSucesso(data);
     } catch (err) {
@@ -57,44 +61,89 @@ function Login({ onNavigate, onLoginSucesso }) {
   };
 
   return (
-    <div style={{ maxWidth: '400px', margin: '40px auto', background: '#fff', padding: '30px', borderRadius: '8px', boxShadow: '0 2px 8px rgba(0,0,0,0.1)' }}>
-      <h2 style={{ color: '#3E2445', marginTop: 0 }}>Entrar no Ateliê</h2>
+    <div className="login-card">
 
-      {erro && <div style={{ background: '#ffebee', color: '#c62828', padding: '10px', borderRadius: '4px', marginBottom: '15px', fontSize: '14px' }}>{erro}</div>}
+      <h2>Entrar no Ateliê</h2>
+
+      <p className="login-subtitle">
+        Acesse sua conta no Ateliê Entre Linhas
+      </p>
+
+      {erro && (
+        <div className="login-erro">
+          {erro}
+        </div>
+      )}
 
       {/* Botão de Login do Google */}
-      <div style={{ marginBottom: '20px', display: 'flex', justifyContent: 'center' }}>
+      <div className="login-google">
         <GoogleLogin
           onSuccess={handleGoogleSuccess}
-          onError={() => setErro('Erro ao comunicar com a conta Google.')}
+          onError={() =>
+            setErro('Erro ao comunicar com a conta Google.')
+          }
           text="signin_with"
           shape="rectangular"
           locale="pt-BR"
         />
       </div>
 
-      <div style={{ textAlign: 'center', color: '#888', margin: '15px 0', fontSize: '12px' }}>OU COM E-MAIL E SENHA</div>
+      <div className="login-separador">
+        OU COM E-MAIL E SENHA
+      </div>
 
       <form onSubmit={handleSubmit}>
-        <div style={{ marginBottom: '15px' }}>
-          <label style={{ display: 'block', marginBottom: '5px', fontSize: '14px', fontWeight: 'bold' }}>E-mail *</label>
-          <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} required style={{ width: '100%', padding: '8px', borderRadius: '4px', border: '1px solid #ccc', boxSizing: 'border-box' }} />
+
+        <div className="login-form-group">
+          <label>E-mail *</label>
+
+          <input
+            type="email"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            required
+          />
         </div>
 
-        <div style={{ marginBottom: '15px' }}>
-          <label style={{ display: 'block', marginBottom: '5px', fontSize: '14px', fontWeight: 'bold' }}>Senha *</label>
-          <input type="password" value={senha} onChange={(e) => setSenha(e.target.value)} required style={{ width: '100%', padding: '8px', borderRadius: '4px', border: '1px solid #ccc', boxSizing: 'border-box' }} />
+        <div className="login-form-group">
+          <label>Senha *</label>
+
+          <input
+            type="password"
+            value={senha}
+            onChange={(e) => setSenha(e.target.value)}
+            required
+          />
         </div>
 
-        <button type="submit" disabled={carregando} style={{ width: '100%', padding: '10px', background: '#3E2445', color: '#fff', border: 'none', borderRadius: '4px', fontWeight: 'bold', cursor: carregando ? 'not-allowed' : 'pointer' }}>
+        <button
+          type="submit"
+          disabled={carregando}
+          className="login-button"
+        >
           {carregando ? 'Entrando...' : 'Entrar'}
         </button>
+
       </form>
 
-      <div style={{ marginTop: '15px', display: 'flex', justifyContent: 'space-between', fontSize: '13px' }}>
-        <span style={{ color: '#666', cursor: 'pointer' }} onClick={() => onNavigate('recuperar-senha')}>Esqueceu a senha?</span>
-        <span style={{ color: '#3E2445', fontWeight: 'bold', cursor: 'pointer' }} onClick={() => onNavigate('cadastro')}>Criar conta</span>
+      <div className="login-links">
+
+        <span
+          style={{ color: '#666', cursor: 'pointer' }}
+          onClick={() => onNavigate('recuperarSenha')}
+        >
+          Esqueceu a senha?
+        </span>
+
+        <span
+          className="criar-conta"
+          onClick={() => onNavigate('cadastro')}
+        >
+          Criar conta
+        </span>
+
       </div>
+
     </div>
   );
 }

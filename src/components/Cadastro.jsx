@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import "../styles/Cadastro.css";
 
 // Funções utilitárias de máscara
 const aplicarMascaraTelefone = (valor) => {
@@ -82,78 +83,104 @@ function Cadastro({ onNavigate, onCadastroSucesso }) {
   };
 
   return (
-    <div style={{ maxWidth: '420px', margin: '40px auto', background: '#fff', padding: '30px', borderRadius: '8px', boxShadow: '0 2px 8px rgba(0,0,0,0.1)' }}>
-      <h2 style={{ color: '#3E2445', marginTop: 0 }}>Criar Conta</h2>
+    <div className="cadastro-card">
+      <h2>Criar Conta</h2>
+      <p className="cadastro-subtitle">
+        Crie sua conta no Ateliê Entre Linhas
+      </p>
 
-      {erro && <div style={{ background: '#ffebee', color: '#c62828', padding: '10px', borderRadius: '4px', marginBottom: '15px', fontSize: '14px' }}>{erro}</div>}
+      {erro && (
+        <div className="cadastro-erro">
+          {erro}
+        </div>
+      )}
 
       <form onSubmit={handleSubmit}>
-        <div style={{ marginBottom: '15px' }}>
-          <label style={{ display: 'block', marginBottom: '5px', fontSize: '14px', fontWeight: 'bold' }}>Nome Completo *</label>
-          <input type="text" value={nome} onChange={(e) => setNome(e.target.value)} required style={{ width: '100%', padding: '8px', borderRadius: '4px', border: '1px solid #ccc', boxSizing: 'border-box' }} />
+        <div className="cadastro-form-group">
+          <label>Nome Completo *</label>
+          <input type="text" value={nome} onChange={(e) => setNome(e.target.value)} required />
         </div>
 
-        <div style={{ marginBottom: '15px' }}>
-          <label style={{ display: 'block', marginBottom: '5px', fontSize: '14px', fontWeight: 'bold' }}>E-mail *</label>
-          <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} required style={{ width: '100%', padding: '8px', borderRadius: '4px', border: '1px solid #ccc', boxSizing: 'border-box' }} />
+        <div className="cadastro-form-group">
+          <label>E-mail *</label>
+          <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} required />
         </div>
 
-        <div style={{ marginBottom: '15px' }}>
-          <label style={{ display: 'block', marginBottom: '5px', fontSize: '14px', fontWeight: 'bold' }}>Senha *</label>
+        <div className="cadastro-form-group">
+          <label>Senha *</label>
           <input
             type="password"
             value={senha}
             minLength={8}
             onChange={(e) => setSenha(e.target.value)}
             placeholder="Mínimo de 8 caracteres"
-            required
-            style={{ width: '100%', padding: '8px', borderRadius: '4px', border: '1px solid #ccc', boxSizing: 'border-box' }}
-          />
-          <small style={{ color: '#666', fontSize: '12px' }}>A senha deve ter pelo menos 8 dígitos.</small>
+            required/>
+          <small className="cadastro-ajuda">
+            A senha deve ter pelo menos 8 dígitos.
+          </small>
         </div>
 
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px', marginBottom: '15px' }}>
-          <div>
-            <label style={{ display: 'block', marginBottom: '5px', fontSize: '14px', fontWeight: 'bold' }}>Telefone</label>
-            <input
-              type="text"
-              value={telefone}
-              onChange={handleTelefoneChange}
-              placeholder="(42) 99999-9999"
-              style={{ width: '100%', padding: '8px', borderRadius: '4px', border: '1px solid #ccc', boxSizing: 'border-box' }}
-            />
-          </div>
+        <div className="cadastro-duas-colunas">
 
-          <div>
-            <label style={{ display: 'block', marginBottom: '5px', fontSize: '14px', fontWeight: 'bold' }}>CPF / CNPJ</label>
-            <input
-              type="text"
-              value={cpfCnpj}
-              onChange={handleCpfCnpjChange}
-              placeholder="000.000.000-00"
-              style={{ width: '100%', padding: '8px', borderRadius: '4px', border: '1px solid #ccc', boxSizing: 'border-box' }}
-            />
-          </div>
-        </div>
+  <div className="cadastro-form-group">
+    <label>Telefone</label>
 
-        <div style={{ marginBottom: '20px' }}>
-          <label style={{ display: 'block', marginBottom: '5px', fontSize: '14px', fontWeight: 'bold' }}>Tipo de Perfil *</label>
-          <select value={tipoUsuario} onChange={(e) => setTipoUsuario(e.target.value)} style={{ width: '100%', padding: '8px', borderRadius: '4px', border: '1px solid #ccc' }}>
-            <option value="Cliente">Cliente (Quero contratar serviços)</option>
-            <option value="Costureira">Costureira (Quero oferecer serviços)</option>
-          </select>
-        </div>
+    <input
+      type="text"
+      value={telefone}
+      onChange={handleTelefoneChange}
+      placeholder="(42) 99999-9999"
+    />
+  </div>
 
-        <button type="submit" disabled={carregando} style={{ width: '100%', padding: '10px', background: '#3E2445', color: '#fff', border: 'none', borderRadius: '4px', fontWeight: 'bold', cursor: carregando ? 'not-allowed' : 'pointer' }}>
-          {carregando ? 'Cadastrando...' : 'Cadastrar'}
-        </button>
-      </form>
+  <div className="cadastro-form-group">
+    <label>CPF / CNPJ</label>
 
-      <p style={{ marginTop: '15px', textAlign: 'center', fontSize: '14px' }}>
-        Já tem uma conta? <span style={{ color: '#3E2445', fontWeight: 'bold', cursor: 'pointer' }} onClick={() => onNavigate('login')}>Entrar</span>
-      </p>
-    </div>
-  );
+    <input
+      type="text"
+      value={cpfCnpj}
+      onChange={handleCpfCnpjChange}
+      placeholder="000.000.000-00"
+    />
+  </div>
+
+</div>
+
+<div className="cadastro-form-group">
+  <label>Tipo de Perfil *</label>
+
+  <select
+    value={tipoUsuario}
+    onChange={(e) => setTipoUsuario(e.target.value)}
+  >
+    <option value="Cliente">
+      Cliente (Quero contratar serviços)
+    </option>
+
+    <option value="Costureira">
+      Costureira (Quero oferecer serviços)
+    </option>
+  </select>
+</div>
+
+<button
+  type="submit"
+  disabled={carregando}
+  className="cadastro-button"
+>
+  {carregando ? 'Cadastrando...' : 'Cadastrar'}
+</button>
+</form>
+
+<p className="cadastro-login">
+  Já tem uma conta?{' '}
+  <span onClick={() => onNavigate('login')}>
+    Entrar
+  </span>
+</p>
+
+</div>
+);
 }
 
 export default Cadastro;

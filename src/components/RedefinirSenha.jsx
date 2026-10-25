@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
+import "../styles/RedefinirSenha.css";
 
 function RedefinirSenha() {
   const [searchParams] = useSearchParams();
@@ -35,7 +36,10 @@ function RedefinirSenha() {
       });
 
       const data = await response.json();
-      if (!response.ok) throw new Error(data.erro || 'Erro ao redefinir a senha.');
+
+      if (!response.ok) {
+        throw new Error(data.erro || 'Erro ao redefinir a senha.');
+      }
 
       alert(data.mensagem);
       navigate('/login');
@@ -47,25 +51,52 @@ function RedefinirSenha() {
   };
 
   return (
-    <div style={{ maxWidth: '400px', margin: '40px auto', background: '#fff', padding: '30px', borderRadius: '8px', boxShadow: '0 2px 8px rgba(0,0,0,0.1)' }}>
-      <h2 style={{ color: '#3E2445', marginTop: 0 }}>Nova Senha</h2>
+    <div className="redefinir-card">
 
-      {erro && <div style={{ background: '#ffebee', color: '#c62828', padding: '10px', borderRadius: '4px', marginBottom: '15px', fontSize: '14px' }}>{erro}</div>}
+      <h2>Nova Senha</h2>
+
+      <p className="redefinir-subtitle">
+        Escolha uma nova senha para sua conta
+      </p>
+
+      {erro && (
+        <div className="redefinir-erro">
+          {erro}
+        </div>
+      )}
 
       <form onSubmit={handleSubmit}>
-        <div style={{ marginBottom: '15px' }}>
-          <label style={{ display: 'block', marginBottom: '5px', fontSize: '14px', fontWeight: 'bold' }}>Digite a Nova Senha *</label>
-          <input type="password" value={novaSenha} onChange={(e) => setNovaSenha(e.target.value)} required style={{ width: '100%', padding: '8px', borderRadius: '4px', border: '1px solid #ccc', boxSizing: 'border-box' }} />
+
+        <div className="redefinir-form-group">
+          <label>Digite a Nova Senha *</label>
+
+          <input
+            type="password"
+            value={novaSenha}
+            onChange={(e) => setNovaSenha(e.target.value)}
+            required
+          />
         </div>
 
-        <div style={{ marginBottom: '20px' }}>
-          <label style={{ display: 'block', marginBottom: '5px', fontSize: '14px', fontWeight: 'bold' }}>Confirme a Nova Senha *</label>
-          <input type="password" value={confirmarSenha} onChange={(e) => setConfirmarSenha(e.target.value)} required style={{ width: '100%', padding: '8px', borderRadius: '4px', border: '1px solid #ccc', boxSizing: 'border-box' }} />
+        <div className="redefinir-form-group">
+          <label>Confirme a Nova Senha *</label>
+
+          <input
+            type="password"
+            value={confirmarSenha}
+            onChange={(e) => setConfirmarSenha(e.target.value)}
+            required
+          />
         </div>
 
-        <button type="submit" disabled={carregando} style={{ width: '100%', padding: '10px', background: '#3E2445', color: '#fff', border: 'none', borderRadius: '4px', fontWeight: 'bold', cursor: carregando ? 'not-allowed' : 'pointer' }}>
+        <button
+          type="submit"
+          disabled={carregando}
+          className="redefinir-button"
+        >
           {carregando ? 'Salvando...' : 'Redefinir Senha'}
         </button>
+
       </form>
     </div>
   );

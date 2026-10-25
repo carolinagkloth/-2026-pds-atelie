@@ -1,135 +1,161 @@
-/* ==========================================================================
-   ESTILOS ESPECÍFICOS: PUBLICAR PEDIDO
-   ========================================================================== */
-
-/* Contentor principal que centra o cartão na página */
-.publicar-pedido-container {
+.publicar-card {
   width: 100%;
   max-width: 720px;
-  margin: 40px auto 60px;
-  padding: 0 16px;
-  box-sizing: border-box;
+  margin: 35px auto;
+  padding: 36px;
+  background: #ffffff;
+  border-radius: 18px;
+  box-shadow: 0 8px 28px rgba(62, 36, 69, 0.12);
 }
 
-/* Cartão branco centralizado */
-.publicar-pedido-card {
-  background-color: #FFFFFF;
+.publicar-card h2 {
+  margin: 0 0 8px;
+  color: #3e2445;
+  font-size: 28px;
+  text-align: center;
+}
+
+.publicar-subtitle {
+  margin-bottom: 26px;
+  color: #666;
+  font-size: 14px;
+  line-height: 1.5;
+  text-align: center;
+}
+
+.publicar-erro {
+  margin-bottom: 16px;
+  padding: 11px 14px;
   border-radius: 8px;
-  padding: 40px 48px;
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.04);
-  border: 1px solid #E8E3DF;
+  background: #fff1f1;
+  color: #b3261e;
+  font-size: 14px;
 }
 
-/* Título em tom púrpura/ameixa escuro */
-.publicar-pedido-card h2 {
-  font-family: 'Playfair Display SC', serif !important;
-  color: #4C2B54 !important; /* Tom plum/púrpura exato do título */
-  font-size: 24px;
-  font-weight: 700;
-  text-align: center;
-  text-transform: uppercase;
-  letter-spacing: 0.8px;
+.publicar-form-group {
+  margin-bottom: 18px;
+}
+
+.publicar-form-group label {
+  display: block;
   margin-bottom: 6px;
+  color: #3e2445;
+  font-size: 14px;
+  font-weight: 600;
 }
 
-/* Subtítulo informativo */
-.publicar-pedido-card .subtitulo {
-  font-family: 'Poppins', sans-serif;
-  color: #8C7E87;
-  font-size: 13px;
-  text-align: center;
-  margin-bottom: 32px;
+.publicar-form-group input,
+.publicar-form-group select,
+.publicar-form-group textarea {
+  width: 100%;
+  padding: 12px 14px;
+  box-sizing: border-box;
+  border: 1px solid #d8cfd5;
+  border-radius: 8px;
+  background: #fff;
+  font-family: inherit;
+  font-size: 14px;
+  outline: none;
 }
 
-/* Espaçamento entre os grupos do formulário */
-.form-group {
-  margin-bottom: 20px;
-  display: flex;
-  flex-direction: column;
+.publicar-form-group textarea {
+  resize: vertical;
+  min-height: 120px;
 }
 
-/* Disposição em 2 colunas para Categoria e Prazo */
-.form-row-2col {
+.publicar-form-group input:focus,
+.publicar-form-group select:focus,
+.publicar-form-group textarea:focus {
+  border-color: #917687;
+  box-shadow: 0 0 0 3px rgba(145, 118, 135, 0.12);
+}
+
+.publicar-duas-colunas {
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 16px;
-  margin-bottom: 20px;
 }
 
-/* Labels dos campos */
-.publicar-pedido-card label {
-  font-family: 'Poppins', sans-serif;
+.publicar-upload input[type="file"] {
+  background: #f8f6f7;
+  cursor: pointer;
+}
+
+.publicar-preview {
+  margin-top: 14px;
+  text-align: center;
+}
+
+.publicar-preview p {
+  margin: 0 0 8px;
+  color: #777;
   font-size: 12px;
-  font-weight: 600;
-  color: #3A3238;
-  margin-bottom: 6px;
-  text-align: left;
 }
 
-/* Estilo unificado para todas as caixas de texto e seletores */
-.publicar-pedido-card input[type="text"],
-.publicar-pedido-card input[type="date"],
-.publicar-pedido-card select,
-.publicar-pedido-card textarea {
-  width: 100%;
-  padding: 12px 14px;
-  background-color: #FAF8F5;
-  border: 1px solid #E5DFD9;
-  border-radius: 4px;
-  font-family: 'Poppins', sans-serif;
-  font-size: 13px;
-  color: #4A3A45;
-  outline: none;
-  box-sizing: border-box;
-  transition: border-color 0.2s ease, background-color 0.2s ease;
+.publicar-preview img {
+  max-width: 100%;
+  max-height: 220px;
+  border: 1px solid #ddd4da;
+  border-radius: 10px;
+  object-fit: contain;
 }
 
-/* Placeholders em tom suave */
-.publicar-pedido-card ::placeholder {
-  color: #A0949B;
+.publicar-botoes {
+  display: flex;
+  gap: 12px;
+  margin-top: 25px;
 }
 
-/* Estado de foco nos campos */
-.publicar-pedido-card input:focus,
-.publicar-pedido-card select:focus,
-.publicar-pedido-card textarea:focus {
-  border-color: #8C7283;
-  background-color: #FFFFFF;
-}
-
-.publicar-pedido-card textarea {
-  min-height: 120px;
-  resize: vertical;
-}
-
-/* Botão principal (Rosa/Malva seco) */
-.btn-publicar-submit {
-  width: 100%;
-  height: 46px;
-  margin-top: 10px;
-  background-color: #886E7E !important;
-  color: #FFFFFF !important;
+.publicar-button-principal {
+  flex: 1;
+  padding: 13px 18px;
   border: none;
-  border-radius: 4px;
-  font-family: 'Poppins', sans-serif;
-  font-size: 14px;
+  border-radius: 8px;
+  background: #917687;
+  color: #fff;
+  font-size: 15px;
   font-weight: 600;
   cursor: pointer;
-  transition: background-color 0.2s ease;
+  transition: 0.2s;
 }
 
-.btn-publicar-submit:hover {
-  background-color: #73586B !important;
+.publicar-button-principal:hover {
+  background: #7a5b72;
 }
 
-/* Responsividade para ecrãs mais pequenos */
-@media (max-width: 640px) {
-  .publicar-pedido-card {
-    padding: 24px 18px;
+.publicar-button-principal:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+}
+
+.publicar-button-cancelar {
+  padding: 13px 22px;
+  border: none;
+  border-radius: 8px;
+  background: #eee9ec;
+  color: #5f4c59;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.publicar-button-cancelar:hover {
+  background: #ddd4da;
+}
+
+@media (max-width: 650px) {
+  .publicar-card {
+    padding: 26px 20px;
   }
-  
-  .form-row-2col {
+
+  .publicar-duas-colunas {
     grid-template-columns: 1fr;
-    gap: 20px;
+  }
+
+  .publicar-botoes {
+    flex-direction: column;
+  }
+
+  .publicar-button-cancelar {
+    width: 100%;
   }
 }
