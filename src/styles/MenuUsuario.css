@@ -1,0 +1,226 @@
+.menu-usuario {
+  width: 100%;
+  background: rgba(255, 255, 255, 0.97);
+  border-bottom: 1px solid #e8dfda;
+  box-shadow: 0 4px 18px rgba(62, 36, 69, 0.05);
+  font-family: 'Plus Jakarta Sans', sans-serif;
+}
+
+.menu-usuario-conteudo {
+  width: min(1120px, 94%);
+  min-height: 76px;
+  margin: 0 auto;
+
+  display: flex;
+  align-items: center;
+  gap: 32px;
+}
+
+
+/* =========================
+   MARCA
+========================= */
+
+.menu-usuario-marca {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+
+  padding: 0;
+
+  background: transparent;
+  border: none;
+
+  cursor: pointer;
+}
+
+.menu-usuario-marca span {
+  color: #3e2445;
+
+  font-family:
+    'Playfair Display',
+    Georgia,
+    serif;
+
+  font-size: 22px;
+  font-weight: 700;
+  line-height: 1;
+}
+
+.menu-usuario-marca small {
+  margin-top: 4px;
+
+  color: #917687;
+
+  font-size: 8px;
+  font-weight: 700;
+
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+}
+
+
+/* =========================
+   NAVEGAÇÃO
+========================= */
+
+.menu-usuario-nav {
+  flex: 1;
+
+  display: flex;
+  align-items: center;
+
+  gap: 4px;
+}
+
+.menu-usuario-link {
+  padding: 10px 13px;
+
+  background: transparent;
+
+  color: #746874;
+
+  border: none;
+  border-radius: 8px;
+
+  font-family:
+    'Plus Jakarta Sans',
+    sans-serif;
+
+  font-size: 12px;
+  font-weight: 600;
+
+  cursor: pointer;
+
+  transition:
+    background 0.2s ease,
+    color 0.2s ease;
+}
+
+.menu-usuario-link:hover {
+  background: #f8f3f6;
+  color: #3e2445;
+}
+
+.menu-usuario-link.ativo {
+  background: #f3ecef;
+  color: #3e2445;
+}
+
+
+/* =========================
+   USUÁRIO / SAIR
+========================= */
+
+.menu-usuario-direita {
+  display: flex;
+  align-items: center;
+
+  gap: 14px;
+}
+
+.menu-usuario-pessoa {
+  display: flex;
+  flex-direction: column;
+
+  align-items: flex-end;
+}
+
+.menu-usuario-pessoa span {
+  max-width: 150px;
+
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+
+  color: #4a424a;
+
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.menu-usuario-pessoa small {
+  margin-top: 2px;
+
+  color: #9a8d96;
+
+  font-size: 8px;
+
+  letter-spacing: 1px;
+  text-transform: uppercase;
+}
+
+.menu-usuario-sair {
+  padding: 8px 13px;
+
+  background: #ffffff;
+
+  color: #7a5b72;
+
+  border: 1px solid #d8cfd5;
+  border-radius: 8px;
+
+  font-family:
+    'Plus Jakarta Sans',
+    sans-serif;
+
+  font-size: 11px;
+  font-weight: 700;
+
+  cursor: pointer;
+
+  transition:
+    background 0.2s ease,
+    border-color 0.2s ease;
+}
+
+.menu-usuario-sair:hover {
+  background: #f8f3f6;
+  border-color: #bcaeb8;
+}
+
+
+/* =========================
+   RESPONSIVO
+========================= */
+
+@media (max-width: 850px) {
+
+  .menu-usuario-conteudo {
+    gap: 18px;
+  }
+
+  .menu-usuario-pessoa {
+    display: none;
+  }
+
+}
+
+
+@media (max-width: 700px) {
+
+  .menu-usuario-conteudo {
+    flex-wrap: wrap;
+
+    padding: 14px 0;
+  }
+
+  .menu-usuario-direita {
+    margin-left: auto;
+  }
+
+  .menu-usuario-nav {
+    order: 3;
+
+    width: 100%;
+
+    overflow-x: auto;
+
+    padding-bottom: 2px;
+  }
+
+  .menu-usuario-link {
+    white-space: nowrap;
+  }
+
+}

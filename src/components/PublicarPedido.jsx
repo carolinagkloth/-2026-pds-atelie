@@ -113,145 +113,285 @@ function PublicarPedido({
   };
 
   return (
-    <div className="publicar-card">
+    <div className="publicar-page">
 
-      <h2>Publicar Novo Pedido</h2>
+      <section className="publicar-page-header">
 
-      <p className="publicar-subtitle">
-        Descreva o serviço de costura ou ajuste que você precisa
-        para que as costureiras da região possam visualizar.
-      </p>
+        <div>
+          <span className="publicar-eyebrow">
+            Nova solicitação
+          </span>
 
-      {erro && (
-        <div className="publicar-erro">
-          {erro}
-        </div>
-      )}
+          <h1>
+            Publicar pedido
+          </h1>
 
-      <form onSubmit={handleSubmit}>
-
-        <div className="publicar-form-group">
-          <label>Tipo de Serviço *</label>
-
-          <select
-            value={tiposervico}
-            onChange={(e) =>
-              setTiposervico(e.target.value)
-            }
-          >
-            <option value="Ajuste / Conserto">
-              Ajuste / Conserto
-            </option>
-
-            <option value="Confecção sob Medida">
-              Confecção sob Medida
-            </option>
-
-            <option value="Customização / Bordado">
-              Customização / Bordado
-            </option>
-
-            <option value="Vestido de Festa">
-              Vestido de Festa
-            </option>
-          </select>
+          <p>
+            Conte o que você precisa e adicione as informações
+            necessárias para que uma costureira possa avaliar seu pedido.
+          </p>
         </div>
 
-        <div className="publicar-form-group">
-          <label>Descrição Detalhada *</label>
+        <button
+          type="button"
+          className="publicar-voltar"
+          onClick={() =>
+            onNavigate && onNavigate('meusPedidos')
+          }
+        >
+          Voltar para meus pedidos
+        </button>
 
-          <textarea
-            rows="4"
-            value={descricao}
-            onChange={(e) =>
-              setDescricao(e.target.value)
-            }
-            placeholder="Ex: Preciso fazer a barra de uma calça jeans e apertar 2cm na cintura de um vestido..."
-            required
-          />
-        </div>
+      </section>
 
-        <div className="publicar-duas-colunas">
 
-          <div className="publicar-form-group">
-            <label>Prazo Desejado *</label>
+      <section className="publicar-card">
 
-            <input
-              type="date"
-              min={hoje}
-              value={prazoDesejado}
-              onChange={(e) =>
-                setPrazoDesejado(e.target.value)
-              }
-              required
-            />
+        <div className="publicar-card-header">
+
+          <div>
+            <span className="publicar-card-etiqueta">
+              Detalhes do pedido
+            </span>
+
+            <h2>
+              O que você precisa?
+            </h2>
           </div>
 
-          <div className="publicar-form-group">
-            <label>Bairro / Localização *</label>
+          <span className="publicar-obrigatorios">
+            * Campos obrigatórios
+          </span>
 
-            <input
-              type="text"
-              value={localizacao}
-              onChange={(e) =>
-                setLocalizacao(e.target.value)
-              }
-              placeholder="Ex: Centro - Ponta Grossa"
-              required
-            />
+        </div>
+
+
+        {erro && (
+          <div className="publicar-erro">
+            {erro}
           </div>
+        )}
 
-        </div>
 
-        <div className="publicar-form-group publicar-upload">
-          <label>
-            Foto de Referência da Peça
-            (Opcional - PNG ou JPG)
-          </label>
+        <form
+          onSubmit={handleSubmit}
+          className="publicar-form"
+        >
 
-          <input
-            type="file"
-            accept="image/png, image/jpeg, image/jpg"
-            onChange={handleFileChange}
-          />
+          <div className="publicar-form-group">
 
-          {previewFoto && (
-            <div className="publicar-preview">
-              <p>Pré-visualização:</p>
+            <label>
+              Tipo de serviço *
+            </label>
 
-              <img
-                src={previewFoto}
-                alt="Pré-visualização"
-              />
-            </div>
-          )}
-        </div>
+            <span className="publicar-ajuda">
+              Escolha a categoria que melhor representa sua solicitação.
+            </span>
 
-        <div className="publicar-botoes">
-
-          <button
-            type="submit"
-            disabled={carregando}
-            className="publicar-button-principal"
-          >
-            {carregando
-              ? 'Publicando...'
-              : 'Publicar no Mural de Pedidos'}
-          </button>
-
-          {onNavigate && (
-            <button
-              type="button"
-              onClick={() => onNavigate('meusPedidos')}
-              className="publicar-button-cancelar"
+            <select
+              value={tiposervico}
+              onChange={(e) =>
+                setTiposervico(e.target.value)
+              }
             >
-              Cancelar
-            </button>
-          )}
+              <option value="Ajuste / Conserto">
+                Ajuste / Conserto
+              </option>
 
-        </div>
+              <option value="Confecção sob Medida">
+                Confecção sob Medida
+              </option>
 
-      </form>
+              <option value="Customização / Bordado">
+                Customização / Bordado
+              </option>
+
+              <option value="Vestido de Festa">
+                Vestido de Festa
+              </option>
+            </select>
+
+          </div>
+
+
+          <div className="publicar-form-group">
+
+            <label>
+              Descrição detalhada *
+            </label>
+
+            <span className="publicar-ajuda">
+              Explique o serviço, a peça e qualquer detalhe importante.
+            </span>
+
+            <textarea
+              rows="5"
+              value={descricao}
+              onChange={(e) =>
+                setDescricao(e.target.value)
+              }
+              placeholder="Ex.: Preciso fazer a barra de uma calça jeans e ajustar aproximadamente 2 cm na cintura..."
+              required
+            />
+
+          </div>
+
+
+          <div className="publicar-duas-colunas">
+
+            <div className="publicar-form-group">
+
+              <label>
+                Prazo desejado *
+              </label>
+
+              <span className="publicar-ajuda">
+                Quando você gostaria de receber a peça?
+              </span>
+
+              <input
+                type="date"
+                min={hoje}
+                value={prazoDesejado}
+                onChange={(e) =>
+                  setPrazoDesejado(e.target.value)
+                }
+                required
+              />
+
+            </div>
+
+
+            <div className="publicar-form-group">
+
+              <label>
+                Bairro / Localização *
+              </label>
+
+              <span className="publicar-ajuda">
+                Informe uma região aproximada.
+              </span>
+
+              <input
+                type="text"
+                value={localizacao}
+                onChange={(e) =>
+                  setLocalizacao(e.target.value)
+                }
+                placeholder="Ex.: Centro - Ponta Grossa"
+                required
+              />
+
+            </div>
+
+          </div>
+
+
+          <div className="publicar-form-group">
+
+            <label>
+              Foto de referência
+            </label>
+
+            <span className="publicar-ajuda">
+              Opcional. Adicione uma imagem da peça ou uma referência
+              do resultado que você deseja.
+            </span>
+
+            <div className="publicar-upload-area">
+
+              <div className="publicar-upload-texto">
+
+                <strong>
+                  Adicionar imagem
+                </strong>
+
+                <span>
+                  PNG ou JPG
+                </span>
+
+              </div>
+
+              <input
+                type="file"
+                accept="image/png, image/jpeg, image/jpg"
+                onChange={handleFileChange}
+              />
+
+            </div>
+
+
+            {previewFoto && (
+
+              <div className="publicar-preview">
+
+                <div className="publicar-preview-header">
+
+                  <span>
+                    Pré-visualização
+                  </span>
+
+                  <span className="publicar-preview-ok">
+                    Imagem adicionada
+                  </span>
+
+                </div>
+
+                <img
+                  src={previewFoto}
+                  alt="Pré-visualização"
+                />
+
+              </div>
+
+            )}
+
+          </div>
+
+
+          <div className="publicar-form-footer">
+
+            <p>
+              Revise as informações antes de publicar.
+              Você poderá cancelar um pedido enquanto ele ainda estiver disponível.
+            </p>
+
+
+            <div className="publicar-botoes">
+
+              {onNavigate && (
+
+                <button
+                  type="button"
+                  onClick={() =>
+                    onNavigate('meusPedidos')
+                  }
+                  className="publicar-button-cancelar"
+                >
+                  Cancelar
+                </button>
+
+              )}
+
+
+              <button
+                type="submit"
+                disabled={carregando}
+                className="publicar-button-principal"
+              >
+                {carregando
+                  ? 'Publicando...'
+                  : 'Publicar pedido'}
+              </button>
+
+            </div>
+
+          </div>
+
+        </form>
+
+      </section>
+
     </div>
   );
 }

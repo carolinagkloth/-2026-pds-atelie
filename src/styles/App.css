@@ -1,0 +1,215 @@
+@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap');
+
+
+/* ========================================
+   BASE
+======================================== */
+
+html,
+body,
+#root {
+  width: 100%;
+  min-height: 100%;
+
+  margin: 0;
+  padding: 0;
+}
+
+
+* {
+  box-sizing: border-box;
+}
+
+
+body {
+  margin: 0;
+  padding: 0;
+
+  overflow-x: hidden;
+
+  background: #faf7f5;
+
+  font-family:
+    'Plus Jakarta Sans',
+    sans-serif;
+
+  color: #4a424a;
+}
+
+
+button,
+input,
+select,
+textarea {
+  font-family:
+    'Plus Jakarta Sans',
+    sans-serif;
+}
+
+
+.app-shell {
+  width: 100%;
+  min-height: 100vh;
+
+  margin: 0;
+  padding: 0;
+
+  overflow-x: hidden;
+
+  background:
+    radial-gradient(
+      circle at top left,
+      rgba(145, 118, 135, 0.08),
+      transparent 28%
+    ),
+    #faf7f5;
+}
+
+
+.app-main {
+  width: 100%;
+
+  margin: 0;
+  padding: 0 0 60px;
+}
+
+
+/* ========================================
+   BANNER PÚBLICO
+======================================== */
+
+.app-banner {
+  position: relative;
+
+  width: 100%;
+  height: 180px;
+
+  margin: 0;
+  padding: 0;
+
+  background-repeat: no-repeat;
+  background-size: cover;
+  background-position: center center;
+
+  overflow: hidden;
+
+  border-bottom: 1px solid #ebe5e0;
+}
+
+
+/* ========================================
+   BOTÕES SOBRE O BANNER
+======================================== */
+
+.app-banner-acoes {
+  position: absolute;
+
+  top: 92px;
+  right: 32px;
+
+  z-index: 10;
+
+  display: flex;
+  align-items: center;
+
+  gap: 8px;
+}
+
+
+.app-banner-btn {
+  padding: 7px 14px;
+
+  border-radius: 8px;
+
+  font-size: 12px;
+  font-weight: 700;
+
+  cursor: pointer;
+
+  transition:
+    background 0.2s ease,
+    border-color 0.2s ease,
+    transform 0.2s ease;
+}
+
+
+.app-banner-btn:hover {
+  transform: translateY(-1px);
+}
+
+
+.app-banner-btn-claro {
+  background:
+    rgba(255, 255, 255, 0.94);
+
+  color: #3e2445;
+
+  border:
+    1px solid
+    rgba(62, 36, 69, 0.18);
+
+  box-shadow:
+    0 4px 12px
+    rgba(62, 36, 69, 0.09);
+
+  backdrop-filter: blur(5px);
+}
+
+
+.app-banner-btn-claro:hover {
+  background: #ffffff;
+}
+
+
+.app-banner-btn-destaque {
+  background: #7a5b72;
+
+  color: #ffffff;
+
+  border: 1px solid #7a5b72;
+
+  box-shadow:
+    0 4px 12px
+    rgba(62, 36, 69, 0.16);
+}
+
+
+.app-banner-btn-destaque:hover {
+  background: #63475b;
+  border-color: #63475b;
+}
+
+
+/* ========================================
+   RESPONSIVO
+======================================== */
+
+@media (max-width: 700px) {
+
+  .app-banner {
+    height: 150px;
+  }
+
+  .app-banner-acoes {
+    top: auto;
+    bottom: 16px;
+
+    right: 18px;
+  }
+
+}
+
+
+@media (max-width: 450px) {
+
+  .app-banner-acoes {
+    right: 14px;
+  }
+
+  .app-banner-btn {
+    padding: 7px 11px;
+
+    font-size: 11px;
+  }
+
+}
