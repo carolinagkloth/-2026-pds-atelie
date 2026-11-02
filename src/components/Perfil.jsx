@@ -359,7 +359,7 @@ function Perfil({ usuario, onNavigate, onUpdateUsuario }) {
       {/* Agenda de Entregas */}
       <div style={{ marginTop: '30px', borderTop: '2px solid #F4EFF5', paddingTop: '20px' }}>
         <h3 style={{ color: '#3E2445', marginTop: 0, fontSize: '18px' }}>
-          Agenda de Entregas e Provas (Ordens de Serviço)
+          Agenda de Entregas e Provas
         </h3>
         <div style={{ display: 'flex', gap: '20px', flexWrap: 'wrap', marginTop: '15px' }}>
           <Calendar onChange={setDataSelecionada} value={dataSelecionada} />

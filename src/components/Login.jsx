@@ -2,7 +2,6 @@ import React, { useState } from 'react';
 import { GoogleLogin, GoogleOAuthProvider } from '@react-oauth/google';
 import "../styles/Login.css";
 
-// Ícones Vetoriais SVG
 const IconOlhoAberto = () => (
   <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#3E2445" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
     <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
@@ -24,7 +23,6 @@ function LoginContent({ onNavigate, onLoginSucesso }) {
   const [erro, setErro] = useState('');
   const [carregando, setCarregando] = useState(false);
 
-  // Manipula a resposta de sucesso do Google OAuth
   const handleGoogleSuccess = async (credentialResponse) => {
     setErro('');
     setCarregando(true);
@@ -42,7 +40,14 @@ function LoginContent({ onNavigate, onLoginSucesso }) {
         throw new Error(data.erro || 'Falha na autenticação via Google.');
       }
 
-      onLoginSucesso(data);
+      // Se for um novo usuário, vai para cadastro preenchendo os dados
+      if (data.novoUsuario) {
+        if (onNavigate) {
+          onNavigate('cadastro', data.dadosGoogle);
+        }
+      } else {
+        onLoginSucesso(data);
+      }
     } catch (err) {
       setErro(err.message);
     } finally {
@@ -82,13 +87,10 @@ function LoginContent({ onNavigate, onLoginSucesso }) {
 
       {erro && <div style={{ background: '#ffebee', color: '#c62828', padding: '10px 14px', borderRadius: '6px', marginBottom: '15px', fontSize: '14px' }}>{erro}</div>}
 
-      {/* Botão de Login do Google */}
       <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '15px' }}>
         <GoogleLogin
           onSuccess={handleGoogleSuccess}
-          onError={() =>
-            setErro('Erro ao comunicar com a conta Google.')
-          }
+          onError={() => setErro('Erro ao comunicar com a conta Google.')}
           text="signin_with"
           shape="rectangular"
           locale="pt-BR"
@@ -137,14 +139,12 @@ function LoginContent({ onNavigate, onLoginSucesso }) {
         >
           {carregando ? 'Entrando...' : 'Entrar'}
         </button>
-
       </form>
 
       <div style={{ marginTop: '18px', display: 'flex', justifyContent: 'space-between', fontSize: '13px' }}>
         <span style={{ color: '#666', cursor: 'pointer', textDecoration: 'underline' }} onClick={() => onNavigate('recuperarSenha')}>Esqueceu a senha?</span>
         <span style={{ color: '#3E2445', fontWeight: 'bold', cursor: 'pointer', textDecoration: 'underline' }} onClick={() => onNavigate('cadastro')}>Criar conta</span>
       </div>
-
     </div>
   );
 }

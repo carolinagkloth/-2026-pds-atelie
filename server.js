@@ -24,7 +24,6 @@ const pool = new Pool({
   ssl: { rejectUnauthorized: false }
 });
 
-// Configuração do Nodemailer com o e-mail oficial do projeto
 const EMAIL_OFICIAL = process.env.EMAIL_USER || 'noreply.atelie.entre.linhas@gmail.com';
 
 const transporter = nodemailer.createTransport({
@@ -42,7 +41,7 @@ app.post('/api/auth/google', async (req, res) => {
   const { token } = req.body;
 
   if (!token) {
-    return res.status(400).json({ erro: 'Token de autenticação do Google não fornecido.' });
+    return res.status(400).json({ erro: 'Token não fornecido.' });
   }
 
   try {
@@ -54,26 +53,25 @@ app.post('/api/auth/google', async (req, res) => {
     const payload = ticket.getPayload();
     const { email, name, picture } = payload;
 
-    let result = await pool.query('SELECT * FROM usuarios WHERE email = $1', [email]);
+    const result = await pool.query('SELECT * FROM usuarios WHERE email = $1', [email]);
     let usuario = result.rows[0];
 
+    // Se o usuário ainda não existe no banco, avisa o frontend para concluir o cadastro
     if (!usuario) {
-      const senhaDummy = await bcrypt.hash('GOOGLE_OAUTH_' + Math.random(), 10);
-      const queryInsert = `
-        INSERT INTO usuarios (nome, email, senha, tipo_usuario, foto_perfil)
-        VALUES ($1, $2, $3, $4, $5)
-        RETURNING id_usuario AS id, id_usuario, nome, email, tipo_usuario, foto_perfil;
-      `;
-      const novoUsuario = await pool.query(queryInsert, [name, email, senhaDummy, 'Cliente', picture || null]);
-      usuario = novoUsuario.rows[0];
-    } else if (picture && !usuario.foto_perfil) {
-      await pool.query('UPDATE usuarios SET foto_perfil = $1 WHERE id_usuario = $2', [picture, usuario.id_usuario]);
-      usuario.foto_perfil = picture;
+      return res.json({
+        novoUsuario: true,
+        dadosGoogle: {
+          nome: name,
+          email: email,
+          foto_perfil: picture || null
+        }
+      });
     }
 
     enviarEmailNovoAcesso(usuario.email, usuario.nome, pool);
 
     return res.json({
+      novoUsuario: false,
       mensagem: 'Login realizado com sucesso!',
       usuario: {
         id: usuario.id_usuario || usuario.id,
@@ -85,8 +83,8 @@ app.post('/api/auth/google', async (req, res) => {
       }
     });
   } catch (err) {
-    console.error('Erro na autenticação do Google:', err);
-    return res.status(401).json({ erro: 'Credencial do Google inválida ou expirada.' });
+    console.error('Erro Google Auth:', err);
+    return res.status(401).json({ erro: 'Credencial inválida do Google.' });
   }
 });
 
@@ -312,9 +310,48 @@ app.get('/api/usuarios/:id', async (req, res) => {
   }
 });
 
-// --- PEDIDOS ---
+// --- MEDIDAS DO CLIENTE ---
+app.get('/api/usuarios/:id/medidas', async (req, res) => {
+  const { id } = req.params;
+  try {
+    const result = await pool.query(
+      'SELECT busto, cintura, quadril, altura, comprimento, observacoes_medidas FROM usuarios WHERE id_usuario = $1',
+      [id]
+    );
+    if (result.rows.length === 0) return res.status(404).json({ erro: 'Usuário não encontrado.' });
+    res.json(result.rows[0]);
+  } catch (err) {
+    console.error('Erro ao buscar medidas:', err);
+    res.status(500).json({ erro: 'Erro ao buscar medidas.' });
+  }
+});
 
-// Edição de pedido pelo cliente (Apenas enquanto estiver 'Aberto')
+app.put('/api/usuarios/:id/medidas', async (req, res) => {
+  const { id } = req.params;
+  const { busto, cintura, quadril, altura, comprimento, observacoes_medidas } = req.body;
+  try {
+    await pool.query(
+      `UPDATE usuarios 
+       SET busto = $1, cintura = $2, quadril = $3, altura = $4, comprimento = $5, observacoes_medidas = $6
+       WHERE id_usuario = $7`,
+      [
+        busto || null,
+        cintura || null,
+        quadril || null,
+        altura || null,
+        comprimento || null,
+        observacoes_medidas || null,
+        id
+      ]
+    );
+    res.json({ mensagem: 'Medidas e observações salvas com sucesso!' });
+  } catch (err) {
+    console.error('Erro ao salvar medidas:', err);
+    res.status(500).json({ erro: 'Erro ao salvar medidas.' });
+  }
+});
+
+// --- PEDIDOS ---
 app.put('/api/pedidos/:id', async (req, res) => {
   const { id } = req.params;
   const { id_cliente, descricao, fotos_referencia, prazo_desejado } = req.body;
@@ -419,7 +456,7 @@ app.delete('/api/pedidos/:id', async (req, res) => {
   }
 });
 
-// --- CHAT E NEGOCIAÇÃO (Suporte a /api/mensagens-chat e /api/chat) ---
+// --- CHAT E NEGOCIAÇÃO ---
 app.get(['/api/mensagens-chat/:idPedido', '/api/chat/:idPedido'], async (req, res) => {
   const { idPedido } = req.params;
   try {
@@ -487,46 +524,41 @@ app.post(['/api/mensagens-chat', '/api/chat'], async (req, res) => {
     res.status(500).json({ erro: `Erro ao salvar mensagem: ${err.message}` });
   }
 });
-// Rota para buscar as conversas ativas do usuário organizadas por data de última atividade (mais recente primeiro)
-  app.get('/api/conversas/usuario/:idUsuario', async (req, res) => {
-    const { idUsuario } = req.params;
-    try {
-      const query = `
-        SELECT DISTINCT ON (p.id_pedido)
-          p.id_pedido AS "idPedido",
-          p.id_pedido AS id,
-          p.descricao,
-          p.status_pedido AS status,
-          p.prazo_desejado AS "prazoDesejado",
-          cli.id_usuario AS "clienteId",
-          cli.nome AS "clienteNome",
-          cost.id_usuario AS "costureiraId",
-          cost.nome AS "costureiraNome",
-          COALESCE(m.conteudo, 'Sem mensagens recentes') AS "ultimaMensagem",
-          COALESCE(m.data_hora_envio, p.data_publicacao) AS "dataUltimaAtividade"
-        FROM pedidos p
-        JOIN usuarios cli ON p.id_cliente = cli.id_usuario
-        LEFT JOIN mensagens_chat m ON m.id_pedido = p.id_pedido
-        LEFT JOIN ordens_servico os ON os.id_pedido = p.id_pedido
-        LEFT JOIN usuarios cost ON os.id_costureira = cost.id_usuario
-        WHERE p.id_cliente = $1 OR os.id_costureira = $1 OR m.id_remetente = $1
-        ORDER BY p.id_pedido, m.data_hora_envio DESC;
-      `;
-      const result = await pool.query(query, [idUsuario]);
 
-      // Ordenação com os chats mais recentes acima
-      const listaOrdenada = result.rows.sort(
-        (a, b) => new Date(b.dataUltimaAtividade) - new Date(a.dataUltimaAtividade)
-      );
+// Central de Conversas
+app.get('/api/conversas/usuario/:idUsuario', async (req, res) => {
+  const { idUsuario } = req.params;
+  try {
+    const query = `
+      SELECT 
+        p.id_pedido AS "idPedido",
+        p.id_pedido AS id,
+        p.descricao,
+        p.status_pedido AS status,
+        p.prazo_desejado AS "prazoDesejado",
+        cli.id_usuario AS "clienteId",
+        cli.nome AS "clienteNome",
+        cost.id_usuario AS "costureiraId",
+        cost.nome AS "costureiraNome",
+        (SELECT conteudo FROM mensagens_chat WHERE id_pedido = p.id_pedido ORDER BY data_hora_envio DESC LIMIT 1) AS "ultimaMensagem",
+        (SELECT data_hora_envio FROM mensagens_chat WHERE id_pedido = p.id_pedido ORDER BY data_hora_envio DESC LIMIT 1) AS "dataUltimaAtividade"
+      FROM pedidos p
+      JOIN usuarios cli ON p.id_cliente = cli.id_usuario
+      LEFT JOIN ordens_servico os ON os.id_pedido = p.id_pedido
+      LEFT JOIN usuarios cost ON os.id_costureira = cost.id_usuario
+      WHERE (p.id_cliente = $1 OR os.id_costureira = $1 OR EXISTS (SELECT 1 FROM mensagens_chat m WHERE m.id_pedido = p.id_pedido AND m.id_remetente = $1))
+        AND EXISTS (SELECT 1 FROM mensagens_chat m WHERE m.id_pedido = p.id_pedido)
+      ORDER BY "dataUltimaAtividade" DESC;
+    `;
+    const result = await pool.query(query, [idUsuario]);
+    res.json(result.rows);
+  } catch (err) {
+    console.error('Erro ao buscar conversas:', err);
+    res.status(500).json({ erro: `Erro ao carregar lista de conversas: ${err.message}` });
+  }
+});
 
-      res.json(listaOrdenada);
-    } catch (err) {
-      console.error('Erro ao buscar conversas:', err);
-      res.status(500).json({ erro: 'Erro ao carregar lista de conversas.' });
-    }
-  });
-
-// --- ROTAS DE ORDENS DE SERVIÇO ---
+// --- ORDENS DE SERVIÇO, ETAPAS E PROVAS ---
 app.post(['/api/ordens-servico', '/api/chat/aceitar-proposta'], async (req, res) => {
   const { id_pedido, id_costureira, valor_total, previsao_entrega, valor_entrada } = req.body;
 
@@ -541,9 +573,9 @@ app.post(['/api/ordens-servico', '/api/chat/aceitar-proposta'], async (req, res)
 
     const queryOS = `
       INSERT INTO ordens_servico (id_pedido, id_costureira, valor_total, previsao_entrega, valor_entrada, status_kanban)
-      VALUES ($1, $2, $3, $4, $5, 'A Fazer')
+      VALUES ($1, $2, $3, $4, $5, 'Em Produção')
       ON CONFLICT (id_pedido) 
-      DO UPDATE SET valor_total = $3, previsao_entrega = $4, valor_entrada = $5, status_kanban = 'A Fazer'
+      DO UPDATE SET valor_total = $3, previsao_entrega = $4, valor_entrada = $5, status_kanban = 'Em Produção'
       RETURNING *;
     `;
     const osResult = await client.query(queryOS, [
@@ -569,6 +601,51 @@ app.post(['/api/ordens-servico', '/api/chat/aceitar-proposta'], async (req, res)
     await client.query('ROLLBACK');
     console.error('Erro ao aceitar proposta:', err);
     res.status(500).json({ erro: 'Erro interno ao gerar Ordem de Serviço.' });
+  } finally {
+    client.release();
+  }
+});
+
+// Agendamento de prova pela costureira (Passo 6)
+app.post('/api/ordens-servico/:idOrdem/agendar-prova', async (req, res) => {
+  const { idOrdem } = req.params;
+  const { dataProva, observacao } = req.body;
+
+  const client = await pool.connect();
+
+  try {
+    await client.query('BEGIN');
+
+    await client.query(
+      `UPDATE ordens_servico SET status_kanban = 'Aguardando Prova', previsao_entrega = $1 WHERE id_ordem_servico = $2`,
+      [dataProva, idOrdem]
+    );
+
+    const os = await client.query('SELECT id_pedido, id_costureira FROM ordens_servico WHERE id_ordem_servico = $1', [idOrdem]);
+    
+    if (os.rows.length > 0) {
+      const idPedido = os.rows[0].id_pedido;
+      const idCostureira = os.rows[0].id_costureira;
+
+      await client.query(
+        `UPDATE pedidos SET status_pedido = 'Aguardando Prova' WHERE id_pedido = $1`,
+        [idPedido]
+      );
+
+      const textoMensagem = `📅 Prova da peça agendada!\nData da Prova: ${new Date(dataProva).toLocaleDateString('pt-BR')}\n${observacao ? `Observação: ${observacao}` : ''}`;
+
+      await client.query(
+        `INSERT INTO mensagens_chat (id_pedido, id_remetente, conteudo, tipo_mensagem) VALUES ($1, $2, $3, 'texto')`,
+        [idPedido, idCostureira, textoMensagem]
+      );
+    }
+
+    await client.query('COMMIT');
+    res.json({ mensagem: 'Prova agendada e notificação enviada no chat com sucesso!' });
+  } catch (err) {
+    await client.query('ROLLBACK');
+    console.error('Erro ao agendar prova:', err);
+    res.status(500).json({ erro: 'Erro ao agendar prova.' });
   } finally {
     client.release();
   }
@@ -629,17 +706,10 @@ app.put('/api/ordens-servico/:idOrdem/status', async (req, res) => {
 
     const ordemAtualizada = resultOS.rows[0];
 
-    if (status_kanban === 'Concluído') {
-      await client.query(
-        `UPDATE pedidos SET status_pedido = 'Concluído' WHERE id_pedido = $1`,
-        [ordemAtualizada.id_pedido]
-      );
-    } else if (status_kanban === 'Em Produção' || status_kanban === 'Aguardando Prova') {
-      await client.query(
-        `UPDATE pedidos SET status_pedido = 'Em Produção' WHERE id_pedido = $1`,
-        [ordemAtualizada.id_pedido]
-      );
-    }
+    await client.query(
+      `UPDATE pedidos SET status_pedido = $1 WHERE id_pedido = $2`,
+      [status_kanban, ordemAtualizada.id_pedido]
+    );
 
     await client.query('COMMIT');
 
@@ -656,7 +726,7 @@ app.put('/api/ordens-servico/:idOrdem/status', async (req, res) => {
   }
 });
 
-// --- CRON JOB: Lembrete automático de entrega/prova via WhatsApp ---
+// CRON JOB para Lembretes
 cron.schedule('0 8 * * *', async () => {
   console.log('Verificando ordens de serviço para lembrete diário...');
   try {
@@ -687,7 +757,7 @@ cron.schedule('0 8 * * *', async () => {
   }
 });
 
-// --- ROTAS DE AVALIAÇÕES ---
+// --- AVALIAÇÕES ---
 app.post('/api/avaliacoes', async (req, res) => {
   const { id_ordem_servico, id_cliente, nota, comentario } = req.body;
 
@@ -703,10 +773,6 @@ app.post('/api/avaliacoes', async (req, res) => {
 
     if (osResult.rows.length === 0) {
       return res.status(404).json({ erro: 'Ordem de serviço não encontrada para este cliente.' });
-    }
-
-    if (osResult.rows[0].status_kanban !== 'Concluído') {
-      return res.status(400).json({ erro: 'Você só pode avaliar o serviço após a conclusão e entrega do pedido.' });
     }
 
     const query = `
@@ -760,8 +826,7 @@ app.get('/api/avaliacoes/costureira/:idCostureira', async (req, res) => {
   }
 });
 
-// --- ROTAS DO PORTFÓLIO ---
-
+// --- PORTFÓLIO ---
 app.get('/api/portfolio/:idCostureira', async (req, res) => {
   const { idCostureira } = req.params;
   try {
@@ -822,6 +887,54 @@ app.delete('/api/portfolio/:idMidia', async (req, res) => {
   } catch (err) {
     console.error('Erro ao excluir foto do portfólio:', err);
     res.status(500).json({ erro: 'Erro ao remover imagem.' });
+  }
+});
+
+// Endpoint para agendar a prova da peça (Costureira)
+app.post('/api/ordens-servico/agendar-prova', async (req, res) => {
+  const { id_pedido, dataProva, observacao, id_costureira } = req.body;
+
+  if (!id_pedido || !dataProva) {
+    return res.status(400).json({ erro: 'ID do pedido e data da prova são obrigatórios.' });
+  }
+
+  const client = await pool.connect();
+
+  try {
+    await client.query('BEGIN');
+
+    // 1. Atualiza ou cria a Ordem de Serviço mudando status para "Aguardando Prova"
+    const queryOS = `
+      INSERT INTO ordens_servico (id_pedido, id_costureira, valor_total, previsao_entrega, status_kanban)
+      VALUES ($1, $2, 0, $3, 'Aguardando Prova')
+      ON CONFLICT (id_pedido)
+      DO UPDATE SET status_kanban = 'Aguardando Prova', previsao_entrega = $3;
+    `;
+    await client.query(queryOS, [id_pedido, id_costureira || null, dataProva]);
+
+    // 2. Atualiza o pedido principal
+    await client.query(
+      `UPDATE pedidos SET status_pedido = 'Aguardando Prova' WHERE id_pedido = $1`,
+      [id_pedido]
+    );
+
+    // 3. Insere mensagem automática de notificação no Chat
+    const dataFormatada = new Date(dataProva + 'T12:00:00').toLocaleDateString('pt-BR');
+    const textoMensagem = `PROVA AGENDADA!\nA prova da sua peça foi marcada para o dia ${dataFormatada}.\n${observacao ? `Observação da Costureira: ${observacao}` : ''}`;
+
+    await client.query(
+      `INSERT INTO mensagens_chat (id_pedido, id_remetente, conteudo, tipo_mensagem) VALUES ($1, $2, $3, 'texto')`,
+      [id_pedido, id_costureira, textoMensagem]
+    );
+
+    await client.query('COMMIT');
+    res.json({ mensagem: 'Prova agendada e notificação enviada no chat com sucesso!' });
+  } catch (err) {
+    await client.query('ROLLBACK');
+    console.error('Erro ao agendar prova:', err);
+    res.status(500).json({ erro: `Erro ao agendar prova: ${err.message}` });
+  } finally {
+    client.release();
   }
 });
 
