@@ -1,12 +1,14 @@
 const nodemailer = require('nodemailer');
-const crypto = require('crypto'); // Módulo nativo do Node.js
+const crypto = require('crypto');
+
+const EMAIL_OFICIAL = process.env.EMAIL_USER || 'noreply.atelie.entre.linhas@gmail.com';
 
 const transporter = nodemailer.createTransport({
   host: process.env.EMAIL_HOST || 'smtp.gmail.com',
   port: Number(process.env.EMAIL_PORT) || 587,
   secure: false,
   auth: {
-    user: process.env.EMAIL_USER,
+    user: EMAIL_OFICIAL,
     pass: process.env.EMAIL_PASS
   }
 });
@@ -31,7 +33,8 @@ async function enviarEmailNovoAcesso(emailDestino, nomeUsuario, pool) {
     const linkAlterarSenha = `http://localhost:5173/?tela=redefinirSenha&token=${tokenRedefinicao}`;
 
     await transporter.sendMail({
-      from: `"Ateliê Entre Linhas" <${process.env.EMAIL_USER}>`,
+      from: `"Ateliê Entre Linhas (Não responda)" <${EMAIL_OFICIAL}>`,
+      replyTo: EMAIL_OFICIAL,
       to: emailDestino,
       subject: 'Aviso de Segurança: Novo acesso à sua conta - Ateliê Entre Linhas',
       html: `
@@ -91,15 +94,14 @@ async function enviarEmailNovoAcesso(emailDestino, nomeUsuario, pool) {
 
           <div style="background-color: #F0EAE1; padding: 20px; text-align: center; border-top: 1px solid #E2D7C8;">
             <p style="font-size: 12px; color: #7A6958; margin: 0; font-style: italic;">
-              Equipe Ateliê Entre Linhas
+              Equipe Ateliê Entre Linhas<br />
+              <span style="font-size: 11px; color: #9A8978;">Este é um e-mail automático. Por favor, não responda a esta mensagem.</span>
             </p>
           </div>
 
         </div>
       `
     });
-
-    console.log(`✉️ E-mail seguro com token enviado para: ${emailDestino}`);
   } catch (error) {
     console.error('❌ Erro ao enviar e-mail de acesso:', error.message);
   }

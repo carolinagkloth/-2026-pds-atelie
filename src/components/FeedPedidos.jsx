@@ -20,6 +20,15 @@ function FeedPedidos({ usuario, usuarioLogado, onNavigate, onDemonstrarInteresse
   const [filtroServico, setFiltroServico] = useState('Todos');
   const [buscaLocalizacao, setBuscaLocalizacao] = useState('');
 
+  const normalizarTexto = (texto) => {
+    return texto
+      ? texto
+          .normalize('NFD')
+          .replace(/[\u0300-\u036f]/g, '')
+          .toLowerCase()
+      : '';
+  };
+
   useEffect(() => {
     fetch('/api/pedidos')
       .then((res) => {
@@ -49,7 +58,13 @@ function FeedPedidos({ usuario, usuarioLogado, onNavigate, onDemonstrarInteresse
   };
 
   const extrairInformacoes = (texto, localizacaoPadrao) => {
-    if (!texto) return { tipo: 'Ajuste / Conserto', localizacao: localizacaoPadrao || 'Não informada', descricao: '' };
+    if (!texto) {
+      return {
+        tipo: 'Ajuste / Conserto',
+        localizacao: localizacaoPadrao || 'Não informada',
+        descricao: ''
+      };
+    }
 
     let tipo = 'Ajuste / Conserto';
     let localizacao = localizacaoPadrao || 'Não informada';
@@ -57,21 +72,27 @@ function FeedPedidos({ usuario, usuarioLogado, onNavigate, onDemonstrarInteresse
 
     if (texto.includes('Localização:')) {
       const partes = texto.split('Localização:');
-      let tipoExtraido = partes[0].replace('[', '').replace(']', '').replace('-', '').trim();
+
+      let tipoExtraido = partes[0]
+        .replace('[', '')
+        .replace(']', '')
+        .replace('-', '')
+        .trim();
 
       if (tipoExtraido) {
         tipo = tipoExtraido;
       }
 
       const resto = partes[1].trim();
-      const quebra = resto.indexOf('\n');
+      const quebra = resto.indexOf('\n\n');
 
       if (quebra !== -1) {
         localizacao = resto.substring(0, quebra).trim();
         descricao = resto.substring(quebra).trim();
       } else {
-        localizacao = resto;
-        descricao = resto;
+        const primeiraLinha = resto.split('\n')[0];
+        localizacao = primeiraLinha.trim();
+        descricao = resto.substring(primeiraLinha.length).trim();
       }
     }
 
@@ -97,8 +118,13 @@ function FeedPedidos({ usuario, usuarioLogado, onNavigate, onDemonstrarInteresse
     const info = extrairInformacoes(pedido.descricao, pedido.localizacao);
     const statusAberto = pedido.status === 'Aberto' || pedido.status === 'Disponível' || !pedido.status;
     
-    const atendeServico = filtroServico === 'Todos' || info.tipo.toLowerCase().includes(filtroServico.toLowerCase());
-    const atendeLocal = (info.localizacao || '').toLowerCase().includes((buscaLocalizacao || '').toLowerCase());
+    const tipoNorm = normalizarTexto(info.tipo);
+    const filtroServicoNorm = normalizarTexto(filtroServico);
+    const atendeServico = filtroServico === 'Todos' || tipoNorm.includes(filtroServicoNorm);
+
+    const localNorm = normalizarTexto(info.localizacao);
+    const buscaLocalNorm = normalizarTexto(buscaLocalizacao);
+    const atendeLocal = localNorm.includes(buscaLocalNorm);
 
     return statusAberto && atendeServico && atendeLocal;
   });
@@ -106,6 +132,7 @@ function FeedPedidos({ usuario, usuarioLogado, onNavigate, onDemonstrarInteresse
   return (
     <div style={{ maxWidth: '950px', margin: '30px auto', background: '#fff', padding: '30px', borderRadius: '12px', boxShadow: '0 4px 16px rgba(62, 36, 69, 0.12)', fontFamily: "'Segoe UI', Tahoma, Geneva, Verdana, sans-serif" }}>
       
+      {/* Cabeçalho com Botão de Conversas para Costureira */}
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '25px', borderBottom: '1px solid #f0f0f0', paddingBottom: '15px', flexWrap: 'wrap', gap: '15px' }}>
         <div>
           <h2 style={{ color: '#3E2445', margin: 0, fontSize: '22px' }}>
@@ -119,6 +146,13 @@ function FeedPedidos({ usuario, usuarioLogado, onNavigate, onDemonstrarInteresse
         </div>
 
         <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
+          <button
+            onClick={() => onNavigate && onNavigate('meusChats')}
+            style={{ padding: '9px 16px', background: '#3E2445', color: '#fff', border: 'none', borderRadius: '6px', fontWeight: 'bold', cursor: 'pointer', fontSize: '13px' }}
+          >
+            Minhas Conversas
+          </button>
+
           <button
             onClick={() => onNavigate && onNavigate('perfil')}
             style={{ padding: '9px 16px', background: '#F4EFF5', color: '#3E2445', border: '1px solid #3E2445', borderRadius: '6px', fontWeight: 'bold', cursor: 'pointer', fontSize: '13px' }}
@@ -144,10 +178,11 @@ function FeedPedidos({ usuario, usuarioLogado, onNavigate, onDemonstrarInteresse
             style={{ width: '100%', padding: '9px', borderRadius: '6px', border: '1px solid #ccc', outline: 'none', fontSize: '14px', background: '#fff' }}
           >
             <option value="Todos">Todos os Serviços</option>
-            <option value="Ajuste">Ajuste / Conserto</option>
+            <option value="Ajuste / Conserto">Ajuste / Conserto</option>
             <option value="Confecção sob Medida">Confecção sob Medida</option>
-            <option value="Customização">Customização / Bordado</option>
+            <option value="Customização / Bordado">Customização / Bordado</option>
             <option value="Vestido de Festa">Vestido de Festa</option>
+            <option value="Outros">Outros</option>
           </select>
         </div>
 
@@ -155,7 +190,7 @@ function FeedPedidos({ usuario, usuarioLogado, onNavigate, onDemonstrarInteresse
           <label style={{ fontSize: '12px', fontWeight: 'bold', color: '#3E2445', display: 'block', marginBottom: '6px' }}>Buscar por Bairro / Cidade:</label>
           <input
             type="text"
-            placeholder="Ex: Centro, Ponta Grossa..."
+            placeholder="Ex: Órfãs, Centro, Ponta Grossa..."
             value={buscaLocalizacao}
             onChange={(e) => setBuscaLocalizacao(e.target.value)}
             style={{ width: '100%', padding: '9px', borderRadius: '6px', border: '1px solid #ccc', boxSizing: 'border-box', outline: 'none', fontSize: '14px', background: '#fff' }}
@@ -187,7 +222,7 @@ function FeedPedidos({ usuario, usuarioLogado, onNavigate, onDemonstrarInteresse
                   boxShadow: '0 2px 8px rgba(0,0,0,0.04)', 
                   display: 'flex', 
                   flexDirection: 'column', 
-                  justify: 'space-between' 
+                  justifyContent: 'space-between' 
                 }}
               >
                 <div>

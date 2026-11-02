@@ -1,7 +1,6 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 
-function Chat({ usuario, usuarioLogado, onNavigate, pedido }) {
-  // Leitura segura do usuário logado (Props ou localStorage)
+function Chat({ pedido, usuario, onNavigate }) {
   const usuarioSalvo = (() => {
     try {
       const item = localStorage.getItem('usuarioAtelie');
@@ -11,47 +10,117 @@ function Chat({ usuario, usuarioLogado, onNavigate, pedido }) {
     }
   })();
 
-  const user = usuario || usuarioLogado || usuarioSalvo;
-  
-  // Identificação flexível e insensível a maiúsculas/minúsculas do tipo de usuário
-  const tipoPerfilRaw = (user?.tipo_usuario || user?.tipoUsuario || user?.usuario?.tipo_usuario || 'Cliente').toString();
-  const isCostureira = tipoPerfilRaw.toLowerCase() === 'costureira';
-  const papelAtual = isCostureira ? 'Costureira' : 'Cliente';
-  const nomeUsuario = user?.nome || user?.usuario?.nome || papelAtual;
+  const user = usuario && Object.keys(usuario).length > 0 ? usuario : usuarioSalvo;
+  const idUsuario = user?.id_usuario || user?.id;
+  const nomeUsuario = user?.nome || 'Usuário';
+  const isCostureira = (user?.tipo_usuario || user?.tipoUsuario || '').toString().toLowerCase() === 'costureira';
 
-  // Ficha de medidas editável por ambas as partes
+  const [mensagens, setMensagens] = useState([]);
+  const [novaMensagem, setNovaMensagem] = useState('');
+  const [mostrarModalProposta, setMostrarModalProposta] = useState(false);
+  const [mostrarModalMedidas, setMostrarModalMedidas] = useState(false);
+
+  const [orcamentoAtual, setOrcamentoAtual] = useState({
+    total: 0,
+    entrada: 0,
+    prazo: '',
+    status: 'Pendente',
+    descricao: ''
+  });
+
   const [medidas, setMedidas] = useState({
-    clienteNome: pedido?.clienteNome || (isCostureira ? 'Cliente' : nomeUsuario),
     busto: '',
     cintura: '',
     quadril: '',
     altura: '',
-    comprimentoDesejado: ''
+    comprimento: ''
   });
 
-  const [editandoMedidas, setEditandoMedidas] = useState(false);
-
-  // Histórico de mensagens
-  const [mensagens, setMensagens] = useState([]);
-  const [novaMensagem, setNovaMensagem] = useState('');
-
-  // Estados de orçamento e pagamento
-  const [mostrarModalOrcamento, setMostrarModalOrcamento] = useState(false);
-  const [orcamento, setOrcamento] = useState(null);
-  const [statusPagamento, setStatusPagamento] = useState('Sem Orçamento');
-
-  // Estado dos campos do modal de orçamento
-  const [formOrcamento, setFormOrcamento] = useState({
-    descricao: pedido?.descricao ? `Serviço: ${pedido.descricao}` : '',
-    valor: '',
-    prazo: pedido?.prazoDesejado || ''
+  const [propostaForm, setPropostaForm] = useState({
+    descricao: '',
+    valorTotal: '',
+    valorEntrada: '',
+    previsaoEntrega: ''
   });
+
+  const idPedido = pedido?.id || pedido?.id_pedido;
+
+  useEffect(() => {
+    if (idPedido) {
+      carregarMensagens();
+    }
+  }, [idPedido]);
+
+  const carregarMensagens = () => {
+    fetch(`/api/mensagens-chat/${idPedido}`)
+      .then((res) => res.json())
+      .then((data) => {
+        if (Array.isArray(data)) {
+          setMensagens(data);
+
+          const propostaExistente = [...data].reverse().find(
+            (m) => m.tipo_mensagem === 'proposta' || (m.conteudo && m.conteudo.includes('Proposta de Orçamento:'))
+          );
+
+          if (propostaExistente) {
+            let dados = propostaExistente.dados_proposta || {};
+            if (typeof dados === 'string') {
+              try { dados = JSON.parse(dados); } catch { dados = {}; }
+            }
+
+            setOrcamentoAtual({
+              total: dados.valorTotal || extrairValorTexto(propostaExistente.conteudo, 'Valor Total: R$') || 0,
+              entrada: dados.valorEntrada || extrairValorTexto(propostaExistente.conteudo, 'Entrada (Sinal): R$') || 0,
+              prazo: dados.previsaoEntrega || pedido?.prazoDesejado || '',
+              status: 'Aguardando Aprovação',
+              descricao: dados.descricaoServico || ''
+            });
+          }
+        }
+      })
+      .catch(() => {});
+  };
+
+  const extrairValorTexto = (texto, chave) => {
+    if (!texto || !texto.includes(chave)) return 0;
+    try {
+      const parte = texto.split(chave)[1];
+      const numero = parte.split('\n')[0].trim();
+      return parseFloat(numero) || 0;
+    } catch {
+      return 0;
+    }
+  };
+
+  const extrairDescricaoLimpa = (texto) => {
+    if (!texto) return '';
+    if (texto.includes('Localização:')) {
+      const partes = texto.split('Localização:');
+      const resto = partes[1].trim();
+      const quebra = resto.indexOf('\n\n');
+      if (quebra !== -1) {
+        return resto.substring(quebra).trim();
+      }
+      const primeiraLinha = resto.split('\n')[0];
+      return resto.substring(primeiraLinha.length).trim();
+    }
+    return texto;
+  };
+
+  const handleAbrirModalProposta = () => {
+    const descricaoLimpa = extrairDescricaoLimpa(pedido?.descricao);
+    setPropostaForm({
+      descricao: orcamentoAtual.descricao || descricaoLimpa || pedido?.descricao || '',
+      valorTotal: orcamentoAtual.total ? Number(orcamentoAtual.total).toFixed(2) : '',
+      valorEntrada: orcamentoAtual.entrada ? Number(orcamentoAtual.entrada).toFixed(2) : '',
+      previsaoEntrega: orcamentoAtual.prazo ? new Date(orcamentoAtual.prazo).toISOString().split('T')[0] : (pedido?.prazoDesejado ? new Date(pedido.prazoDesejado).toISOString().split('T')[0] : '')
+    });
+    setMostrarModalProposta(true);
+  };
 
   const handleLogout = () => {
     localStorage.removeItem('usuarioAtelie');
-    if (onNavigate) {
-      onNavigate('inicio');
-    }
+    if (onNavigate) onNavigate('inicio');
   };
 
   const handleVoltarPedidos = () => {
@@ -60,212 +129,272 @@ function Chat({ usuario, usuarioLogado, onNavigate, pedido }) {
     }
   };
 
-  // Envio de mensagens
-  const handleEnviarMensagem = (e) => {
+  const handleEnviarMensagem = async (e) => {
     e.preventDefault();
     if (!novaMensagem.trim()) return;
 
-    const msg = {
-      id: Date.now(),
-      remetente: papelAtual,
-      nomeRemetente: nomeUsuario,
-      texto: novaMensagem,
-      hora: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-      tipo: 'texto'
-    };
-
-    setMensagens((prev) => [...prev, msg]);
-    setNovaMensagem('');
-  };
-
-  // Abrir Modal de Orçamento
-  const handleAbrirModalOrcamento = () => {
-    if (orcamento) {
-      setFormOrcamento({
-        descricao: orcamento.descricao,
-        valor: orcamento.valor,
-        prazo: orcamento.prazo
+    try {
+      const response = await fetch('/api/mensagens-chat', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          id_pedido: Number(idPedido),
+          id_remetente: Number(idUsuario),
+          conteudo: novaMensagem.trim(),
+          tipo_mensagem: 'texto'
+        })
       });
+
+      if (response.ok) {
+        setNovaMensagem('');
+        carregarMensagens();
+      } else {
+        const data = await response.json();
+        alert(data.erro || 'Erro ao enviar mensagem.');
+      }
+    } catch (err) {
+      alert(`Erro de conexão: ${err.message}`);
     }
-    setMostrarModalOrcamento(true);
   };
 
-  // Costureira emite ou edita o orçamento
-  const handleSalvarOrcamento = (e) => {
-    e.preventDefault();
-    const valor = parseFloat(formOrcamento.valor);
-    const sinal = valor * 0.5;
-    const prazo = formOrcamento.prazo;
-    const descricao = formOrcamento.descricao;
+  const handleValorChange = (campo, valorBruto) => {
+    const apenasNumeros = valorBruto.replace(/\D/g, '');
+    if (!apenasNumeros) {
+      setPropostaForm((prev) => ({ ...prev, [campo]: '' }));
+      return;
+    }
+    const valorDecimal = (parseFloat(apenasNumeros) / 100).toFixed(2);
+    setPropostaForm((prev) => ({ ...prev, [campo]: valorDecimal }));
+  };
 
-    if (!valor || valor <= 0) {
-      alert('Informe um valor válido para o orçamento.');
+  const handleEnviarProposta = async (e) => {
+    e.preventDefault();
+
+    if (!idPedido || !idUsuario) {
+      alert('Erro: ID do pedido ou do usuário não identificado.');
       return;
     }
 
-    const eEdicao = !!orcamento;
+    const total = parseFloat(propostaForm.valorTotal);
+    if (isNaN(total) || total <= 0) {
+      alert('Informe um valor total válido para a proposta.');
+      return;
+    }
 
-    const novoOrcamento = {
-      id: Date.now(),
-      valor,
-      sinal,
-      prazo,
-      descricao,
-      aprovado: false
+    const entrada = propostaForm.valorEntrada ? parseFloat(propostaForm.valorEntrada) : 0;
+
+    const textoFormatado = `Proposta de Orçamento:\nServiço: ${propostaForm.descricao}\nValor Total: R$ ${total.toFixed(2)}${entrada > 0 ? `\nEntrada (Sinal): R$ ${entrada.toFixed(2)}` : ''}\nPrevisão de Entrega: ${propostaForm.previsaoEntrega ? new Date(propostaForm.previsaoEntrega).toLocaleDateString('pt-BR') : 'A combinar'}`;
+
+    const payload = {
+      id_pedido: Number(idPedido),
+      id_remetente: Number(idUsuario),
+      conteudo: textoFormatado,
+      tipo_mensagem: 'proposta',
+      valor_entrada: entrada,
+      valor_proposta: total,
+      dados_proposta: {
+        descricaoServico: propostaForm.descricao,
+        valorTotal: total,
+        valorEntrada: entrada,
+        previsaoEntrega: propostaForm.previsaoEntrega
+      }
     };
 
-    setOrcamento(novoOrcamento);
-    setStatusPagamento('Aguardando Aprovação');
-    setMostrarModalOrcamento(false);
+    try {
+      const response = await fetch('/api/mensagens-chat', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      });
 
-    setMensagens((prev) => [
-      ...prev,
-      {
-        id: Date.now(),
-        remetente: 'Costureira',
-        nomeRemetente: nomeUsuario,
-        texto: `PROPOSTA DE ORÇAMENTO ${eEdicao ? 'ATUALIZADA' : 'EMITIDA'}:\nServiço: ${descricao}\nValor Total: R$ ${valor.toFixed(2)}\nSinal (50%): R$ ${sinal.toFixed(2)}\nPrazo Estimado: ${prazo}`,
-        hora: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-        tipo: 'orcamento',
-        dadosOrcamento: novoOrcamento
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.erro || 'Erro ao registrar a proposta no servidor.');
       }
-    ]);
+
+      setOrcamentoAtual({
+        total: total,
+        entrada: entrada,
+        prazo: propostaForm.previsaoEntrega,
+        status: 'Aguardando Aprovação',
+        descricao: propostaForm.descricao
+      });
+
+      setMostrarModalProposta(false);
+      carregarMensagens();
+      alert('Proposta enviada com sucesso!');
+    } catch (err) {
+      alert(`Erro ao enviar proposta: ${err.message}`);
+    }
   };
 
-  // Cliente aprova o orçamento
-  const handleAprovarOrcamento = () => {
-    setOrcamento((prev) => ({ ...prev, aprovado: true }));
-    setStatusPagamento('Sinal Pago (50%)');
+  const handleAceitarProposta = async (dadosProposta) => {
+    try {
+      const response = await fetch('/api/ordens-servico', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          id_pedido: idPedido,
+          id_costureira: pedido.costureiraId || idUsuario,
+          valor_total: dadosProposta.valorTotal || orcamentoAtual.total,
+          valor_entrada: dadosProposta.valorEntrada || orcamentoAtual.entrada,
+          previsao_entrega: dadosProposta.previsaoEntrega || orcamentoAtual.prazo
+        })
+      });
 
-    setMensagens((prev) => [
-      ...prev,
-      {
-        id: Date.now(),
-        remetente: 'Cliente',
-        nomeRemetente: nomeUsuario,
-        texto: 'Orçamento aprovado! Pagamento do sinal confirmado.',
-        hora: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-        tipo: 'sistema'
+      if (response.ok) {
+        alert('Orçamento aprovado! O pedido foi atualizado.');
+        setOrcamentoAtual((prev) => ({ ...prev, status: 'Em Produção' }));
+        if (onNavigate) onNavigate('meusPedidos');
+      } else {
+        const data = await response.json();
+        alert(data.erro || 'Erro ao aprovar o orçamento.');
       }
-    ]);
+    } catch (err) {
+      alert(`Erro ao aprovar orçamento: ${err.message}`);
+    }
   };
 
-  // Atualização das medidas corporais
-  const handleSalvarMedidas = (e) => {
-    e.preventDefault();
-    setEditandoMedidas(false);
+  const handleBaixarTXT = () => {
+    const conteudoTXT = `FICHA DE MEDIDAS E ORÇAMENTO\nPedido: #${idPedido}\nCliente: ${pedido?.clienteNome || 'Cliente'}\nData: ${new Date().toLocaleDateString('pt-BR')}\n\nMEDIDAS:\n- Busto: ${medidas.busto || 'Não informado'}\n- Cintura: ${medidas.cintura || 'Não informado'}\n- Quadril: ${medidas.quadril || 'Não informado'}\n- Altura: ${medidas.altura || 'Não informado'}\n- Comprimento: ${medidas.comprimento || 'Não informado'}\n\nORÇAMENTO:\n- Serviço: ${orcamentoAtual.descricao || extrairDescricaoLimpa(pedido?.descricao) || 'Não informado'}\n- Valor Total: R$ ${orcamentoAtual.total ? Number(orcamentoAtual.total).toFixed(2) : '0.00'}\n- Valor de Entrada: R$ ${orcamentoAtual.entrada ? Number(orcamentoAtual.entrada).toFixed(2) : '0.00'}\n- Status: ${orcamentoAtual.status}`;
+
+    const blob = new Blob([conteudoTXT], { type: 'text/plain;charset=utf-8' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `Ficha_Medidas_Pedido_${idPedido}.txt`;
+    link.click();
+    URL.revokeObjectURL(url);
   };
 
-  // Exportar Ficha em TXT
-  const handleExportarTXT = () => {
-    const conteudo = `=== ATELIÊ ENTRE LINHAS - FICHA DE MEDIDAS ===\nCliente: ${medidas.clienteNome}\nBusto: ${medidas.busto || 'Não informado'}\nCintura: ${medidas.cintura || 'Não informado'}\nQuadril: ${medidas.quadril || 'Não informado'}\nAltura: ${medidas.altura || 'Não informado'}\nComprimento Desejado: ${medidas.comprimentoDesejado || 'Não informado'}\nData de Emissão: ${new Date().toLocaleDateString()}`;
-
-    const element = document.createElement('a');
-    const file = new Blob([conteudo], { type: 'text/plain;charset=utf-8' });
-    element.href = URL.createObjectURL(file);
-    element.download = `Ficha_Medidas_${medidas.clienteNome.replace(/\s+/g, '_')}.txt`;
-    document.body.appendChild(element);
-    element.click();
-    document.body.removeChild(element);
-  };
-
-  // Exportar Ficha de Medidas em PDF
-  const handleExportarPDFMedidas = () => {
-    const janelaImpressao = window.open('', '_blank');
-    janelaImpressao.document.write(`
+  const handleGerarPDF = () => {
+    const janelaImpressao = window.open('', '_blank', 'width=800,height=900');
+    
+    const htmlPDF = `
+      <!DOCTYPE html>
       <html>
-        <head>
-          <title>Ficha de Medidas - ${medidas.clienteNome}</title>
-          <style>
-            body { font-family: sans-serif; padding: 30px; color: #333; }
-            h1 { color: #3E2445; border-bottom: 2px solid #3E2445; padding-bottom: 8px; margin-bottom: 5px; }
-            h2 { color: #7A5B72; font-size: 18px; margin-top: 0; }
-            ul { line-height: 2; font-size: 15px; list-style-type: square; }
-            .footer { margin-top: 50px; font-size: 12px; color: #777; border-top: 1px solid #ddd; padding-top: 10px; }
-          </style>
-        </head>
-        <body>
-          <h1>Ateliê Entre Linhas</h1>
-          <h2>Ficha Corporal de Medidas</h2>
-          <p><strong>Cliente:</strong> ${medidas.clienteNome}</p>
-          <p><strong>Data de Emissão:</strong> ${new Date().toLocaleDateString()}</p>
-          <hr />
-          <ul>
-            <li><strong>Busto:</strong> ${medidas.busto || 'Não preenchido'}</li>
-            <li><strong>Cintura:</strong> ${medidas.cintura || 'Não preenchido'}</li>
-            <li><strong>Quadril:</strong> ${medidas.quadril || 'Não preenchido'}</li>
-            <li><strong>Altura:</strong> ${medidas.altura || 'Não preenchido'}</li>
-            <li><strong>Comprimento Desejado:</strong> ${medidas.comprimentoDesejado || 'Não preenchido'}</li>
-          </ul>
-          <div class="footer">Gerado por Ateliê Entre Linhas</div>
-          <script>
-            window.onload = function() { window.print(); window.close(); }
-          </script>
-        </body>
-      </html>
-    `);
-    janelaImpressao.document.close();
-  };
-
-  // Exportar Orçamento em PDF
-  const handleExportarPDFOrcamento = () => {
-    if (!orcamento) return;
-    const janelaImpressao = window.open('', '_blank');
-    janelaImpressao.document.write(`
-      <html>
-        <head>
-          <title>Orçamento - Ateliê Entre Linhas</title>
-          <style>
-            body { font-family: sans-serif; padding: 30px; color: #333; }
-            h1 { color: #3E2445; border-bottom: 2px solid #3E2445; padding-bottom: 8px; }
-            .box { background: #faf7f5; padding: 20px; border-radius: 6px; border: 1px solid #ddd; margin-top: 15px; }
-            .price { font-size: 20px; color: #2e7d32; font-weight: bold; }
-            .footer { margin-top: 50px; font-size: 12px; color: #777; border-top: 1px solid #ddd; padding-top: 10px; }
-          </style>
-        </head>
-        <body>
-          <h1>Ateliê Entre Linhas</h1>
-          <h2>Comprovante de Proposta de Orçamento</h2>
-          <p><strong>Cliente:</strong> ${medidas.clienteNome}</p>
-          <p><strong>Data de Emissão:</strong> ${new Date().toLocaleDateString()}</p>
-          
-          <div class="box">
-            <p><strong>Descrição do Serviço:</strong> ${orcamento.descricao}</p>
-            <p class="price">Valor Total: R$ ${orcamento.valor.toFixed(2)}</p>
-            <p><strong>Sinal Obrigatório (50%):</strong> R$ ${orcamento.sinal.toFixed(2)}</p>
-            <p><strong>Prazo Estimado:</strong> ${orcamento.prazo}</p>
-            <p><strong>Status:</strong> ${orcamento.aprovado ? 'Aprovado pelo Cliente' : 'Aguardando Aprovação'}</p>
+      <head>
+        <title>Orçamento e Ficha de Medidas - Ateliê Entre Linhas</title>
+        <style>
+          body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; padding: 40px; color: #333; }
+          .header { border-bottom: 2px solid #3E2445; padding-bottom: 15px; margin-bottom: 30px; display: flex; justify-content: space-between; align-items: center; }
+          .title { color: #3E2445; font-size: 24px; font-weight: bold; margin: 0; }
+          .subtitle { color: #666; font-size: 14px; margin-top: 5px; }
+          .section { margin-bottom: 25px; background: #FAF7FA; padding: 18px; border-radius: 8px; border: 1px solid #EADCEB; }
+          .section-title { font-size: 16px; font-weight: bold; color: #3E2445; border-bottom: 1px solid #D8BFD8; padding-bottom: 6px; margin-bottom: 12px; }
+          table { width: 100%; border-collapse: collapse; margin-top: 10px; }
+          th, td { text-align: left; padding: 8px 12px; border-bottom: 1px solid #eee; font-size: 14px; }
+          th { background: #EADCEB; color: #3E2445; font-weight: bold; }
+          .footer { margin-top: 50px; text-align: center; font-size: 12px; color: #777; border-top: 1px solid #ddd; padding-top: 15px; }
+        </style>
+      </head>
+      <body>
+        <div class="header">
+          <div>
+            <h1 class="title">Ateliê Entre Linhas</h1>
+            <div class="subtitle">Documento de Orçamento e Ficha Técnica</div>
           </div>
-          <div class="footer">Gerado por Ateliê Entre Linhas</div>
-          <script>
-            window.onload = function() { window.print(); window.close(); }
-          </script>
-        </body>
+          <div style="text-align: right; font-size: 13px; color: #555;">
+            <div><strong>Data:</strong> ${new Date().toLocaleDateString('pt-BR')}</div>
+            <div><strong>Pedido:</strong> #${idPedido}</div>
+          </div>
+        </div>
+
+        <div class="section">
+          <div class="section-title">Detalhamento do Orçamento</div>
+          <div style="margin-bottom: 10px;"><strong>Descrição do Serviço:</strong> ${orcamentoAtual.descricao || extrairDescricaoLimpa(pedido?.descricao) || 'Não informada'}</div>
+          <table>
+            <thead>
+              <tr>
+                <th>Item</th>
+                <th>Valor</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>Valor Total do Serviço</td>
+                <td><strong>R$ ${orcamentoAtual.total ? Number(orcamentoAtual.total).toFixed(2) : '0.00'}</strong></td>
+              </tr>
+              ${orcamentoAtual.entrada > 0 ? `
+              <tr>
+                <td>Valor de Entrada (Sinal)</td>
+                <td>R$ ${Number(orcamentoAtual.entrada).toFixed(2)}</td>
+              </tr>
+              ` : ''}
+              <tr>
+                <td>Previsão de Entrega</td>
+                <td>${orcamentoAtual.prazo ? new Date(orcamentoAtual.prazo).toLocaleDateString('pt-BR') : 'A combinar'}</td>
+              </tr>
+              <tr>
+                <td>Status do Serviço</td>
+                <td>${orcamentoAtual.status}</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <div class="section">
+          <div class="section-title">Ficha de Medidas do Cliente</div>
+          <table>
+            <thead>
+              <tr>
+                <th>Medida</th>
+                <th>Valor (cm)</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr><td>Busto</td><td>${medidas.busto || 'Não informado'}</td></tr>
+              <tr><td>Cintura</td><td>${medidas.cintura || 'Não informado'}</td></tr>
+              <tr><td>Quadril</td><td>${medidas.quadril || 'Não informado'}</td></tr>
+              <tr><td>Altura</td><td>${medidas.altura || 'Não informado'}</td></tr>
+              <tr><td>Comprimento da Peça</td><td>${medidas.comprimento || 'Não informado'}</td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <div class="footer">
+          Ateliê Entre Linhas - Plataforma de Confecção e Ajustes
+        </div>
+
+        <script>
+          window.onload = function() {
+            window.print();
+          };
+        </script>
+      </body>
       </html>
-    `);
+    `;
+
+    janelaImpressao.document.write(htmlPDF);
     janelaImpressao.document.close();
   };
 
   return (
-    <div style={{ maxWidth: '950px', margin: '20px auto', fontFamily: "'Segoe UI', Tahoma, Geneva, Verdana, sans-serif" }}>
+    <div style={{ maxWidth: '1100px', margin: '20px auto', fontFamily: "'Segoe UI', Tahoma, Geneva, Verdana, sans-serif" }}>
       
-      {/* CABEÇALHO SUPERIOR */}
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px', background: '#fff', padding: '20px', borderRadius: '12px', boxShadow: '0 4px 16px rgba(62, 36, 69, 0.12)' }}>
+      {/* Cabeçalho */}
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: '#fff', padding: '20px 25px', borderRadius: '12px', boxShadow: '0 4px 16px rgba(62, 36, 69, 0.12)', marginBottom: '20px' }}>
         <div>
-          <h2 style={{ color: '#3E2445', margin: 0, fontSize: '22px' }}>
-            Chat de Negociação
-          </h2>
+          <h2 style={{ color: '#3E2445', margin: 0, fontSize: '22px' }}>Chat de Negociação</h2>
           <span style={{ fontSize: '13px', color: '#666', marginTop: '4px', display: 'block' }}>
-            Usuário: <strong>{nomeUsuario}</strong> ({papelAtual})
+            Usuário: <strong>{nomeUsuario}</strong> ({isCostureira ? 'Costureira' : 'Cliente'})
           </span>
         </div>
 
         <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
           <button
+            onClick={() => onNavigate && onNavigate('meusChats')}
+            style={{ padding: '9px 16px', background: '#F4EFF5', color: '#3E2445', border: '1px solid #3E2445', borderRadius: '6px', fontWeight: 'bold', cursor: 'pointer', fontSize: '13px' }}
+          >
+            Conversas
+          </button>
+          
+          <button
             onClick={handleVoltarPedidos}
             style={{ padding: '9px 16px', background: '#3E2445', color: '#fff', border: 'none', borderRadius: '6px', fontWeight: 'bold', cursor: 'pointer', fontSize: '13px' }}
           >
-            ← Ver Pedidos
+            Ver Pedidos
           </button>
 
           <button
@@ -284,61 +413,42 @@ function Chat({ usuario, usuarioLogado, onNavigate, pedido }) {
         </div>
       </div>
 
-      <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr', gap: '20px' }}>
+      {/* Grid Principal */}
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 340px', gap: '20px' }}>
         
-        {/* COLUNA ESQUERDA: CHAT DE MENSAGENS */}
-        <div style={{ background: '#fff', borderRadius: '12px', boxShadow: '0 4px 16px rgba(62, 36, 69, 0.12)', display: 'flex', flexDirection: 'column', height: '580px', overflow: 'hidden' }}>
-          <div style={{ padding: '15px 20px', background: '#3E2445', color: '#fff', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-            <div>
-              <h4 style={{ margin: 0, fontSize: '16px' }}>Atendimento Direto</h4>
-              <small style={{ color: '#EAE3EA' }}>Conectado como: {nomeUsuario}</small>
-            </div>
+        {/* Janela do Chat */}
+        <div style={{ background: '#fff', borderRadius: '12px', boxShadow: '0 4px 16px rgba(62, 36, 69, 0.12)', display: 'flex', flexDirection: 'column', height: '620px', overflow: 'hidden' }}>
+          
+          <div style={{ background: '#3E2445', color: '#fff', padding: '15px 20px' }}>
+            <h3 style={{ margin: 0, fontSize: '16px', fontWeight: 'bold' }}>Atendimento Direto</h3>
+            <span style={{ fontSize: '12px', opacity: 0.85 }}>Conectado como: {nomeUsuario}</span>
           </div>
 
-          {/* ÁREA DE MENSAGENS */}
-          <div style={{ flex: 1, padding: '20px', overflowY: 'auto', background: '#FAF7F5' }}>
+          <div style={{ flex: 1, padding: '20px', overflowY: 'auto', background: '#FAF7FA', display: 'flex', flexDirection: 'column', gap: '12px' }}>
             {mensagens.length === 0 ? (
-              <div style={{ textAlign: 'center', color: '#888', marginTop: '160px' }}>
-                <p style={{ fontSize: '15px', fontWeight: 'bold', color: '#3E2445' }}>Nenhuma mensagem na conversa.</p>
-                <p style={{ fontSize: '13px' }}>Digite uma mensagem abaixo para iniciar a negociação do serviço.</p>
+              <div style={{ textAlign: 'center', color: '#888', marginTop: 'auto', marginBottom: 'auto', fontSize: '14px' }}>
+                Nenhuma mensagem trocada ainda. Envie uma mensagem para iniciar a negociação.
               </div>
             ) : (
               mensagens.map((msg) => {
-                const eEu = msg.remetente === papelAtual;
-                const eSistema = msg.tipo === 'sistema';
-
-                if (eSistema) {
-                  return (
-                    <div key={msg.id} style={{ textAlign: 'center', margin: '12px 0', fontSize: '13px', color: '#2e7d32', background: '#e8f5e9', padding: '10px', borderRadius: '6px', fontWeight: 'bold' }}>
-                      {msg.texto}
-                    </div>
-                  );
-                }
+                const ehMinha = Number(msg.id_remetente) === Number(idUsuario);
+                const ehProposta = msg.tipo_mensagem === 'proposta' || (msg.conteudo && msg.conteudo.includes('Proposta de Orçamento:'));
 
                 return (
-                  <div key={msg.id} style={{ display: 'flex', flexDirection: 'column', alignItems: eEu ? 'flex-end' : 'flex-start', marginBottom: '14px' }}>
-                    <span style={{ fontSize: '11px', color: '#777', marginBottom: '3px' }}>
-                      {msg.nomeRemetente} ({msg.remetente}) • {msg.hora}
-                    </span>
-                    <div style={{ maxWidth: '80%', padding: '10px 14px', borderRadius: '12px', background: eEu ? '#3E2445' : '#fff', color: eEu ? '#fff' : '#333', boxShadow: '0 1px 4px rgba(0,0,0,0.08)', whiteSpace: 'pre-line', fontSize: '14px' }}>
-                      {msg.texto}
+                  <div key={msg.id_mensagem || msg.id} style={{ display: 'flex', justifyContent: ehMinha ? 'flex-end' : 'flex-start' }}>
+                    <div style={{ maxWidth: '80%', background: ehMinha ? '#3E2445' : '#fff', color: ehMinha ? '#fff' : '#333', border: ehMinha ? 'none' : '1px solid #E0D0E0', padding: '12px 16px', borderRadius: '10px', boxShadow: '0 2px 6px rgba(0,0,0,0.05)' }}>
+                      <div style={{ fontSize: '11px', color: ehMinha ? '#EADCEB' : '#777', marginBottom: '4px', fontWeight: 'bold' }}>
+                        {msg.remetente_nome || (ehMinha ? 'Você' : 'Interlocutor')}
+                      </div>
+                      <div style={{ fontSize: '14px', whiteSpace: 'pre-line', lineHeight: '1.4' }}>{msg.conteudo}</div>
 
-                      {msg.tipo === 'orcamento' && (
-                        <div style={{ marginTop: '10px', padding: '10px', background: eEu ? 'rgba(255,255,255,0.15)' : '#F4EFF5', borderRadius: '6px', borderLeft: '4px solid #3E2445' }}>
-                          {!isCostureira && !orcamento?.aprovado && (
-                            <button
-                              onClick={handleAprovarOrcamento}
-                              style={{ width: '100%', marginTop: '8px', padding: '8px', background: '#2e7d32', color: '#fff', border: 'none', borderRadius: '4px', cursor: 'pointer', fontWeight: 'bold', fontSize: '13px' }}
-                            >
-                              Aprovar Orçamento e Pagar Sinal (R$ {msg.dadosOrcamento.sinal.toFixed(2)})
-                            </button>
-                          )}
-                          {orcamento?.aprovado && (
-                            <span style={{ fontSize: '12px', fontWeight: 'bold', color: eEu ? '#81c784' : '#2e7d32', display: 'block', marginTop: '6px' }}>
-                              Orçamento Aprovado pelo Cliente
-                            </span>
-                          )}
-                        </div>
+                      {!isCostureira && ehProposta && (
+                        <button
+                          onClick={() => handleAceitarProposta(msg.dados_proposta || {})}
+                          style={{ marginTop: '12px', width: '100%', padding: '9px', background: '#2E7D32', color: '#fff', border: 'none', borderRadius: '6px', cursor: 'pointer', fontWeight: 'bold', fontSize: '13px' }}
+                        >
+                          Aprovar Orçamento e Iniciar Serviço
+                        </button>
                       )}
                     </div>
                   </div>
@@ -353,210 +463,245 @@ function Chat({ usuario, usuarioLogado, onNavigate, pedido }) {
               value={novaMensagem}
               onChange={(e) => setNovaMensagem(e.target.value)}
               placeholder="Digite sua mensagem..."
-              style={{ flex: 1, padding: '10px 14px', borderRadius: '6px', border: '1px solid #ccc', outline: 'none', fontSize: '14px' }}
+              style={{ flex: 1, padding: '11px 14px', borderRadius: '6px', border: '1px solid #ccc', outline: 'none', fontSize: '14px' }}
             />
-            <button type="submit" style={{ padding: '10px 20px', background: '#3E2445', color: '#fff', border: 'none', borderRadius: '6px', cursor: 'pointer', fontWeight: 'bold', fontSize: '14px' }}>
+            <button
+              type="submit"
+              style={{ padding: '11px 20px', background: '#3E2445', color: '#fff', border: 'none', borderRadius: '6px', cursor: 'pointer', fontWeight: 'bold', fontSize: '14px' }}
+            >
               Enviar
             </button>
           </form>
+
         </div>
 
-        {/* COLUNA DIREITA: FINANCEIRO E MEDIDAS */}
+        {/* Painel Lateral Único */}
         <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
           
-          {/* Painel Financeiro */}
-          <div style={{ background: '#fff', padding: '20px', borderRadius: '12px', boxShadow: '0 4px 16px rgba(62, 36, 69, 0.12)' }}>
-            <h3 style={{ margin: '0 0 12px 0', color: '#3E2445', fontSize: '16px', fontWeight: 'bold' }}>Status Financeiro</h3>
-
-            <div style={{ padding: '10px 12px', background: '#FAF7F5', borderRadius: '6px', marginBottom: '14px' }}>
-              <p style={{ margin: '0 0 6px 0', fontSize: '13px', color: '#555' }}>
-                <strong>Status do Pagamento:</strong>
-              </p>
-              <span
-                style={{
-                  display: 'inline-block',
-                  padding: '4px 10px',
-                  borderRadius: '12px',
-                  fontSize: '12px',
-                  fontWeight: 'bold',
-                  background: statusPagamento === 'Quitado' ? '#e8f5e9' : statusPagamento.includes('Sinal') ? '#e3f2fd' : statusPagamento === 'Aguardando Aprovação' ? '#fff3e0' : '#f5f5f5',
-                  color: statusPagamento === 'Quitado' ? '#2e7d32' : statusPagamento.includes('Sinal') ? '#1565c0' : statusPagamento === 'Aguardando Aprovação' ? '#e65100' : '#666'
-                }}
-              >
-                {statusPagamento}
-              </span>
+          {/* Card 1: Status Financeiro */}
+          <div style={{ background: '#fff', borderRadius: '12px', padding: '20px', boxShadow: '0 4px 16px rgba(62, 36, 69, 0.12)' }}>
+            <h3 style={{ margin: '0 0 15px 0', color: '#3E2445', fontSize: '17px', fontWeight: 'bold' }}>Status Financeiro</h3>
+            
+            <div style={{ background: '#FFF8E1', border: '1px solid #FFE082', borderRadius: '8px', padding: '12px', marginBottom: '15px' }}>
+              <span style={{ fontSize: '12px', color: '#888', display: 'block', marginBottom: '4px' }}>Status do Serviço:</span>
+              <strong style={{ color: '#E65100', fontSize: '14px' }}>{orcamentoAtual.status}</strong>
             </div>
 
-            {orcamento ? (
-              <div style={{ fontSize: '13px', color: '#333' }}>
-                <p style={{ margin: '4px 0' }}><strong>Total:</strong> R$ {orcamento.valor.toFixed(2)}</p>
-                <p style={{ margin: '4px 0' }}><strong>Sinal (50%):</strong> R$ {orcamento.sinal.toFixed(2)}</p>
-                <p style={{ margin: '4px 0' }}><strong>Prazo:</strong> {orcamento.prazo}</p>
+            <div style={{ fontSize: '14px', color: '#444', display: 'flex', flexDirection: 'column', gap: '8px', marginBottom: '18px' }}>
+              <div><strong>Total:</strong> R$ {orcamentoAtual.total ? Number(orcamentoAtual.total).toFixed(2) : '0.00'}</div>
+              {orcamentoAtual.entrada > 0 && (
+                <div><strong>Entrada:</strong> R$ {Number(orcamentoAtual.entrada).toFixed(2)}</div>
+              )}
+              <div><strong>Prazo:</strong> {orcamentoAtual.prazo ? new Date(orcamentoAtual.prazo).toLocaleDateString('pt-BR') : 'A combinar'}</div>
+            </div>
 
-                <button
-                  onClick={handleExportarPDFOrcamento}
-                  style={{ width: '100%', padding: '9px', marginTop: '12px', background: '#F4EFF5', color: '#3E2445', border: '1px solid #3E2445', borderRadius: '6px', cursor: 'pointer', fontWeight: 'bold', fontSize: '13px' }}
-                >
-                  Gerar PDF do Orçamento
-                </button>
-
-                {/* EDITAR ORÇAMENTO SE FOR COSTUREIRA E NÃO TIVER SIDO APROVADO */}
-                {isCostureira && !orcamento.aprovado && (
-                  <button
-                    onClick={handleAbrirModalOrcamento}
-                    style={{ width: '100%', padding: '9px', marginTop: '8px', background: '#3E2445', color: '#fff', border: 'none', borderRadius: '6px', cursor: 'pointer', fontWeight: 'bold', fontSize: '13px' }}
-                  >
-                    Editar Orçamento
-                  </button>
-                )}
-              </div>
-            ) : (
-              <p style={{ fontSize: '13px', color: '#777', margin: '8px 0' }}>Nenhum orçamento emitido ainda para esta conversa.</p>
-            )}
-
-            {/* BOTÃO EMITIR ORÇAMENTO SE FOR COSTUREIRA */}
-            {isCostureira && !orcamento && (
+            {isCostureira && (
               <button
-                onClick={handleAbrirModalOrcamento}
-                style={{ width: '100%', padding: '10px', marginTop: '10px', background: '#3E2445', color: '#fff', border: 'none', borderRadius: '6px', cursor: 'pointer', fontWeight: 'bold', fontSize: '13px' }}
+                onClick={handleAbrirModalProposta}
+                style={{ width: '100%', padding: '10px', background: '#3E2445', color: '#fff', border: 'none', borderRadius: '6px', fontWeight: 'bold', cursor: 'pointer', fontSize: '13px' }}
               >
-                + Emitir Orçamento
+                {orcamentoAtual.total > 0 ? 'Editar Orçamento' : '+ Incluir Orçamento / Proposta'}
               </button>
             )}
           </div>
 
-          {/* Painel da Ficha de Medidas */}
-          <div style={{ background: '#fff', padding: '20px', borderRadius: '12px', boxShadow: '0 4px 16px rgba(62, 36, 69, 0.12)' }}>
+          {/* Card 2: Ficha de Medidas */}
+          <div style={{ background: '#fff', borderRadius: '12px', padding: '20px', boxShadow: '0 4px 16px rgba(62, 36, 69, 0.12)' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' }}>
-              <h3 style={{ margin: 0, color: '#3E2445', fontSize: '16px', fontWeight: 'bold' }}>Ficha de Medidas</h3>
-              
+              <h3 style={{ margin: 0, color: '#3E2445', fontSize: '17px', fontWeight: 'bold' }}>Ficha de Medidas</h3>
               <button
-                onClick={() => setEditandoMedidas(!editandoMedidas)}
-                style={{ background: 'none', border: 'none', color: '#3E2445', cursor: 'pointer', fontSize: '12px', fontWeight: 'bold', textDecoration: 'underline' }}
+                onClick={() => setMostrarModalMedidas(true)}
+                style={{ background: 'none', border: 'none', color: '#3E2445', textDecoration: 'underline', cursor: 'pointer', fontSize: '13px', fontWeight: 'bold' }}
               >
-                {editandoMedidas ? 'Cancelar' : 'Editar'}
+                Editar
               </button>
             </div>
 
-            {editandoMedidas ? (
-              <form onSubmit={handleSalvarMedidas} style={{ fontSize: '12px' }}>
-                <div style={{ marginBottom: '8px' }}>
-                  <label style={{ fontWeight: 'bold', color: '#333' }}>Busto:</label>
-                  <input type="text" value={medidas.busto} onChange={(e) => setMedidas({ ...medidas, busto: e.target.value })} style={{ width: '100%', padding: '6px', borderRadius: '4px', border: '1px solid #ccc', boxSizing: 'border-box', marginTop: '2px' }} placeholder="Ex: 90 cm" />
-                </div>
-                <div style={{ marginBottom: '8px' }}>
-                  <label style={{ fontWeight: 'bold', color: '#333' }}>Cintura:</label>
-                  <input type="text" value={medidas.cintura} onChange={(e) => setMedidas({ ...medidas, cintura: e.target.value })} style={{ width: '100%', padding: '6px', borderRadius: '4px', border: '1px solid #ccc', boxSizing: 'border-box', marginTop: '2px' }} placeholder="Ex: 70 cm" />
-                </div>
-                <div style={{ marginBottom: '8px' }}>
-                  <label style={{ fontWeight: 'bold', color: '#333' }}>Quadril:</label>
-                  <input type="text" value={medidas.quadril} onChange={(e) => setMedidas({ ...medidas, quadril: e.target.value })} style={{ width: '100%', padding: '6px', borderRadius: '4px', border: '1px solid #ccc', boxSizing: 'border-box', marginTop: '2px' }} placeholder="Ex: 98 cm" />
-                </div>
-                <div style={{ marginBottom: '8px' }}>
-                  <label style={{ fontWeight: 'bold', color: '#333' }}>Altura:</label>
-                  <input type="text" value={medidas.altura} onChange={(e) => setMedidas({ ...medidas, altura: e.target.value })} style={{ width: '100%', padding: '6px', borderRadius: '4px', border: '1px solid #ccc', boxSizing: 'border-box', marginTop: '2px' }} placeholder="Ex: 1.65 m" />
-                </div>
-                <div style={{ marginBottom: '12px' }}>
-                  <label style={{ fontWeight: 'bold', color: '#333' }}>Comprimento Desejado:</label>
-                  <input type="text" value={medidas.comprimentoDesejado} onChange={(e) => setMedidas({ ...medidas, comprimentoDesejado: e.target.value })} style={{ width: '100%', padding: '6px', borderRadius: '4px', border: '1px solid #ccc', boxSizing: 'border-box', marginTop: '2px' }} placeholder="Ex: 100 cm" />
-                </div>
-                <button type="submit" style={{ width: '100%', padding: '8px', background: '#3E2445', color: '#fff', border: 'none', borderRadius: '4px', cursor: 'pointer', fontWeight: 'bold', fontSize: '12px' }}>
-                  Salvar Medidas
-                </button>
-              </form>
-            ) : (
-              <ul style={{ paddingLeft: '18px', fontSize: '13px', margin: '0 0 14px 0', lineHeight: '1.7', color: '#333' }}>
-                <li><strong>Busto:</strong> {medidas.busto || <span style={{ color: '#aaa' }}>Não informado</span>}</li>
-                <li><strong>Cintura:</strong> {medidas.cintura || <span style={{ color: '#aaa' }}>Não informado</span>}</li>
-                <li><strong>Quadril:</strong> {medidas.quadril || <span style={{ color: '#aaa' }}>Não informado</span>}</li>
-                <li><strong>Altura:</strong> {medidas.altura || <span style={{ color: '#aaa' }}>Não informado</span>}</li>
-                <li><strong>Comprimento:</strong> {medidas.comprimentoDesejado || <span style={{ color: '#aaa' }}>Não informado</span>}</li>
-              </ul>
-            )}
-
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', marginTop: '12px' }}>
-              <button
-                onClick={handleExportarPDFMedidas}
-                style={{ width: '100%', padding: '8px', background: '#3E2445', color: '#fff', border: 'none', borderRadius: '6px', cursor: 'pointer', fontSize: '12px', fontWeight: 'bold' }}
-              >
-                Exportar Ficha em PDF
-              </button>
-
-              <button
-                onClick={handleExportarTXT}
-                style={{ width: '100%', padding: '8px', background: '#F4EFF5', color: '#3E2445', border: '1px solid #3E2445', borderRadius: '6px', cursor: 'pointer', fontSize: '12px', fontWeight: 'bold' }}
-              >
-                Baixar Texto (.TXT)
-              </button>
-            </div>
+            <ul style={{ listStyle: 'disc', paddingLeft: '20px', margin: 0, fontSize: '13px', color: '#555', lineHeight: '1.8' }}>
+              <li>Busto: {medidas.busto || 'Não informado'}</li>
+              <li>Cintura: {medidas.cintura || 'Não informado'}</li>
+              <li>Quadril: {medidas.quadril || 'Não informado'}</li>
+              <li>Altura: {medidas.altura || 'Não informado'}</li>
+              <li>Comprimento: {medidas.comprimento || 'Não informado'}</li>
+            </ul>
           </div>
+
+          {/* Card 3: Ações de Exportação (Apenas 1 botão PDF e 1 botão TXT) */}
+          <div style={{ background: '#fff', borderRadius: '12px', padding: '20px', boxShadow: '0 4px 16px rgba(62, 36, 69, 0.12)', display: 'flex', flexDirection: 'column', gap: '10px' }}>
+            <button
+              onClick={handleGerarPDF}
+              style={{ width: '100%', padding: '11px', background: '#3E2445', color: '#fff', border: 'none', borderRadius: '6px', fontWeight: 'bold', cursor: 'pointer', fontSize: '13px' }}
+            >
+              Exportar PDF Completo
+            </button>
+            <button
+              onClick={handleBaixarTXT}
+              style={{ width: '100%', padding: '10px', background: '#fff', color: '#3E2445', border: '1px solid #ccc', borderRadius: '6px', fontWeight: 'bold', cursor: 'pointer', fontSize: '13px' }}
+            >
+              Baixar Texto (.TXT)
+            </button>
+          </div>
+
         </div>
+
       </div>
 
-      {/* MODAL DE EMISSÃO OU EDIÇÃO DE ORÇAMENTO */}
-      {mostrarModalOrcamento && (
+      {/* Modal de Orçamento */}
+      {mostrarModalProposta && (
         <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000 }}>
-          <div style={{ background: '#fff', padding: '25px', borderRadius: '12px', width: '420px', maxWidth: '90%', boxShadow: '0 4px 20px rgba(0,0,0,0.2)' }}>
-            <h3 style={{ marginTop: 0, color: '#3E2445', fontSize: '18px' }}>
-              {orcamento ? 'Editar Proposta de Orçamento' : 'Emitir Proposta de Orçamento'}
-            </h3>
-            <form onSubmit={handleSalvarOrcamento}>
+          <div style={{ background: '#fff', padding: '25px', borderRadius: '12px', width: '450px', maxWidth: '90%', boxShadow: '0 4px 20px rgba(0,0,0,0.2)' }}>
+            <h3 style={{ marginTop: 0, color: '#3E2445', fontSize: '18px' }}>Elaborar Proposta de Orçamento</h3>
+            
+            <form onSubmit={handleEnviarProposta}>
               <div style={{ marginBottom: '12px' }}>
-                <label style={{ display: 'block', fontSize: '13px', fontWeight: 'bold', color: '#3E2445', marginBottom: '4px' }}>Descrição do Serviço:</label>
-                <input
-                  type="text"
-                  value={formOrcamento.descricao}
-                  onChange={(e) => setFormOrcamento({ ...formOrcamento, descricao: e.target.value })}
-                  placeholder="Ex: Ajuste de barra e zíper"
-                  style={{ width: '100%', padding: '9px', borderRadius: '6px', border: '1px solid #ccc', boxSizing: 'border-box', outline: 'none' }}
+                <label style={{ display: 'block', fontSize: '13px', fontWeight: 'bold', color: '#3E2445', marginBottom: '4px' }}>Descrição do Serviço</label>
+                <textarea
+                  rows="3"
+                  value={propostaForm.descricao}
+                  onChange={(e) => setPropostaForm({ ...propostaForm, descricao: e.target.value })}
+                  style={{ width: '100%', padding: '9px', borderRadius: '6px', border: '1px solid #ccc', outline: 'none', fontSize: '13px', boxSizing: 'border-box' }}
                   required
                 />
               </div>
 
               <div style={{ marginBottom: '12px' }}>
-                <label style={{ display: 'block', fontSize: '13px', fontWeight: 'bold', color: '#3E2445', marginBottom: '4px' }}>Valor Total (R$):</label>
-                <input
-                  type="number"
-                  step="0.01"
-                  value={formOrcamento.valor}
-                  onChange={(e) => setFormOrcamento({ ...formOrcamento, valor: e.target.value })}
-                  placeholder="0.00"
-                  style={{ width: '100%', padding: '9px', borderRadius: '6px', border: '1px solid #ccc', boxSizing: 'border-box', outline: 'none' }}
-                  required
-                />
+                <label style={{ display: 'block', fontSize: '13px', fontWeight: 'bold', color: '#3E2445', marginBottom: '4px' }}>Valor Total (R$) *</label>
+                <div style={{ display: 'flex', alignItems: 'center', border: '1px solid #ccc', borderRadius: '6px', padding: '0 10px', background: '#fff' }}>
+                  <span style={{ color: '#555', fontWeight: 'bold', marginRight: '6px' }}>R$</span>
+                  <input
+                    type="text"
+                    inputMode="numeric"
+                    placeholder="0.00"
+                    value={propostaForm.valorTotal}
+                    onChange={(e) => handleValorChange('valorTotal', e.target.value)}
+                    style={{ width: '100%', padding: '9px 0', border: 'none', outline: 'none', background: 'transparent', fontSize: '14px' }}
+                    required
+                  />
+                </div>
+              </div>
+
+              <div style={{ marginBottom: '12px' }}>
+                <label style={{ display: 'block', fontSize: '13px', fontWeight: 'bold', color: '#3E2445', marginBottom: '4px' }}>Valor de Entrada / Sinal (Opcional)</label>
+                <div style={{ display: 'flex', alignItems: 'center', border: '1px solid #ccc', borderRadius: '6px', padding: '0 10px', background: '#fff' }}>
+                  <span style={{ color: '#555', fontWeight: 'bold', marginRight: '6px' }}>R$</span>
+                  <input
+                    type="text"
+                    inputMode="numeric"
+                    placeholder="0.00"
+                    value={propostaForm.valorEntrada}
+                    onChange={(e) => handleValorChange('valorEntrada', e.target.value)}
+                    style={{ width: '100%', padding: '9px 0', border: 'none', outline: 'none', background: 'transparent', fontSize: '14px' }}
+                  />
+                </div>
               </div>
 
               <div style={{ marginBottom: '20px' }}>
-                <label style={{ display: 'block', fontSize: '13px', fontWeight: 'bold', color: '#3E2445', marginBottom: '4px' }}>Prazo Estimado de Entrega:</label>
+                <label style={{ display: 'block', fontSize: '13px', fontWeight: 'bold', color: '#3E2445', marginBottom: '4px' }}>Previsão de Entrega</label>
                 <input
-                  type="text"
-                  value={formOrcamento.prazo}
-                  onChange={(e) => setFormOrcamento({ ...formOrcamento, prazo: e.target.value })}
-                  placeholder="Ex: 3 dias úteis"
-                  style={{ width: '100%', padding: '9px', borderRadius: '6px', border: '1px solid #ccc', boxSizing: 'border-box', outline: 'none' }}
-                  required
+                  type="date"
+                  value={propostaForm.previsaoEntrega}
+                  onChange={(e) => setPropostaForm({ ...propostaForm, previsaoEntrega: e.target.value })}
+                  style={{ width: '100%', padding: '9px', borderRadius: '6px', border: '1px solid #ccc', outline: 'none', boxSizing: 'border-box' }}
                 />
               </div>
 
               <div style={{ display: 'flex', gap: '10px', justifyContent: 'flex-end' }}>
                 <button
                   type="button"
-                  onClick={() => setMostrarModalOrcamento(false)}
-                  style={{ padding: '10px 16px', background: '#757575', color: '#fff', border: 'none', borderRadius: '6px', cursor: 'pointer', fontWeight: 'bold', fontSize: '13px' }}
+                  onClick={() => setMostrarModalProposta(false)}
+                  style={{ padding: '9px 16px', background: '#757575', color: '#fff', border: 'none', borderRadius: '6px', cursor: 'pointer', fontWeight: 'bold', fontSize: '13px' }}
                 >
                   Cancelar
                 </button>
                 <button
                   type="submit"
-                  style={{ padding: '10px 16px', background: '#3E2445', color: '#fff', border: 'none', borderRadius: '6px', cursor: 'pointer', fontWeight: 'bold', fontSize: '13px' }}
+                  style={{ padding: '9px 16px', background: '#2E7D32', color: '#fff', border: 'none', borderRadius: '6px', cursor: 'pointer', fontWeight: 'bold', fontSize: '13px' }}
                 >
-                  {orcamento ? 'Salvar Alterações' : 'Enviar Proposta'}
+                  Enviar Proposta
                 </button>
               </div>
             </form>
+
           </div>
         </div>
       )}
+
+      {/* Modal de Medidas */}
+      {mostrarModalMedidas && (
+        <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000 }}>
+          <div style={{ background: '#fff', padding: '25px', borderRadius: '12px', width: '400px', maxWidth: '90%', boxShadow: '0 4px 20px rgba(0,0,0,0.2)' }}>
+            <h3 style={{ marginTop: 0, color: '#3E2445', fontSize: '18px' }}>Editar Ficha de Medidas</h3>
+            
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', marginBottom: '20px' }}>
+              <div>
+                <label style={{ display: 'block', fontSize: '12px', fontWeight: 'bold', color: '#3E2445', marginBottom: '4px' }}>Busto (cm)</label>
+                <input
+                  type="text"
+                  value={medidas.busto}
+                  onChange={(e) => setMedidas({ ...medidas, busto: e.target.value })}
+                  placeholder="Ex: 90 cm"
+                  style={{ width: '100%', padding: '8px', borderRadius: '6px', border: '1px solid #ccc', outline: 'none', boxSizing: 'border-box' }}
+                />
+              </div>
+
+              <div>
+                <label style={{ display: 'block', fontSize: '12px', fontWeight: 'bold', color: '#3E2445', marginBottom: '4px' }}>Cintura (cm)</label>
+                <input
+                  type="text"
+                  value={medidas.cintura}
+                  onChange={(e) => setMedidas({ ...medidas, cintura: e.target.value })}
+                  placeholder="Ex: 72 cm"
+                  style={{ width: '100%', padding: '8px', borderRadius: '6px', border: '1px solid #ccc', outline: 'none', boxSizing: 'border-box' }}
+                />
+              </div>
+
+              <div>
+                <label style={{ display: 'block', fontSize: '12px', fontWeight: 'bold', color: '#3E2445', marginBottom: '4px' }}>Quadril (cm)</label>
+                <input
+                  type="text"
+                  value={medidas.quadril}
+                  onChange={(e) => setMedidas({ ...medidas, quadril: e.target.value })}
+                  placeholder="Ex: 98 cm"
+                  style={{ width: '100%', padding: '8px', borderRadius: '6px', border: '1px solid #ccc', outline: 'none', boxSizing: 'border-box' }}
+                />
+              </div>
+
+              <div>
+                <label style={{ display: 'block', fontSize: '12px', fontWeight: 'bold', color: '#3E2445', marginBottom: '4px' }}>Altura (cm)</label>
+                <input
+                  type="text"
+                  value={medidas.altura}
+                  onChange={(e) => setMedidas({ ...medidas, altura: e.target.value })}
+                  placeholder="Ex: 165 cm"
+                  style={{ width: '100%', padding: '8px', borderRadius: '6px', border: '1px solid #ccc', outline: 'none', boxSizing: 'border-box' }}
+                />
+              </div>
+
+              <div>
+                <label style={{ display: 'block', fontSize: '12px', fontWeight: 'bold', color: '#3E2445', marginBottom: '4px' }}>Comprimento (cm)</label>
+                <input
+                  type="text"
+                  value={medidas.comprimento}
+                  onChange={(e) => setMedidas({ ...medidas, comprimento: e.target.value })}
+                  placeholder="Ex: 110 cm"
+                  style={{ width: '100%', padding: '8px', borderRadius: '6px', border: '1px solid #ccc', outline: 'none', boxSizing: 'border-box' }}
+                />
+              </div>
+            </div>
+
+            <div style={{ display: 'flex', gap: '10px', justifyContent: 'flex-end' }}>
+              <button
+                type="button"
+                onClick={() => setMostrarModalMedidas(false)}
+                style={{ padding: '9px 16px', background: '#3E2445', color: '#fff', border: 'none', borderRadius: '6px', cursor: 'pointer', fontWeight: 'bold', fontSize: '13px' }}
+              >
+                Salvar Medidas
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
     </div>
   );
 }

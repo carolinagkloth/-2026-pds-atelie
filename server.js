@@ -7,6 +7,8 @@ const bcrypt = require('bcrypt');
 const { OAuth2Client } = require('google-auth-library');
 const nodemailer = require('nodemailer');
 const crypto = require('crypto');
+const cron = require('node-cron');
+
 const app = express();
 const PORT = process.env.PORT || 3000;
 const googleClient = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
@@ -22,13 +24,15 @@ const pool = new Pool({
   ssl: { rejectUnauthorized: false }
 });
 
-// Configuração do Nodemailer
+// Configuração do Nodemailer com o e-mail oficial do projeto
+const EMAIL_OFICIAL = process.env.EMAIL_USER || 'noreply.atelie.entre.linhas@gmail.com';
+
 const transporter = nodemailer.createTransport({
   host: process.env.EMAIL_HOST || 'smtp.gmail.com',
-  port: process.env.EMAIL_PORT || 587,
+  port: Number(process.env.EMAIL_PORT) || 587,
   secure: false,
   auth: {
-    user: process.env.EMAIL_USER,
+    user: EMAIL_OFICIAL,
     pass: process.env.EMAIL_PASS
   }
 });
@@ -168,14 +172,15 @@ app.post('/api/login', async (req, res) => {
 
 // 4. E-mail de Recuperação de Senha
 async function enviarEmailRecuperacao(emailUsuario, nomeUsuario, token) {
-  if (!process.env.EMAIL_USER || !process.env.EMAIL_PASS) {
-    throw new Error('Credenciais de e-mail não configuradas no arquivo .env!');
+  if (!process.env.EMAIL_PASS) {
+    throw new Error('Senha de app do e-mail não configurada no arquivo .env!');
   }
 
   const linkRedefinicao = `http://localhost:5173/?tela=redefinirSenha&token=${token}`;
 
   const mailOptions = {
-    from: `"Ateliê Entre Linhas" <${process.env.EMAIL_USER}>`,
+    from: `"Ateliê Entre Linhas (Não responda)" <${EMAIL_OFICIAL}>`,
+    replyTo: EMAIL_OFICIAL,
     to: emailUsuario,
     subject: 'Redefinição de Senha - Ateliê Entre Linhas',
     html: `
@@ -202,7 +207,8 @@ async function enviarEmailRecuperacao(emailUsuario, nomeUsuario, token) {
               <a href="${linkRedefinicao}" style="color: #3E2445; word-break: break-all;">${linkRedefinicao}</a>
             </p>
             <p style="font-size: 12px; color: #aaa; margin-top: 20px; margin-bottom: 0;">
-              Este link é válido por 15 minutos. Se você não solicitou esta alteração, desconsidere este e-mail.
+              Este link é válido por 15 minutos. Se você não solicitou esta alteração, desconsidere este e-mail.<br>
+              <em>Este é um e-mail automático. Por favor, não responda a esta mensagem.</em>
             </p>
           </div>
         </div>
@@ -288,12 +294,12 @@ app.post('/api/redefinir-senha', async (req, res) => {
   }
 });
 
-// --- PERFIL E PEDIDOS ---
+// --- PERFIL DE USUÁRIO ---
 app.get('/api/usuarios/:id', async (req, res) => {
   const { id } = req.params;
   try {
     const result = await pool.query(
-      'SELECT id_usuario AS id, nome, email, telefone, tipo_usuario, cpf_cnpj, endereco, bio, foto_perfil FROM usuarios WHERE id_usuario = $1',
+      'SELECT id_usuario AS id, id_usuario, nome, email, telefone, tipo_usuario, cpf_cnpj, endereco, bio, especialidades, foto_perfil FROM usuarios WHERE id_usuario = $1',
       [id]
     );
     if (result.rows.length === 0) {
@@ -306,24 +312,49 @@ app.get('/api/usuarios/:id', async (req, res) => {
   }
 });
 
-app.put('/api/usuarios/:id', async (req, res) => {
+// --- PEDIDOS ---
+
+// Edição de pedido pelo cliente (Apenas enquanto estiver 'Aberto')
+app.put('/api/pedidos/:id', async (req, res) => {
   const { id } = req.params;
-  const { nome, telefone, endereco, bio, foto_perfil } = req.body;
+  const { id_cliente, descricao, fotos_referencia, prazo_desejado } = req.body;
+
+  if (!descricao || !descricao.trim()) {
+    return res.status(400).json({ erro: 'A descrição do pedido é obrigatória.' });
+  }
+
   try {
-    const query = `
-      UPDATE usuarios 
-      SET nome = $1, telefone = $2, endereco = $3, bio = $4, foto_perfil = $5
-      WHERE id_usuario = $6
-      RETURNING id_usuario AS id, id_usuario, nome, email, tipo_usuario, telefone, endereco, bio, foto_perfil;
-    `;
-    const result = await pool.query(query, [nome, telefone || null, endereco || null, bio || null, foto_perfil || null, id]);
-    if (result.rowCount === 0) {
-      return res.status(404).json({ erro: 'Usuário não encontrado.' });
+    const checagem = await pool.query('SELECT status_pedido FROM pedidos WHERE id_pedido = $1', [id]);
+    
+    if (checagem.rows.length === 0) {
+      return res.status(404).json({ erro: 'Pedido não encontrado.' });
     }
-    res.json({ mensagem: 'Perfil atualizado com sucesso!', usuario: result.rows[0] });
+
+    if (checagem.rows[0].status_pedido !== 'Aberto') {
+      return res.status(400).json({ 
+        erro: 'Não é possível editar um pedido que já teve proposta aceita ou está em produção.' 
+      });
+    }
+
+    const queryUpdate = `
+      UPDATE pedidos 
+      SET descricao = $1, fotos_referencia = $2, prazo_desejado = $3
+      WHERE id_pedido = $4 AND id_cliente = $5
+      RETURNING *;
+    `;
+    const result = await pool.query(queryUpdate, [
+      descricao.trim(), 
+      fotos_referencia || null, 
+      prazo_desejado, 
+      id, 
+      id_cliente
+    ]);
+
+    res.json({ mensagem: 'Pedido atualizado com sucesso!', pedido: result.rows[0] });
+
   } catch (err) {
-    console.error('Erro ao atualizar perfil:', err);
-    res.status(500).json({ erro: 'Erro ao atualizar perfil no banco de dados.' });
+    console.error('Erro ao editar pedido:', err);
+    res.status(500).json({ erro: 'Erro interno ao atualizar pedido.' });
   }
 });
 
@@ -385,6 +416,412 @@ app.delete('/api/pedidos/:id', async (req, res) => {
   } catch (err) {
     console.error('Erro ao cancelar pedido:', err);
     res.status(500).json({ erro: 'Erro ao cancelar o pedido no servidor.' });
+  }
+});
+
+// --- CHAT E NEGOCIAÇÃO (Suporte a /api/mensagens-chat e /api/chat) ---
+app.get(['/api/mensagens-chat/:idPedido', '/api/chat/:idPedido'], async (req, res) => {
+  const { idPedido } = req.params;
+  try {
+    const query = `
+      SELECT 
+        m.id_mensagem AS id,
+        m.id_mensagem,
+        m.id_pedido AS "idPedido",
+        m.id_pedido,
+        m.id_remetente AS "idRemetente",
+        m.id_remetente,
+        u.nome AS "remetente_nome",
+        u.nome AS "nomeRemetente",
+        u.foto_perfil AS "fotoRemetente",
+        m.conteudo,
+        m.tipo_mensagem,
+        m.dados_proposta,
+        m.valor_proposta AS "valorProposta",
+        m.prazo_proposta AS "prazoProposta",
+        m.valor_entrada AS "valorEntrada",
+        m.data_hora_envio AS "dataHoraEnvio"
+      FROM mensagens_chat m
+      JOIN usuarios u ON m.id_remetente = u.id_usuario
+      WHERE m.id_pedido = $1
+      ORDER BY m.data_hora_envio ASC;
+    `;
+    const result = await pool.query(query, [idPedido]);
+    res.json(result.rows);
+  } catch (err) {
+    console.error('Erro ao carregar mensagens do chat:', err);
+    res.status(500).json({ erro: 'Erro ao carregar histórico de mensagens.' });
+  }
+});
+
+app.post(['/api/mensagens-chat', '/api/chat'], async (req, res) => {
+  const { id_pedido, id_remetente, conteudo, tipo_mensagem, dados_proposta, valor_proposta, prazo_proposta, valor_entrada } = req.body;
+
+  if (!id_pedido || !id_remetente || !conteudo) {
+    return res.status(400).json({ erro: 'Pedido, remetente e conteúdo são obrigatórios.' });
+  }
+
+  try {
+    const query = `
+      INSERT INTO mensagens_chat (id_pedido, id_remetente, conteudo, tipo_mensagem, dados_proposta, valor_proposta, prazo_proposta, valor_entrada)
+      VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+      RETURNING *;
+    `;
+    
+    const dadosJson = dados_proposta ? (typeof dados_proposta === 'string' ? dados_proposta : JSON.stringify(dados_proposta)) : null;
+
+    const result = await pool.query(query, [
+      id_pedido,
+      id_remetente,
+      conteudo,
+      tipo_mensagem || 'texto',
+      dadosJson,
+      valor_proposta || null,
+      prazo_proposta || null,
+      valor_entrada || 0
+    ]);
+
+    res.status(201).json({ mensagem: 'Mensagem enviada com sucesso!', item: result.rows[0], ...result.rows[0] });
+  } catch (err) {
+    console.error('Erro ao enviar mensagem:', err);
+    res.status(500).json({ erro: `Erro ao salvar mensagem: ${err.message}` });
+  }
+});
+// Rota para buscar as conversas ativas do usuário organizadas por data de última atividade (mais recente primeiro)
+  app.get('/api/conversas/usuario/:idUsuario', async (req, res) => {
+    const { idUsuario } = req.params;
+    try {
+      const query = `
+        SELECT DISTINCT ON (p.id_pedido)
+          p.id_pedido AS "idPedido",
+          p.id_pedido AS id,
+          p.descricao,
+          p.status_pedido AS status,
+          p.prazo_desejado AS "prazoDesejado",
+          cli.id_usuario AS "clienteId",
+          cli.nome AS "clienteNome",
+          cost.id_usuario AS "costureiraId",
+          cost.nome AS "costureiraNome",
+          COALESCE(m.conteudo, 'Sem mensagens recentes') AS "ultimaMensagem",
+          COALESCE(m.data_hora_envio, p.data_publicacao) AS "dataUltimaAtividade"
+        FROM pedidos p
+        JOIN usuarios cli ON p.id_cliente = cli.id_usuario
+        LEFT JOIN mensagens_chat m ON m.id_pedido = p.id_pedido
+        LEFT JOIN ordens_servico os ON os.id_pedido = p.id_pedido
+        LEFT JOIN usuarios cost ON os.id_costureira = cost.id_usuario
+        WHERE p.id_cliente = $1 OR os.id_costureira = $1 OR m.id_remetente = $1
+        ORDER BY p.id_pedido, m.data_hora_envio DESC;
+      `;
+      const result = await pool.query(query, [idUsuario]);
+
+      // Ordenação com os chats mais recentes acima
+      const listaOrdenada = result.rows.sort(
+        (a, b) => new Date(b.dataUltimaAtividade) - new Date(a.dataUltimaAtividade)
+      );
+
+      res.json(listaOrdenada);
+    } catch (err) {
+      console.error('Erro ao buscar conversas:', err);
+      res.status(500).json({ erro: 'Erro ao carregar lista de conversas.' });
+    }
+  });
+
+// --- ROTAS DE ORDENS DE SERVIÇO ---
+app.post(['/api/ordens-servico', '/api/chat/aceitar-proposta'], async (req, res) => {
+  const { id_pedido, id_costureira, valor_total, previsao_entrega, valor_entrada } = req.body;
+
+  if (!id_pedido || !id_costureira) {
+    return res.status(400).json({ erro: 'Informações incompletas para gerar a Ordem de Serviço.' });
+  }
+
+  const client = await pool.connect();
+
+  try {
+    await client.query('BEGIN');
+
+    const queryOS = `
+      INSERT INTO ordens_servico (id_pedido, id_costureira, valor_total, previsao_entrega, valor_entrada, status_kanban)
+      VALUES ($1, $2, $3, $4, $5, 'A Fazer')
+      ON CONFLICT (id_pedido) 
+      DO UPDATE SET valor_total = $3, previsao_entrega = $4, valor_entrada = $5, status_kanban = 'A Fazer'
+      RETURNING *;
+    `;
+    const osResult = await client.query(queryOS, [
+      id_pedido, 
+      id_costureira, 
+      valor_total || 0, 
+      previsao_entrega || null,
+      valor_entrada || 0
+    ]);
+
+    await client.query(
+      `UPDATE pedidos SET status_pedido = 'Em Produção' WHERE id_pedido = $1`,
+      [id_pedido]
+    );
+
+    await client.query('COMMIT');
+
+    res.status(201).json({
+      mensagem: 'Proposta aceita! Ordem de Serviço iniciada com sucesso.',
+      ordemServico: osResult.rows[0]
+    });
+  } catch (err) {
+    await client.query('ROLLBACK');
+    console.error('Erro ao aceitar proposta:', err);
+    res.status(500).json({ erro: 'Erro interno ao gerar Ordem de Serviço.' });
+  } finally {
+    client.release();
+  }
+});
+
+app.get('/api/ordens-servico/usuario/:idUsuario', async (req, res) => {
+  const { idUsuario } = req.params;
+  try {
+    const query = `
+      SELECT 
+        os.id_ordem_servico AS id, os.id_pedido AS "idPedido", os.valor_total AS "valorTotal", os.valor_entrada AS "valorEntrada", os.data_inicio AS "dataInicio",
+        os.previsao_entrega AS "previsaoEntrega", os.status_kanban AS "statusKanban",
+        p.descricao AS "pedidoDescricao",
+        cli.nome AS "clienteNome", cli.telefone AS "clienteTelefone",
+        cost.nome AS "costureiraNome", cost.telefone AS "costureiraTelefone"
+      FROM ordens_servico os
+      JOIN pedidos p ON os.id_pedido = p.id_pedido
+      JOIN usuarios cli ON p.id_cliente = cli.id_usuario
+      JOIN usuarios cost ON os.id_costureira = cost.id_usuario
+      WHERE p.id_cliente = $1 OR os.id_costureira = $1
+      ORDER BY os.previsao_entrega ASC;
+    `;
+    const result = await pool.query(query, [idUsuario]);
+    res.json(result.rows);
+  } catch (err) {
+    console.error('Erro ao buscar ordens de serviço:', err);
+    res.status(500).json({ erro: 'Erro ao carregar ordens de serviço.' });
+  }
+});
+
+app.put('/api/ordens-servico/:idOrdem/status', async (req, res) => {
+  const { idOrdem } = req.params;
+  const { status_kanban } = req.body;
+
+  const statusValidos = ['A Fazer', 'Em Produção', 'Aguardando Prova', 'Concluído'];
+
+  if (!status_kanban || !statusValidos.includes(status_kanban)) {
+    return res.status(400).json({ erro: 'Status inválido fornecido.' });
+  }
+
+  const client = await pool.connect();
+
+  try {
+    await client.query('BEGIN');
+
+    const queryOS = `
+      UPDATE ordens_servico 
+      SET status_kanban = $1
+      WHERE id_ordem_servico = $2
+      RETURNING *;
+    `;
+    const resultOS = await client.query(queryOS, [status_kanban, idOrdem]);
+
+    if (resultOS.rowCount === 0) {
+      await client.query('ROLLBACK');
+      return res.status(404).json({ erro: 'Ordem de serviço não encontrada.' });
+    }
+
+    const ordemAtualizada = resultOS.rows[0];
+
+    if (status_kanban === 'Concluído') {
+      await client.query(
+        `UPDATE pedidos SET status_pedido = 'Concluído' WHERE id_pedido = $1`,
+        [ordemAtualizada.id_pedido]
+      );
+    } else if (status_kanban === 'Em Produção' || status_kanban === 'Aguardando Prova') {
+      await client.query(
+        `UPDATE pedidos SET status_pedido = 'Em Produção' WHERE id_pedido = $1`,
+        [ordemAtualizada.id_pedido]
+      );
+    }
+
+    await client.query('COMMIT');
+
+    return res.json({
+      mensagem: `Status atualizado para "${status_kanban}" com sucesso!`,
+      ordem: ordemAtualizada
+    });
+  } catch (err) {
+    await client.query('ROLLBACK');
+    console.error('Erro ao atualizar status kanban:', err);
+    return res.status(500).json({ erro: 'Erro interno ao atualizar status no banco de dados.' });
+  } finally {
+    client.release();
+  }
+});
+
+// --- CRON JOB: Lembrete automático de entrega/prova via WhatsApp ---
+cron.schedule('0 8 * * *', async () => {
+  console.log('Verificando ordens de serviço para lembrete diário...');
+  try {
+    const query = `
+      SELECT 
+        os.id_ordem_servico, os.status_kanban, os.previsao_entrega,
+        cli.nome AS nome_cliente, cli.telefone AS fone_cliente,
+        cost.nome AS nome_costureira, cost.telefone AS fone_costureira
+      FROM ordens_servico os
+      JOIN pedidos p ON os.id_pedido = p.id_pedido
+      JOIN usuarios cli ON p.id_cliente = cli.id_usuario
+      JOIN usuarios cost ON os.id_costureira = cost.id_usuario
+      WHERE os.status_kanban IN ('Em Produção', 'Aguardando Prova')
+        AND os.previsao_entrega = CURRENT_DATE + INTERVAL '1 day';
+    `;
+    const { rows } = await pool.query(query);
+
+    for (const item of rows) {
+      const tipoCompromisso = item.status_kanban === 'Aguardando Prova' ? 'Prova da Peça' : 'Entrega do Serviço';
+      const msg = `Olá ${item.nome_cliente}! Lembrete do Ateliê Entre Linhas: Seu compromisso de ${tipoCompromisso} com a costureira ${item.nome_costureira} está previsto para amanhã.`;
+      
+      if (item.fone_cliente) {
+        console.log(`[WhatsApp Lembrete] Para: ${item.fone_cliente} | Mensagem: "${msg}"`);
+      }
+    }
+  } catch (err) {
+    console.error('Erro na rotina de lembretes:', err);
+  }
+});
+
+// --- ROTAS DE AVALIAÇÕES ---
+app.post('/api/avaliacoes', async (req, res) => {
+  const { id_ordem_servico, id_cliente, nota, comentario } = req.body;
+
+  if (!id_ordem_servico || !id_cliente || !nota) {
+    return res.status(400).json({ erro: 'Ordem de serviço, cliente e nota são obrigatórios.' });
+  }
+
+  try {
+    const osResult = await pool.query(
+      'SELECT status_kanban FROM ordens_servico WHERE id_ordem_servico = $1 AND id_cliente = $2',
+      [id_ordem_servico, id_cliente]
+    );
+
+    if (osResult.rows.length === 0) {
+      return res.status(404).json({ erro: 'Ordem de serviço não encontrada para este cliente.' });
+    }
+
+    if (osResult.rows[0].status_kanban !== 'Concluído') {
+      return res.status(400).json({ erro: 'Você só pode avaliar o serviço após a conclusão e entrega do pedido.' });
+    }
+
+    const query = `
+      INSERT INTO avaliacoes (id_ordem_servico, id_cliente, nota, comentario)
+      VALUES ($1, $2, $3, $4)
+      RETURNING *;
+    `;
+    const result = await pool.query(query, [id_ordem_servico, id_cliente, nota, comentario || null]);
+    res.status(201).json({ mensagem: 'Avaliação registrada com sucesso!', avaliacao: result.rows[0] });
+
+  } catch (err) {
+    console.error('Erro ao registrar avaliação:', err);
+    res.status(500).json({ erro: 'Erro ao registrar avaliação no servidor.' });
+  }
+});
+
+app.get('/api/avaliacoes/costureira/:idCostureira', async (req, res) => {
+  const { idCostureira } = req.params;
+  try {
+    const queryAvaliacoes = `
+      SELECT 
+        a.id_avaliacao AS id, a.nota, a.comentario, a.data_avaliacao AS data,
+        u.nome AS "clienteNome", u.foto_perfil AS "clienteFoto"
+      FROM avaliacoes a
+      JOIN ordens_servico os ON a.id_ordem_servico = os.id_ordem_servico
+      JOIN usuarios u ON a.id_cliente = u.id_usuario
+      WHERE os.id_costureira = $1
+      ORDER BY a.data_avaliacao DESC;
+    `;
+    
+    const queryMedia = `
+      SELECT 
+        ROUND(AVG(a.nota)::numeric, 1) AS media,
+        COUNT(a.id_avaliacao) AS total
+      FROM avaliacoes a
+      JOIN ordens_servico os ON a.id_ordem_servico = os.id_ordem_servico
+      WHERE os.id_costureira = $1;
+    `;
+
+    const avaliacoes = await pool.query(queryAvaliacoes, [idCostureira]);
+    const estatisticas = await pool.query(queryMedia, [idCostureira]);
+
+    res.json({
+      media: parseFloat(estatisticas.rows[0].media) || 0,
+      totalAvaliacoes: parseInt(estatisticas.rows[0].total) || 0,
+      depoimentos: avaliacoes.rows
+    });
+  } catch (err) {
+    console.error('Erro ao buscar avaliações:', err);
+    res.status(500).json({ erro: 'Erro ao carregar avaliações da costureira.' });
+  }
+});
+
+// --- ROTAS DO PORTFÓLIO ---
+
+app.get('/api/portfolio/:idCostureira', async (req, res) => {
+  const { idCostureira } = req.params;
+  try {
+    const query = `
+      SELECT 
+        id_midia AS id,
+        id_costureira AS "idCostureira",
+        url_imagem AS "urlImagem",
+        titulo_trabalho AS "tituloTrabalho",
+        data_publicacao AS "dataPublicacao"
+      FROM portfolio
+      WHERE id_costureira = $1
+      ORDER BY data_publicacao DESC;
+    `;
+    const result = await pool.query(query, [idCostureira]);
+    res.json(result.rows);
+  } catch (err) {
+    console.error('Erro ao buscar portfólio:', err);
+    res.status(500).json({ erro: 'Erro ao carregar fotos do portfólio.' });
+  }
+});
+
+app.post('/api/portfolio', async (req, res) => {
+  const { id_costureira, url_imagem, titulo_trabalho } = req.body;
+
+  if (!id_costureira || !url_imagem) {
+    return res.status(400).json({ erro: 'Id da costureira e imagem são obrigatórios.' });
+  }
+
+  try {
+    const query = `
+      INSERT INTO portfolio (id_costureira, url_imagem, titulo_trabalho)
+      VALUES ($1, $2, $3)
+      RETURNING 
+        id_midia AS id,
+        id_costureira AS "idCostureira",
+        url_imagem AS "urlImagem",
+        titulo_trabalho AS "tituloTrabalho",
+        data_publicacao AS "dataPublicacao";
+    `;
+    const result = await pool.query(query, [id_costureira, url_imagem, titulo_trabalho || null]);
+    res.status(201).json({ mensagem: 'Trabalho adicionado com sucesso!', item: result.rows[0] });
+  } catch (err) {
+    console.error('Erro ao publicar no portfólio:', err);
+    res.status(500).json({ erro: `Erro ao salvar imagem no portfólio: ${err.message}` });
+  }
+});
+
+app.delete('/api/portfolio/:idMidia', async (req, res) => {
+  const { idMidia } = req.params;
+  try {
+    const query = 'DELETE FROM portfolio WHERE id_midia = $1 RETURNING *;';
+    const result = await pool.query(query, [idMidia]);
+    if (result.rowCount === 0) {
+      return res.status(404).json({ erro: 'Imagem não encontrada no portfólio.' });
+    }
+    res.json({ mensagem: 'Foto removida do portfólio!' });
+  } catch (err) {
+    console.error('Erro ao excluir foto do portfólio:', err);
+    res.status(500).json({ erro: 'Erro ao remover imagem.' });
   }
 });
 

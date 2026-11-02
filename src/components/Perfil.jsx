@@ -1,5 +1,9 @@
 import React, { useState, useEffect } from 'react';
+import Calendar from 'react-calendar';
+import 'react-calendar/dist/Calendar.css';
 import "../styles/Perfil.css";
+import Portfolio from './Portfolio';
+import TabelaPrecos from './TabelaPrecos';
 
 function Perfil({ usuario, onNavigate, onUpdateUsuario }) {
   const usuarioSalvo = (() => {
@@ -21,17 +25,24 @@ function Perfil({ usuario, onNavigate, onUpdateUsuario }) {
   const [erro, setErro] = useState('');
   const [erroImagem, setErroImagem] = useState(false);
 
+  // Estados integrados para Avaliações (DER) e Agenda de Ordens de Serviço
+  const [reputacao, setReputacao] = useState({ media: 0, totalAvaliacoes: 0, depoimentos: [] });
+  const [ordensServico, setOrdensServico] = useState([]);
+  const [dataSelecionada, setDataSelecionada] = useState(new Date());
+
   const [formData, setFormData] = useState({
     nome: user?.nome || '',
     email: user?.email || '',
     telefone: user?.telefone || '',
     endereco: user?.endereco || '',
     bio: user?.bio || '',
+    especialidades: user?.especialidades || '',
     foto_perfil: user?.foto_perfil || ''
   });
 
   useEffect(() => {
     if (idUsuario) {
+      // 1. Carrega os dados do Perfil
       fetch(`/api/usuarios/${idUsuario}`)
         .then((res) => {
           if (!res.ok) {
@@ -47,13 +58,36 @@ function Perfil({ usuario, onNavigate, onUpdateUsuario }) {
               telefone: data.telefone || '',
               endereco: data.endereco || '',
               bio: data.bio || '',
+              especialidades: data.especialidades || '',
               foto_perfil: data.foto_perfil || user?.foto_perfil || ''
             });
           }
         })
         .catch(() => {});
+
+      // 2. Carrega as Ordens de Serviço do usuário para a Agenda
+      fetch(`/api/ordens-servico/usuario/${idUsuario}`)
+        .then((res) => res.json())
+        .then((data) => {
+          if (Array.isArray(data)) {
+            setOrdensServico(data);
+          }
+        })
+        .catch(() => {});
+
+      // 3. Se for Costureira, carrega a média e os depoimentos da tabela avaliacoes
+      if (!isCliente) {
+        fetch(`/api/avaliacoes/costureira/${idUsuario}`)
+          .then((res) => res.json())
+          .then((data) => {
+            if (data && !data.erro) {
+              setReputacao(data);
+            }
+          })
+          .catch(() => {});
+      }
     }
-  }, [idUsuario]);
+  }, [idUsuario, isCliente]);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -127,11 +161,18 @@ function Perfil({ usuario, onNavigate, onUpdateUsuario }) {
     }
   };
 
+  const renderEstrelas = (nota) => {
+    const valor = Math.round(nota || 0);
+    return '★'.repeat(valor) + '☆'.repeat(5 - valor);
+  };
+
   return (
-    <div style={{ maxWidth: '600px', margin: '30px auto', background: '#fff', padding: '30px', borderRadius: '12px', boxShadow: '0 4px 16px rgba(62, 36, 69, 0.12)', fontFamily: "'Segoe UI', Tahoma, Geneva, Verdana, sans-serif" }}>
+    <div style={{ maxWidth: '750px', margin: '30px auto', background: '#fff', padding: '30px', borderRadius: '12px', boxShadow: '0 4px 16px rgba(62, 36, 69, 0.12)', fontFamily: "'Segoe UI', Tahoma, Geneva, Verdana, sans-serif" }}>
       
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px', borderBottom: '1px solid #f0f0f0', paddingBottom: '12px' }}>
-        <h2 style={{ color: '#3E2445', margin: 0, fontSize: '22px' }}>Meu Perfil</h2>
+        <h2 style={{ color: '#3E2445', margin: 0, fontSize: '22px' }}>
+          {isCliente ? 'Meu Perfil' : 'Perfil Profissional da Costureira'}
+        </h2>
         <button
           type="button"
           onClick={handleVoltar}
@@ -144,7 +185,28 @@ function Perfil({ usuario, onNavigate, onUpdateUsuario }) {
       {mensagem && <div style={{ background: '#e8f5e9', color: '#2e7d32', padding: '10px 14px', borderRadius: '6px', marginBottom: '15px', fontSize: '14px' }}>{mensagem}</div>}
       {erro && <div style={{ background: '#ffebee', color: '#c62828', padding: '10px 14px', borderRadius: '6px', marginBottom: '15px', fontSize: '14px' }}>{erro}</div>}
 
+      {/* Resumo de Reputação */}
+      {!isCliente && (
+        <div style={{ background: '#FAF6FA', border: '1px solid #EADCEB', padding: '15px 20px', borderRadius: '8px', marginBottom: '25px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+          <div>
+            <h3 style={{ margin: 0, color: '#3E2445', fontSize: '16px' }}>Reputação & Avaliações</h3>
+            <div style={{ marginTop: '4px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <span style={{ fontSize: '22px', color: '#FFB400', fontWeight: 'bold' }}>
+                {reputacao.media ? reputacao.media.toFixed(1) : '0.0'}
+              </span>
+              <span style={{ fontSize: '18px', color: '#FFB400' }}>
+                {renderEstrelas(reputacao.media)}
+              </span>
+              <span style={{ fontSize: '13px', color: '#666' }}>
+                ({reputacao.totalAvaliacoes || 0} avaliações)
+              </span>
+            </div>
+          </div>
+        </div>
+      )}
+
       <form onSubmit={handleSubmit}>
+        {/* Foto de Perfil */}
         <div style={{ textAlign: 'center', marginBottom: '20px' }}>
           <div style={{ margin: '0 auto 12px auto', width: '110px', height: '110px', borderRadius: '50%', overflow: 'hidden', border: '3px solid #3E2445', background: '#3E2445', display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 2px 8px rgba(0,0,0,0.15)' }}>
             {formData.foto_perfil && !erroImagem ? (
@@ -179,6 +241,7 @@ function Perfil({ usuario, onNavigate, onUpdateUsuario }) {
           )}
         </div>
 
+        {/* Nome */}
         <div style={{ marginBottom: '15px' }}>
           <label style={{ display: 'block', fontWeight: 'bold', fontSize: '14px', marginBottom: '5px', color: '#3E2445' }}>Nome</label>
           <input
@@ -192,6 +255,7 @@ function Perfil({ usuario, onNavigate, onUpdateUsuario }) {
           />
         </div>
 
+        {/* E-mail (Somente Leitura) */}
         <div style={{ marginBottom: '15px' }}>
           <label style={{ display: 'block', fontWeight: 'bold', fontSize: '14px', marginBottom: '5px', color: '#3E2445' }}>E-mail (Não editável)</label>
           <input
@@ -202,6 +266,7 @@ function Perfil({ usuario, onNavigate, onUpdateUsuario }) {
           />
         </div>
 
+        {/* Telefone */}
         <div style={{ marginBottom: '15px' }}>
           <label style={{ display: 'block', fontWeight: 'bold', fontSize: '14px', marginBottom: '5px', color: '#3E2445' }}>Telefone / WhatsApp</label>
           <input
@@ -215,10 +280,24 @@ function Perfil({ usuario, onNavigate, onUpdateUsuario }) {
           />
         </div>
 
+        {/* Campos adicionais para Costureira */}
         {!isCliente && (
           <>
             <div style={{ marginBottom: '15px' }}>
-              <label style={{ display: 'block', fontWeight: 'bold', fontSize: '14px', marginBottom: '5px', color: '#3E2445' }}>Endereço / Cidade</label>
+              <label style={{ display: 'block', fontWeight: 'bold', fontSize: '14px', marginBottom: '5px', color: '#3E2445' }}>Especialidades / Serviços Prestados</label>
+              <input
+                type="text"
+                name="especialidades"
+                value={formData.especialidades}
+                onChange={handleChange}
+                disabled={!editando}
+                placeholder="Ex: Vestidos de Festa, Ajustes de Jeans, Barra de Calça"
+                style={{ width: '100%', padding: '10px', borderRadius: '6px', border: '1px solid #ccc', boxSizing: 'border-box', background: editando ? '#fff' : '#f9f9f9', fontSize: '14px', outline: 'none' }}
+              />
+            </div>
+
+            <div style={{ marginBottom: '15px' }}>
+              <label style={{ display: 'block', fontWeight: 'bold', fontSize: '14px', marginBottom: '5px', color: '#3E2445' }}>Endereço / Ateliê</label>
               <input
                 type="text"
                 name="endereco"
@@ -245,6 +324,7 @@ function Perfil({ usuario, onNavigate, onUpdateUsuario }) {
           </>
         )}
 
+        {/* Botões de Ação */}
         <div style={{ display: 'flex', gap: '10px', marginTop: '20px' }}>
           {!editando ? (
             <button
@@ -275,6 +355,63 @@ function Perfil({ usuario, onNavigate, onUpdateUsuario }) {
           )}
         </div>
       </form>
+
+      {/* Agenda de Entregas */}
+      <div style={{ marginTop: '30px', borderTop: '2px solid #F4EFF5', paddingTop: '20px' }}>
+        <h3 style={{ color: '#3E2445', marginTop: 0, fontSize: '18px' }}>
+          Agenda de Entregas e Provas (Ordens de Serviço)
+        </h3>
+        <div style={{ display: 'flex', gap: '20px', flexWrap: 'wrap', marginTop: '15px' }}>
+          <Calendar onChange={setDataSelecionada} value={dataSelecionada} />
+          
+          <div style={{ flex: 1, minWidth: '250px' }}>
+            <h4 style={{ margin: '0 0 10px 0', color: '#555', fontSize: '15px' }}>
+              Entregas em {dataSelecionada.toLocaleDateString('pt-BR')}:
+            </h4>
+            {ordensServico.filter(os => os.previsaoEntrega && new Date(os.previsaoEntrega).toDateString() === dataSelecionada.toDateString()).length === 0 ? (
+              <p style={{ color: '#888', fontSize: '13px' }}>Sem entregas ou provas previstas para esta data.</p>
+            ) : (
+              ordensServico
+                .filter(os => os.previsaoEntrega && new Date(os.previsaoEntrega).toDateString() === dataSelecionada.toDateString())
+                .map(item => (
+                  <div key={item.id} style={{ background: '#F9F9F9', borderLeft: `4px solid ${item.statusKanban === 'Aguardando Prova' ? '#E67E22' : '#2E7D32'}`, padding: '10px', marginBottom: '8px', borderRadius: '4px' }}>
+                    <strong style={{ fontSize: '13px', color: '#3E2445' }}>Status: {item.statusKanban}</strong><br />
+                    <small style={{ color: '#555', display: 'block', marginTop: '3px' }}>{item.pedidoDescricao}</small>
+                    <small style={{ color: '#888', display: 'block', marginTop: '2px' }}>
+                      {isCliente ? `Costureira: ${item.costureiraNome}` : `Cliente: ${item.clienteNome}`}
+                    </small>
+                  </div>
+                ))
+            )}
+          </div>
+        </div>
+      </div>
+
+      {/* Depoimentos dos Clientes */}
+      {!isCliente && reputacao.depoimentos && reputacao.depoimentos.length > 0 && (
+        <div style={{ marginTop: '30px', borderTop: '2px solid #F4EFF5', paddingTop: '20px' }}>
+          <h3 style={{ color: '#3E2445', marginTop: 0, fontSize: '18px' }}>Depoimentos dos Clientes</h3>
+          {reputacao.depoimentos.map((dep) => (
+            <div key={dep.id} style={{ padding: '12px 0', borderBottom: '1px dashed #eee' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <strong style={{ fontSize: '14px', color: '#3E2445' }}>{dep.clienteNome}</strong>
+                <span style={{ color: '#FFB400', fontSize: '14px' }}>{renderEstrelas(dep.nota)}</span>
+              </div>
+              {dep.comentario && <p style={{ margin: '5px 0', fontSize: '13px', color: '#555' }}>"{dep.comentario}"</p>}
+              <span style={{ fontSize: '11px', color: '#aaa' }}>{new Date(dep.data).toLocaleDateString('pt-BR')}</span>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {/* Tabela de Preços e Portfólio (Exibidos apenas no perfil de costureiras) */}
+      {!isCliente && (
+        <>
+          <TabelaPrecos modoEdicao={editando} />
+          <Portfolio idCostureira={idUsuario} modoEdicao={editando} />
+        </>
+      )}
+
     </div>
   );
 }
