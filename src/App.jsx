@@ -10,7 +10,8 @@ import Perfil from './components/Perfil.jsx';
 import PublicarPedido from './components/PublicarPedido.jsx';
 import Chat from './components/Chat.jsx';
 import MeusChats from './components/MeusChats.jsx';
-import BarraNotificacoes from './components/BarraNotificacoes.jsx';
+import BotaoNotificacoes from './components/BotaoNotificacoes.jsx';
+import ConfiguracoesNotificacoes from './components/ConfiguracoesNotificacoes.jsx';
 
 function App() {
   const [usuarioLogado, setUsuarioLogado] = useState(() => {
@@ -52,7 +53,16 @@ function App() {
     return 'inicio';
   });
 
-  const rotasPrivadas = ['meusPedidos', 'feedPedidos', 'perfil', 'publicarPedido', 'chat', 'meusChats'];
+  // Inclui a rota de configurações de notificações nas rotas protegidas
+  const rotasPrivadas = [
+    'meusPedidos', 
+    'feedPedidos', 
+    'perfil', 
+    'publicarPedido', 
+    'chat', 
+    'meusChats', 
+    'configuracoesNotificacoes'
+  ];
 
   // 1. Sincronização em tempo real entre abas
   useEffect(() => {
@@ -149,9 +159,11 @@ function App() {
 
   return (
     <div>
-      {/* Barra de Notificações no topo para usuários logados */}
-      {usuarioLogado && (
-        <BarraNotificacoes usuario={usuarioLogado} onNavigate={handleNavigate} />
+      {/* Sininho de Notificações estilo Pop-up posicionado no topo superior direito */}
+      {usuarioLogado && rotasPrivadas.includes(telaAtual) && (
+        <div style={{ position: 'fixed', top: '15px', right: '20px', zIndex: 1100 }}>
+          <BotaoNotificacoes usuario={usuarioLogado} onNavigate={handleNavigate} />
+        </div>
       )}
 
       {/* ROTAS PÚBLICAS */}
@@ -217,6 +229,10 @@ function App() {
 
       {usuarioLogado && telaAtual === 'meusChats' && (
         <MeusChats usuario={usuarioLogado} onNavigate={handleNavigate} />
+      )}
+
+      {usuarioLogado && telaAtual === 'configuracoesNotificacoes' && (
+        <ConfiguracoesNotificacoes usuario={usuarioLogado} onNavigate={handleNavigate} />
       )}
     </div>
   );

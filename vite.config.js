@@ -12,6 +12,9 @@ export default defineConfig({
         changeOrigin: true,
         secure: false
       }
+    },
+    watch: {
+      ignored: ['**/.wwebjs_auth/**', '**/.wwebjs_cache/**']
     }
   }
 });

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import "../styles/Cadastro.css";
 
 // Ícones Vetoriais SVG para exibir/ocultar senha
@@ -40,7 +40,7 @@ const aplicarMascaraCpfCnpj = (valor) => {
     .replace(/(\d{4})(\d{1,2})$/, '$1-$2');
 };
 
-function Cadastro({ onNavigate, onCadastroSucesso }) {
+function Cadastro({ onNavigate, onCadastroSucesso, dadosPreenchidos }) {
   const [nome, setNome] = useState('');
   const [email, setEmail] = useState('');
   const [senha, setSenha] = useState('');
@@ -51,6 +51,14 @@ function Cadastro({ onNavigate, onCadastroSucesso }) {
   const [erro, setErro] = useState('');
   const [sucesso, setSucesso] = useState('');
   const [carregando, setCarregando] = useState(false);
+
+  // Pré-preenche os dados caso venha do redirecionamento do Login com Google
+  useEffect(() => {
+    if (dadosPreenchidos) {
+      if (dadosPreenchidos.nome) setNome(dadosPreenchidos.nome);
+      if (dadosPreenchidos.email) setEmail(dadosPreenchidos.email);
+    }
+  }, [dadosPreenchidos]);
 
   const handleTelefoneChange = (e) => {
     setTelefone(aplicarMascaraTelefone(e.target.value));
@@ -65,7 +73,13 @@ function Cadastro({ onNavigate, onCadastroSucesso }) {
     setErro('');
     setSucesso('');
 
-    // Validação de tamanho mínimo da senha no front-end
+    // Validação de telefone obrigatório com DDD (mínimo 14 caracteres na máscara: (XX) XXXX-XXXX)
+    if (!telefone || telefone.trim().length < 14) {
+      setErro('Por favor, informe um número de WhatsApp/Telefone válido com DDD.');
+      return;
+    }
+
+    // Validação de tamanho mínimo da senha
     if (senha.length < 8) {
       setErro('A senha deve ter no mínimo 8 dígitos.');
       return;
@@ -106,6 +120,7 @@ function Cadastro({ onNavigate, onCadastroSucesso }) {
     } catch (err) {
       setErro(err.message);
     } finally {
+      setSalvando(false);
       setCarregando(false);
     }
   };
@@ -154,14 +169,16 @@ function Cadastro({ onNavigate, onCadastroSucesso }) {
 
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px', marginBottom: '15px' }}>
           <div>
-            <label style={{ display: 'block', marginBottom: '5px', fontSize: '14px', fontWeight: 'bold', color: '#3E2445' }}>Telefone</label>
+            <label style={{ display: 'block', marginBottom: '5px', fontSize: '14px', fontWeight: 'bold', color: '#3E2445' }}>WhatsApp / Tel *</label>
             <input
               type="text"
               value={telefone}
               onChange={handleTelefoneChange}
               placeholder="(42) 99999-9999"
+              required
               style={{ width: '100%', padding: '10px', borderRadius: '6px', border: '1px solid #ccc', boxSizing: 'border-box', fontSize: '14px', outline: 'none' }}
             />
+            <small style={{ color: '#777', fontSize: '11px', marginTop: '3px', display: 'block' }}>Para envio de lembretes e avisos.</small>
           </div>
 
           <div>
