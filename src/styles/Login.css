@@ -1,141 +1,512 @@
 .login-page {
-  min-height: calc(100vh - 80px);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 40px 20px;
-  background: #f3f2ed;
+  min-height: 100vh;
+  background: #F3F2ED;
+  color: #917687;
+  font-family: "Poppins", sans-serif;
 }
+
+
+/* ==========================================
+   BANNER ORIGINAL
+========================================== */
+
+.login-banner {
+  width: 100%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+
+  padding: 22px 6% 8px;
+
+  box-sizing: border-box;
+
+  background: #F3F2ED;
+}
+
+
+.login-banner img {
+  width: min(100%, 1180px);
+  height: auto;
+
+  display: block;
+
+  border-radius: 4px;
+}
+
+
+/* ==========================================
+   ÁREA LOGIN
+========================================== */
+
+.login-area {
+  min-height: 500px;
+
+  display: flex;
+
+  justify-content: center;
+  align-items: flex-start;
+
+  padding: 45px 20px 70px;
+
+  box-sizing: border-box;
+}
+
+
+/* ==========================================
+   CARD
+========================================== */
 
 .login-card {
   width: 100%;
   max-width: 430px;
-  background: #ffffff;
-  padding: 36px;
-  border-radius: 18px;
-  box-shadow: 0 8px 28px rgba(62, 36, 69, 0.12);
+
+  padding: 34px 36px;
+
+  box-sizing: border-box;
+
+  background:
+    rgba(255, 255, 255, 0.72);
+
+  border:
+    1px solid rgba(
+      145,
+      118,
+      135,
+      0.24
+    );
+
+  border-radius: 14px;
+
+  box-shadow:
+    0 10px 30px
+    rgba(145, 118, 135, 0.09);
 }
 
-.login-card h2 {
-  margin: 0 0 8px;
+
+/* ==========================================
+   CABEÇALHO
+========================================== */
+
+.login-cabecalho {
+  margin-bottom: 25px;
   text-align: center;
-  color: #3e2445;
-  font-size: 28px;
 }
+
+
+.login-etiqueta {
+  display: block;
+
+  margin-bottom: 7px;
+
+  color: #BB91AD;
+
+  font-size: 9px;
+  font-weight: 600;
+
+  letter-spacing: 1.5px;
+
+  text-transform: uppercase;
+}
+
+
+.login-card h1 {
+  margin: 0;
+
+  color: #917687;
+
+  font-family:
+    "Playfair Display SC",
+    serif;
+
+  font-size: 25px;
+  line-height: 1.25;
+}
+
 
 .login-subtitle {
-  text-align: center;
-  color: #777;
-  margin-bottom: 24px;
-  font-size: 14px;
+  max-width: 340px;
+
+  margin:
+    11px auto 0;
+
+  color: #917687;
+
+  opacity: 0.82;
+
+  font-size: 11px;
+  line-height: 1.7;
 }
+
+
+/* ==========================================
+   ERRO
+========================================== */
+
+.login-erro {
+  margin-bottom: 17px;
+
+  padding: 10px 12px;
+
+  background: #FFF1F1;
+
+  color: #A43B3B;
+
+  border:
+    1px solid #F1D5D5;
+
+  border-radius: 8px;
+
+  font-size: 11px;
+}
+
+
+/* ==========================================
+   GOOGLE
+========================================== */
 
 .login-google {
   display: flex;
+
   justify-content: center;
-  margin-bottom: 20px;
+
+  margin-bottom: 18px;
 }
+
+
+/* ==========================================
+   SEPARADOR
+========================================== */
 
 .login-separador {
   display: flex;
+
   align-items: center;
+
   gap: 12px;
-  margin: 18px 0;
-  color: #999;
-  font-size: 12px;
+
+  margin:
+    18px 0 20px;
+
+  color: rgba(
+    145,
+    118,
+    135,
+    0.65
+  );
+
+  font-size: 9px;
+
+  text-transform: uppercase;
+
+  letter-spacing: 0.7px;
 }
+
 
 .login-separador::before,
 .login-separador::after {
   content: "";
+
   flex: 1;
+
   height: 1px;
-  background: #ddd;
+
+  background:
+    rgba(
+      145,
+      118,
+      135,
+      0.25
+    );
 }
 
+
+/* ==========================================
+   CAMPOS
+========================================== */
+
 .login-form-group {
-  margin-bottom: 16px;
+  margin-bottom: 15px;
 }
+
 
 .login-form-group label {
   display: block;
+
   margin-bottom: 6px;
-  color: #3e2445;
+
+  color: #7A5B72;
+
+  font-size: 10px;
+
   font-weight: 600;
-  font-size: 14px;
 }
+
 
 .login-form-group input {
   width: 100%;
-  padding: 12px 14px;
-  border: 1px solid #d8cfd5;
-  border-radius: 8px;
+  height: 42px;
+
+  padding: 0 12px;
+
   box-sizing: border-box;
-  font-size: 14px;
+
+  color: #7A5B72;
+
+  background:
+    rgba(
+      255,
+      255,
+      255,
+      0.38
+    );
+
+  border:
+    1px solid
+    rgba(
+      145,
+      118,
+      135,
+      0.32
+    );
+
+  border-radius: 7px;
+
   outline: none;
-}
 
-.login-form-group input:focus {
-  border-color: #917687;
-  box-shadow: 0 0 0 3px rgba(145, 118, 135, 0.12);
-}
+  font-family:
+    "Poppins",
+    sans-serif;
 
-.login-button {
-  width: 100%;
-  padding: 12px;
-  border: none;
-  border-radius: 8px;
-  background: #917687;
-  color: white;
-  font-size: 15px;
-  font-weight: 600;
-  cursor: pointer;
+  font-size: 11px;
+
   transition: 0.2s;
 }
 
-.login-button:hover {
-  background: #7a5b72;
+
+.login-form-group input::placeholder {
+  color:
+    rgba(
+      145,
+      118,
+      135,
+      0.46
+    );
 }
+
+
+.login-form-group input:focus {
+  border-color: #BB91AD;
+
+  box-shadow:
+    0 0 0 3px
+    rgba(
+      187,
+      145,
+      173,
+      0.11
+    );
+}
+
+
+/* ==========================================
+   SENHA
+========================================== */
+
+.login-senha-box {
+  position: relative;
+}
+
+
+.login-senha-box input {
+  padding-right: 43px;
+}
+
+
+.login-olho {
+  position: absolute;
+
+  top: 50%;
+  right: 10px;
+
+  transform:
+    translateY(-50%);
+
+  width: auto !important;
+  height: auto !important;
+
+  display: flex;
+
+  align-items: center;
+  justify-content: center;
+
+  padding: 3px !important;
+
+  background:
+    transparent !important;
+
+  border: none !important;
+
+  cursor: pointer;
+}
+
+
+/* ==========================================
+   ESQUECEU A SENHA
+========================================== */
+
+.login-esqueci-area {
+  display: flex;
+
+  justify-content: flex-end;
+
+  margin:
+    -3px 0 18px;
+}
+
+
+.login-link-texto {
+  width: auto !important;
+  height: auto !important;
+
+  padding: 0 !important;
+
+  color: #7A5B72 !important;
+
+  background:
+    transparent !important;
+
+  border: none !important;
+
+  font-family:
+    "Poppins",
+    sans-serif;
+
+  font-size: 10px;
+
+  text-decoration: underline;
+
+  cursor: pointer;
+}
+
+
+/* ==========================================
+   BOTÃO PRINCIPAL
+========================================== */
+
+.login-button {
+  width: 100%;
+  height: 44px;
+
+  background: #917687;
+
+  color: #FFFFFF;
+
+  border: none;
+
+  border-radius: 7px;
+
+  font-family:
+    "Poppins",
+    sans-serif;
+
+  font-size: 11px;
+
+  font-weight: 600;
+
+  letter-spacing: 0.2px;
+
+  cursor: pointer;
+
+  transition: 0.2s;
+}
+
+
+.login-button:hover {
+  background: #7A5B72;
+}
+
 
 .login-button:disabled {
-  opacity: 0.7;
-  cursor: not-allowed;
+  opacity: 0.65;
+
+  cursor:
+    not-allowed;
 }
 
-.login-erro {
-  background: #fff1f1;
-  color: #b3261e;
-  padding: 10px 12px;
-  border-radius: 8px;
-  margin-bottom: 16px;
-  font-size: 13px;
-}
 
-.login-links {
+/* ==========================================
+   CRIAR CONTA
+========================================== */
+
+.login-criar-conta {
   display: flex;
-  justify-content: space-between;
-  margin-top: 18px;
-  font-size: 13px;
+
+  justify-content: center;
+  align-items: center;
+
+  gap: 5px;
+
+  margin-top: 17px;
+
+  color: #917687;
+
+  font-size: 10px;
 }
 
-.login-links span {
-  cursor: pointer;
-  color: #7a5b72;
-}
 
-.login-links .criar-conta {
-  color: #3e2445;
+.login-criar-conta button {
+  width: auto !important;
+  height: auto !important;
+
+  padding: 0 !important;
+
+  background:
+    transparent !important;
+
+  color: #7A5B72 !important;
+
+  border: none !important;
+
+  font-family:
+    "Poppins",
+    sans-serif;
+
+  font-size: 10px;
+
   font-weight: 600;
+
+  text-decoration: underline;
+
+  cursor: pointer;
 }
 
-@media (max-width: 500px) {
-  .login-card {
-    padding: 26px 20px;
+
+/* ==========================================
+   RESPONSIVO
+========================================== */
+
+@media (max-width: 600px) {
+
+  .login-banner {
+    padding:
+      14px 14px 0;
   }
 
-  .login-links {
-    flex-direction: column;
-    gap: 12px;
-    text-align: center;
+
+  .login-area {
+    padding:
+      30px 15px 55px;
   }
+
+
+  .login-card {
+    padding:
+      28px 21px;
+  }
+
+
+  .login-card h1 {
+    font-size: 22px;
+  }
+
 }
