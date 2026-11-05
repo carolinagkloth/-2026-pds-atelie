@@ -1,10 +1,10 @@
 const express = require('express');
 const router = express.Router();
 const MensagemChatController = require('../controllers/mensagemChatController');
-const autenticarToken = require('../middlewares/authMiddleware');
-const upload = require('../middlewares/uploadMiddleware');
 
-router.post('/', autenticarToken, upload.single('anexo'), MensagemChatController.enviar);
-router.get('/pedido/:idPedido', autenticarToken, MensagemChatController.listar);
+// Suporta requisições com ou sem param :idPedido
+router.get('/:idPedido', MensagemChatController.listar);
+router.get('/pedido/:idPedido', MensagemChatController.listar);
+router.post('/', MensagemChatController.enviar);
 
 module.exports = router;

@@ -1,18 +1,19 @@
 const express = require('express');
 const router = express.Router();
 const PortfolioController = require('../controllers/portfolioController');
-const authMiddleware = require('../middlewares/authMiddleware'); // Ajuste o caminho se necessário
 
-// Rota para cadastrar item no portfólio (Requer autenticação)
-router.post('/', authMiddleware, PortfolioController.criar);
-
-// Rota para listar todo o portfólio da plataforma (Pública)
+// Listar todo o portfólio da plataforma (Pública)
 router.get('/', PortfolioController.listarTodos);
 
-// Rota para listar o portfólio de uma costureira específica (Pública)
-router.get('/costureira/:id_costureira', PortfolioController.listarPorCostureira);
+// Criar item no portfólio
+router.post('/', PortfolioController.criar);
 
-// Rota para deletar um item do portfólio (Requer autenticação)
-router.delete('/:id', authMiddleware, PortfolioController.deletar);
+// Listar por costureira específica (Suporta ambas as assinaturas de rota)
+router.get('/costureira/:id_costureira', PortfolioController.listarPorCostureira);
+router.get('/:idCostureira', PortfolioController.listarPorCostureira);
+
+// Deletar item do portfólio
+router.delete('/:id', PortfolioController.deletar);
+router.delete('/midia/:idMidia', PortfolioController.deletar);
 
 module.exports = router;

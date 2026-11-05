@@ -1,41 +1,76 @@
-const db = require('../config/database');
+const pool = require('../config/database');
 
 class PedidoModel {
   static async criar({ id_cliente, descricao, fotos_referencia, prazo_desejado, status_pedido }) {
     const statusInicial = status_pedido || 'Aberto';
     const query = `
       INSERT INTO pedidos (id_cliente, descricao, fotos_referencia, data_publicacao, prazo_desejado, status_pedido) 
-      VALUES (?, ?, ?, NOW(), ?, ?)
+      VALUES ($1, $2, $3, NOW(), $4, $5)
+      RETURNING *;
     `;
-    const [result] = await db.query(query, [
+    const result = await pool.query(query, [
       id_cliente, 
       descricao, 
-      fotos_referencia, 
+      fotos_referencia || null, 
       prazo_desejado, 
       statusInicial
     ]);
-    return result.insertId;
+    return result.rows[0];
   }
 
   static async listarTodos() {
-    const [rows] = await db.query(`
-      SELECT p.*, u.nome as nome_cliente 
-      FROM pedidos p
+    const query = `
+      SELECT p.id_pedido AS id, p.id_pedido, p.descricao, p.fotos_referencia AS "fotoReferencia", 
+             p.data_publicacao AS "dataPublicacao", p.prazo_desejado AS "prazoDesejado", 
+             p.status_pedido AS status, p.status_pedido, u.nome AS "clienteNome", u.nome AS nome_cliente, 
+             u.id_usuario AS "clienteId", u.id_usuario AS id_cliente,
+             COALESCE(u.endereco, 'Não informado') AS localizacao
+      FROM pedidos p 
       JOIN usuarios u ON p.id_cliente = u.id_usuario
-    `);
-    return rows;
+      ORDER BY p.data_publicacao DESC;
+    `;
+    const result = await pool.query(query);
+    return result.rows;
   }
 
   static async buscarPorId(id_pedido) {
-    const [rows] = await db.query('SELECT * FROM pedidos WHERE id_pedido = ?', [id_pedido]);
-    return rows[0];
+    const query = 'SELECT * FROM pedidos WHERE id_pedido = $1';
+    const result = await pool.query(query, [id_pedido]);
+    return result.rows[0];
+  }
+
+  static async atualizar(id_pedido, id_cliente, { descricao, fotos_referencia, prazo_desejado }) {
+    const query = `
+      UPDATE pedidos 
+      SET descricao = $1, fotos_referencia = $2, prazo_desejado = $3
+      WHERE id_pedido = $4 AND id_cliente = $5 
+      RETURNING *;
+    `;
+    const result = await pool.query(query, [
+      descricao.trim(), 
+      fotos_referencia || null, 
+      prazo_desejado, 
+      id_pedido, 
+      id_cliente
+    ]);
+    return result.rows[0];
   }
 
   static async atualizarStatus(id_pedido, status_pedido) {
-    await db.query(
-      'UPDATE pedidos SET status_pedido = ? WHERE id_pedido = ?', 
-      [status_pedido, id_pedido]
-    );
+    const query = 'UPDATE pedidos SET status_pedido = $1 WHERE id_pedido = $2 RETURNING *;';
+    const result = await pool.query(query, [status_pedido, id_pedido]);
+    return result.rows[0];
+  }
+
+  static async deletar(id_pedido) {
+    const query = 'DELETE FROM pedidos WHERE id_pedido = $1';
+    await pool.query(query, [id_pedido]);
+  }
+
+  static async buscarCostureiraVinculada(id_pedido) {
+    const query = 'SELECT id_costureira FROM ordens_servico WHERE id_pedido = $1';
+    const result = await pool.query(query, [id_pedido]);
+    return result.rows[0]?.id_costureira || null;
   }
 }
 
