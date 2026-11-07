@@ -25,7 +25,7 @@ function Perfil({ usuario, onNavigate, onUpdateUsuario }) {
   const [erro, setErro] = useState('');
   const [erroImagem, setErroImagem] = useState(false);
 
-  // Estados integrados para Avaliações (DER) e Agenda de Ordens de Serviço
+  // Estados integrados para Avaliações e Agenda de Compromissos
   const [reputacao, setReputacao] = useState({ media: 0, totalAvaliacoes: 0, depoimentos: [] });
   const [ordensServico, setOrdensServico] = useState([]);
   const [dataSelecionada, setDataSelecionada] = useState(new Date());
@@ -44,12 +44,7 @@ function Perfil({ usuario, onNavigate, onUpdateUsuario }) {
     if (idUsuario) {
       // 1. Carrega os dados do Perfil
       fetch(`/api/usuarios/${idUsuario}`)
-        .then((res) => {
-          if (!res.ok) {
-            throw new Error('Erro ao carregar dados do usuário');
-          }
-          return res.json();
-        })
+        .then((res) => res.json())
         .then((data) => {
           if (data && !data.erro) {
             setFormData({
@@ -65,12 +60,20 @@ function Perfil({ usuario, onNavigate, onUpdateUsuario }) {
         })
         .catch(() => {});
 
-      // 2. Carrega as Ordens de Serviço do usuário para a Agenda
-      fetch(`/api/ordens-servico/usuario/${idUsuario}`)
+      // 2. Carrega a Agenda de compromissos da Costureira / Cliente
+      fetch(`/api/usuarios/${idUsuario}/agenda`)
         .then((res) => res.json())
         .then((data) => {
           if (Array.isArray(data)) {
             setOrdensServico(data);
+          } else {
+            // Fallback para a rota de ordens de serviço
+            fetch(`/api/ordens-servico/usuario/${idUsuario}`)
+              .then((r) => r.json())
+              .then((osData) => {
+                if (Array.isArray(osData)) setOrdensServico(osData);
+              })
+              .catch(() => {});
           }
         })
         .catch(() => {});
@@ -81,7 +84,11 @@ function Perfil({ usuario, onNavigate, onUpdateUsuario }) {
           .then((res) => res.json())
           .then((data) => {
             if (data && !data.erro) {
-              setReputacao(data);
+              setReputacao({
+                media: data.media || data.media_nota || 0,
+                totalAvaliacoes: data.totalAvaliacoes || data.total_avaliacoes || 0,
+                depoimentos: data.depoimentos || data.avaliacoes || []
+              });
             }
           })
           .catch(() => {});
@@ -130,14 +137,20 @@ function Perfil({ usuario, onNavigate, onUpdateUsuario }) {
         body: JSON.stringify(formData)
       });
 
-      const data = await response.json();
+      // Proteção contra respostas HTML (erro 404/500 em formato Unexpected token <)
+      const textResponse = await response.text();
+      let data;
+      try {
+        data = JSON.parse(textResponse);
+      } catch (jsonErr) {
+        throw new Error('Servidor retornou uma resposta inválida. Verifique se a rota API está ativa.');
+      }
 
       if (!response.ok) {
-        throw new Error(data.erro || 'Erro ao atualizar perfil.');
+        throw new Error(data.erro || data.error || 'Erro ao atualizar perfil.');
       }
 
       const usuarioAtualizado = data.usuario || { ...user, ...formData };
-
       localStorage.setItem('usuarioAtelie', JSON.stringify(usuarioAtualizado));
 
       if (onUpdateUsuario) {
@@ -166,6 +179,14 @@ function Perfil({ usuario, onNavigate, onUpdateUsuario }) {
     return '★'.repeat(valor) + '☆'.repeat(5 - valor);
   };
 
+  // Filtro seguro de datas para o calendário
+  const ordensDoDia = ordensServico.filter((os) => {
+    const dataEntrega = os.previsaoEntrega || os.previsao_entrega;
+    if (!dataEntrega) return false;
+    const d = new Date(dataEntrega);
+    return !isNaN(d.getTime()) && d.toDateString() === dataSelecionada.toDateString();
+  });
+
   return (
     <div style={{ maxWidth: '750px', margin: '30px auto', background: '#fff', padding: '30px', borderRadius: '12px', boxShadow: '0 4px 16px rgba(62, 36, 69, 0.12)', fontFamily: "'Segoe UI', Tahoma, Geneva, Verdana, sans-serif" }}>
       
@@ -192,7 +213,7 @@ function Perfil({ usuario, onNavigate, onUpdateUsuario }) {
             <h3 style={{ margin: 0, color: '#3E2445', fontSize: '16px' }}>Reputação & Avaliações</h3>
             <div style={{ marginTop: '4px', display: 'flex', alignItems: 'center', gap: '8px' }}>
               <span style={{ fontSize: '22px', color: '#FFB400', fontWeight: 'bold' }}>
-                {reputacao.media ? reputacao.media.toFixed(1) : '0.0'}
+                {reputacao.media ? Number(reputacao.media).toFixed(1) : '0.0'}
               </span>
               <span style={{ fontSize: '18px', color: '#FFB400' }}>
                 {renderEstrelas(reputacao.media)}
@@ -356,7 +377,7 @@ function Perfil({ usuario, onNavigate, onUpdateUsuario }) {
         </div>
       </form>
 
-      {/* Agenda de Entregas */}
+      {/* Agenda de Entregas e Provas */}
       <div style={{ marginTop: '30px', borderTop: '2px solid #F4EFF5', paddingTop: '20px' }}>
         <h3 style={{ color: '#3E2445', marginTop: 0, fontSize: '18px' }}>
           Agenda de Entregas e Provas
@@ -368,20 +389,18 @@ function Perfil({ usuario, onNavigate, onUpdateUsuario }) {
             <h4 style={{ margin: '0 0 10px 0', color: '#555', fontSize: '15px' }}>
               Entregas em {dataSelecionada.toLocaleDateString('pt-BR')}:
             </h4>
-            {ordensServico.filter(os => os.previsaoEntrega && new Date(os.previsaoEntrega).toDateString() === dataSelecionada.toDateString()).length === 0 ? (
+            {ordensDoDia.length === 0 ? (
               <p style={{ color: '#888', fontSize: '13px' }}>Sem entregas ou provas previstas para esta data.</p>
             ) : (
-              ordensServico
-                .filter(os => os.previsaoEntrega && new Date(os.previsaoEntrega).toDateString() === dataSelecionada.toDateString())
-                .map(item => (
-                  <div key={item.id} style={{ background: '#F9F9F9', borderLeft: `4px solid ${item.statusKanban === 'Aguardando Prova' ? '#E67E22' : '#2E7D32'}`, padding: '10px', marginBottom: '8px', borderRadius: '4px' }}>
-                    <strong style={{ fontSize: '13px', color: '#3E2445' }}>Status: {item.statusKanban}</strong><br />
-                    <small style={{ color: '#555', display: 'block', marginTop: '3px' }}>{item.pedidoDescricao}</small>
-                    <small style={{ color: '#888', display: 'block', marginTop: '2px' }}>
-                      {isCliente ? `Costureira: ${item.costureiraNome}` : `Cliente: ${item.clienteNome}`}
-                    </small>
-                  </div>
-                ))
+              ordensDoDia.map((item) => (
+                <div key={item.id || item.id_ordem_servico} style={{ background: '#F9F9F9', borderLeft: `4px solid ${(item.statusKanban || item.status_kanban) === 'Aguardando Prova' ? '#E67E22' : '#2E7D32'}`, padding: '10px', marginBottom: '8px', borderRadius: '4px' }}>
+                  <strong style={{ fontSize: '13px', color: '#3E2445' }}>Status: {item.statusKanban || item.status_kanban}</strong><br />
+                  <small style={{ color: '#555', display: 'block', marginTop: '3px' }}>{item.pedidoDescricao || item.pedido_descricao}</small>
+                  <small style={{ color: '#888', display: 'block', marginTop: '2px' }}>
+                    {isCliente ? `Costureira: ${item.costureiraNome || item.costureira_nome}` : `Cliente: ${item.clienteNome || item.cliente_nome}`}
+                  </small>
+                </div>
+              ))
             )}
           </div>
         </div>
@@ -391,14 +410,14 @@ function Perfil({ usuario, onNavigate, onUpdateUsuario }) {
       {!isCliente && reputacao.depoimentos && reputacao.depoimentos.length > 0 && (
         <div style={{ marginTop: '30px', borderTop: '2px solid #F4EFF5', paddingTop: '20px' }}>
           <h3 style={{ color: '#3E2445', marginTop: 0, fontSize: '18px' }}>Depoimentos dos Clientes</h3>
-          {reputacao.depoimentos.map((dep) => (
-            <div key={dep.id} style={{ padding: '12px 0', borderBottom: '1px dashed #eee' }}>
+          {reputacao.depoimentos.map((dep, index) => (
+            <div key={dep.id || index} style={{ padding: '12px 0', borderBottom: '1px dashed #eee' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <strong style={{ fontSize: '14px', color: '#3E2445' }}>{dep.clienteNome}</strong>
+                <strong style={{ fontSize: '14px', color: '#3E2445' }}>{dep.clienteNome || dep.nome_cliente}</strong>
                 <span style={{ color: '#FFB400', fontSize: '14px' }}>{renderEstrelas(dep.nota)}</span>
               </div>
               {dep.comentario && <p style={{ margin: '5px 0', fontSize: '13px', color: '#555' }}>"{dep.comentario}"</p>}
-              <span style={{ fontSize: '11px', color: '#aaa' }}>{new Date(dep.data).toLocaleDateString('pt-BR')}</span>
+              <span style={{ fontSize: '11px', color: '#aaa' }}>{dep.data ? new Date(dep.data).toLocaleDateString('pt-BR') : ''}</span>
             </div>
           ))}
         </div>

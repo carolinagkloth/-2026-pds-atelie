@@ -40,7 +40,8 @@ class MensagemChatModel {
 
   static async buscarConversasUsuario(idUsuario) {
     const query = `
-      SELECT p.id_pedido AS "idPedido", p.id_pedido AS id, p.descricao, p.status_pedido AS status, p.prazo_desejado AS "prazoDesejado",
+      SELECT p.id_pedido AS "idPedido", p.id_pedido AS id, p.descricao, 
+             COALESCE(os.status_kanban, p.status_pedido) AS status, p.prazo_desejado AS "prazoDesejado",
              cli.id_usuario AS "clienteId", cli.nome AS "clienteNome", cost.id_usuario AS "costureiraId", cost.nome AS "costureiraNome",
              (SELECT conteudo FROM mensagens_chat WHERE id_pedido = p.id_pedido ORDER BY data_hora_envio DESC LIMIT 1) AS "ultimaMensagem",
              (SELECT data_hora_envio FROM mensagens_chat WHERE id_pedido = p.id_pedido ORDER BY data_hora_envio DESC LIMIT 1) AS "dataUltimaAtividade"

@@ -55,6 +55,40 @@ class UsuarioModel {
     await pool.query(query, [senhaHash, idUsuario]);
   }
 
+  // --- ATUALIZAR PERFIL E AGENDA ---
+  static async atualizarPerfil(idUsuario, { nome, telefone, bio, especialidades, foto_perfil }) {
+    const query = `
+      UPDATE usuarios 
+      SET nome = $1, telefone = $2, bio = $3, especialidades = $4, foto_perfil = COALESCE($5, foto_perfil)
+      WHERE id_usuario = $6
+      RETURNING id_usuario AS id, id_usuario, nome, email, telefone, bio, especialidades, foto_perfil, tipo_usuario;
+    `;
+    const result = await pool.query(query, [
+      nome, 
+      telefone || null, 
+      bio || null, 
+      especialidades || null, 
+      foto_perfil || null, 
+      idUsuario
+    ]);
+    return result.rows[0];
+  }
+
+  static async buscarAgendaUsuario(idUsuario) {
+    const query = `
+      SELECT os.id_ordem_servico, os.id_pedido, os.previsao_entrega, os.status_kanban,
+             p.descricao AS pedido_descricao, cli.nome AS cliente_nome, cli.telefone AS cliente_telefone
+      FROM ordens_servico os
+      JOIN pedidos p ON os.id_pedido = p.id_pedido
+      JOIN usuarios cli ON p.id_cliente = cli.id_usuario
+      WHERE (os.id_costureira = $1 OR p.id_cliente = $1)
+        AND os.status_kanban NOT IN ('Cancelado')
+      ORDER BY os.previsao_entrega ASC;
+    `;
+    const result = await pool.query(query, [idUsuario]);
+    return result.rows;
+  }
+
   // --- MEDIDAS ---
   static async buscarMedidas(idUsuario) {
     const query = 'SELECT busto, cintura, quadril, altura, comprimento, observacoes_medidas FROM usuarios WHERE id_usuario = $1';

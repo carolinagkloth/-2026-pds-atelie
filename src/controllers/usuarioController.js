@@ -176,6 +176,45 @@ class UsuarioController {
     }
   }
 
+  static async atualizarPerfil(req, res) {
+    const { id } = req.params;
+    const { nome, telefone, bio, especialidades, foto_perfil } = req.body;
+
+    if (!nome || !nome.trim()) {
+      return res.status(400).json({ erro: 'O nome é obrigatório.' });
+    }
+
+    try {
+      const usuarioAtualizado = await usuarioModel.atualizarPerfil(id, {
+        nome: nome.trim(),
+        telefone,
+        bio,
+        especialidades,
+        foto_perfil
+      });
+
+      if (!usuarioAtualizado) {
+        return res.status(404).json({ erro: 'Usuário não encontrado.' });
+      }
+
+      return res.json({ mensagem: 'Perfil atualizado com sucesso!', usuario: usuarioAtualizado });
+    } catch (err) {
+      console.error('Erro ao atualizar perfil:', err);
+      return res.status(500).json({ erro: 'Erro ao atualizar dados do perfil.' });
+    }
+  }
+
+  static async obterAgenda(req, res) {
+    const { id } = req.params;
+    try {
+      const agenda = await usuarioModel.buscarAgendaUsuario(id);
+      return res.json(agenda);
+    } catch (err) {
+      console.error('Erro ao buscar agenda:', err);
+      return res.status(500).json({ erro: 'Erro ao carregar compromissos da agenda.' });
+    }
+  }
+
   static async obterMedidas(req, res) {
     const { id } = req.params;
     try {

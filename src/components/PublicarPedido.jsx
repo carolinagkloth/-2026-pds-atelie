@@ -16,6 +16,8 @@ function PublicarPedido({
   const [tiposervico, setTiposervico] = useState('Ajuste / Conserto');
   const [descricao, setDescricao] = useState('');
   const [prazoDesejado, setPrazoDesejado] = useState('');
+  const [horarioPreferencial, setHorarioPreferencial] = useState('14:00');
+  const [semPreferenciaHorario, setSemPreferenciaHorario] = useState(true);
   const [localizacao, setLocalizacao] = useState('');
   const [previewFoto, setPreviewFoto] = useState('');
   const [carregando, setCarregando] = useState(false);
@@ -58,8 +60,11 @@ function PublicarPedido({
     setCarregando(true);
 
     try {
-      const descricaoFormatada =
-        `[${tiposervico}] - Localização: ${localizacao}\n\n${descricao}`;
+      // Formatação limpa mantendo a descrição acessível para a proposta sem misturar com a localização
+      const descricaoFormatada = `[${tiposervico}] - Localização: ${localizacao}\n\n${descricao.trim()}`;
+      
+      const horarioTexto = semPreferenciaHorario ? 'Horário a combinar' : (horarioPreferencial || 'Horário a definir');
+      const prazoFormatadoComHorario = `${prazoDesejado} (${horarioTexto})`;
 
       const response = await fetch('/api/pedidos', {
         method: 'POST',
@@ -70,7 +75,7 @@ function PublicarPedido({
           id_cliente: idCliente,
           descricao: descricaoFormatada,
           fotos_referencia: previewFoto || null,
-          prazo_desejado: prazoDesejado
+          prazo_desejado: prazoFormatadoComHorario
         })
       });
 
@@ -87,8 +92,8 @@ function PublicarPedido({
         clienteId: idCliente,
         clienteNome: user?.nome || 'Cliente',
         tiposervico,
-        descricao,
-        prazoDesejado,
+        descricao: descricaoFormatada,
+        prazoDesejado: prazoFormatadoComHorario,
         localizacao,
         fotoReferencia: previewFoto || null,
         status: 'Aberto',
@@ -203,7 +208,32 @@ function PublicarPedido({
 
         </div>
 
-        <div className="publicar-form-group publicar-upload">
+        {/* Seleção de Horário Preferencial */}
+        <div className="publicar-duas-colunas" style={{ marginTop: '10px' }}>
+          <div className="publicar-form-group">
+            <label>Horário Preferencial</label>
+            <input
+              type="time"
+              value={horarioPreferencial}
+              disabled={semPreferenciaHorario}
+              onChange={(e) => setHorarioPreferencial(e.target.value)}
+              style={{ opacity: semPreferenciaHorario ? 0.5 : 1 }}
+            />
+          </div>
+
+          <div className="publicar-form-group" style={{ display: 'flex', alignItems: 'center', paddingTop: '24px' }}>
+            <label style={{ cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '8px', fontSize: '13px' }}>
+              <input
+                type="checkbox"
+                checked={semPreferenciaHorario}
+                onChange={(e) => setSemPreferenciaHorario(e.target.checked)}
+              />
+              Sem preferência / Horário a combinar
+            </label>
+          </div>
+        </div>
+
+        <div className="publicar-form-group publicar-upload" style={{ marginTop: '15px' }}>
           <label>
             Foto de Referência da Peça
             (Opcional - PNG ou JPG)
