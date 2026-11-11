@@ -104,10 +104,11 @@ class OrdemServicoController {
     }
   }
 
+  // --- AGENDAMENTO DE PROVA (PERSISTE DATA E HORA NA BANCO) ---
   static async agendarProva(req, res) {
     const { id_pedido, dataProva, horarioProva, semPreferenciaHorario, observacao, id_costureira } = req.body;
     if (!id_pedido || !dataProva) {
-      return res.status(400).json({ erro: 'ID do pedido e data são obrigatórios.' });
+      return res.status(400).json({ erro: 'ID do pedido e data da prova são obrigatórios.' });
     }
 
     const horarioTexto = semPreferenciaHorario ? 'Horário a combinar' : (horarioProva || 'Horário a definir');
@@ -117,27 +118,51 @@ class OrdemServicoController {
     try {
       await client.query('BEGIN');
 
-      const { idCliente, msgTexto } = await OrdemServicoModel.agendarProva(client, {
-        id_pedido, 
-        dataProva, 
-        observacao: observacaoComHorario, 
-        id_costureira
-      });
+      // 1. Grava data_prova e horario_prova na tabela ordens_servico (Alimenta a Agenda)
+      await client.query(
+        `UPDATE ordens_servico 
+         SET status_kanban = 'Aguardando Prova', 
+             data_prova = $2, 
+             horario_prova = $3 
+         WHERE id_pedido = $1;`,
+        [id_pedido, dataProva, horarioTexto]
+      );
+
+      // 2. Atualiza status no pedido
+      await client.query(
+        `UPDATE pedidos SET status_pedido = 'Aguardando Prova' WHERE id_pedido = $1;`,
+        [id_pedido]
+      );
+
+      // 3. Formata a data para a mensagem no chat
+      const [ano, mes, dia] = dataProva.split('-');
+      const dataFormatada = `${dia}/${mes}/${ano}`;
+      const msgTexto = `📅 PROVA AGENDADA!\nSua prova da peça foi agendada para o dia ${dataFormatada}. ${observacaoComHorario}`;
+
+      // 4. Insere mensagem no histórico do chat
+      await client.query(
+        `INSERT INTO mensagens_chat (id_pedido, id_remetente, conteudo, tipo_mensagem) VALUES ($1, $2, $3, 'texto')`,
+        [id_pedido, id_costureira || null, msgTexto]
+      );
 
       await client.query('COMMIT');
+
+      // 5. Notifica o Cliente
+      const pedRes = await pool.query('SELECT id_cliente FROM pedidos WHERE id_pedido = $1', [id_pedido]);
+      const idCliente = pedRes.rows[0]?.id_cliente;
 
       if (idCliente) {
         await dispararNotificacao({
           idUsuario: idCliente,
           titulo: 'Prova Agendada! 🗓️',
-          mensagem: `${msgTexto} (${horarioTexto})`,
+          mensagem: `${msgTexto}`,
           tipo: 'prova',
           idPedido: id_pedido,
           forcarWhatsapp: true
         });
       }
 
-      return res.json({ mensagem: 'Prova agendada e cliente notificado!' });
+      return res.json({ mensagem: 'Prova agendada com sucesso!' });
     } catch (err) {
       await client.query('ROLLBACK');
       console.error('Erro ao agendar prova:', err);
@@ -147,6 +172,7 @@ class OrdemServicoController {
     }
   }
 
+  // --- CANCELAMENTO DE PROVA (LIMPA AS DATAS DA AGENDA) ---
   static async cancelarProva(req, res) {
     const { id_pedido, id_remetente } = req.body;
     if (!id_pedido) {
@@ -157,8 +183,13 @@ class OrdemServicoController {
     try {
       await client.query('BEGIN');
 
+      // Limpa data_prova e horario_prova da ordem de serviço
       await client.query(
-        `UPDATE ordens_servico SET status_kanban = 'Em Produção' WHERE id_pedido = $1;`,
+        `UPDATE ordens_servico 
+         SET status_kanban = 'Em Produção', 
+             data_prova = NULL, 
+             horario_prova = NULL 
+         WHERE id_pedido = $1;`,
         [id_pedido]
       );
       await client.query(
@@ -203,8 +234,6 @@ class OrdemServicoController {
   }
 
   // --- FLUXO DE CONCLUSÃO E ENTREGA ---
-
-  // 1. COSTUREIRA: MARCAR PEÇA COMO CONCLUÍDA / PRONTA
   static async concluirServico(req, res) {
     const { id_pedido, id_costureira } = req.body;
     if (!id_pedido) {
@@ -250,7 +279,6 @@ class OrdemServicoController {
     }
   }
 
-  // 2. CLIENTE: CONFIRMAR RECEBIMENTO E LIBERAR AVALIAÇÃO
   static async confirmarEntrega(req, res) {
     const { id_pedido, id_cliente } = req.body;
     if (!id_pedido) {

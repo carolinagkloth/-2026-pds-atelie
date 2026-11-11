@@ -1,3 +1,13 @@
+import React from 'react';
+import ChatContainer from './chat/ChatContainer';
+
+function Chat(props) {
+  return <ChatContainer {...props} />;
+}
+
+export default Chat;
+
+/*
 import React, { useState, useEffect, useRef } from 'react';
 
 function Chat({ pedido, usuario, onNavigate }) {
@@ -504,7 +514,6 @@ Observações: ${medidas.observacoes_medidas || 'Nenhuma'}
   return (
     <div style={{ maxWidth: '1100px', margin: '20px auto', fontFamily: "'Segoe UI', Tahoma, sans-serif" }}>
       
-      {/* Cabeçalho */}
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: '#fff', padding: '20px 25px', borderRadius: '12px', boxShadow: '0 4px 16px rgba(62, 36, 69, 0.12)', marginBottom: '20px' }}>
         <div>
           <h2 style={{ color: '#3E2445', margin: 0, fontSize: '22px' }}>Chat de Negociação</h2>
@@ -530,10 +539,8 @@ Observações: ${medidas.observacoes_medidas || 'Nenhuma'}
         </div>
       </div>
 
-      {/* Grid Principal */}
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 340px', gap: '20px' }}>
         
-        {/* Painel do Chat */}
         <div style={{ background: '#fff', borderRadius: '12px', boxShadow: '0 4px 16px rgba(62, 36, 69, 0.12)', display: 'flex', flexDirection: 'column', height: '620px', overflow: 'hidden' }}>
           <div style={{ background: '#3E2445', color: '#fff', padding: '15px 20px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
             <h3 style={{ margin: 0, fontSize: '16px', fontWeight: 'bold' }}>Atendimento Direto</h3>
@@ -576,7 +583,6 @@ Observações: ${medidas.observacoes_medidas || 'Nenhuma'}
                         {msg.conteudo}
                       </div>
 
-                      {/* Balão de Proposta */}
                       {ehProposta && (
                         <div style={{ marginTop: '8px', background: ehMinha ? 'rgba(255,255,255,0.1)' : '#FAF7FA', padding: '10px', borderRadius: '8px', border: '1px solid rgba(62, 36, 69, 0.2)' }}>
                           {statusProposta === 'recusada' ? (
@@ -636,10 +642,8 @@ Observações: ${medidas.observacoes_medidas || 'Nenhuma'}
           </form>
         </div>
 
-        {/* Painel Lateral */}
         <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
           
-          {/* Status do Pedido & Ações */}
           <div style={{ background: '#fff', borderRadius: '12px', padding: '20px', boxShadow: '0 4px 16px rgba(62, 36, 69, 0.12)' }}>
             <h3 style={{ margin: '0 0 15px 0', color: '#3E2445', fontSize: '17px', fontWeight: 'bold' }}>Status do Pedido</h3>
             
@@ -648,7 +652,6 @@ Observações: ${medidas.observacoes_medidas || 'Nenhuma'}
               <strong style={{ color: '#E65100', fontSize: '14px' }}>{orcamentoAtual.status}</strong>
             </div>
 
-            {/* Perfil da Costureira */}
             {!isCostureira && idCostureiraPedido && (
               <button
                 onClick={() => onNavigate && onNavigate('perfil', idCostureiraPedido)}
@@ -658,7 +661,6 @@ Observações: ${medidas.observacoes_medidas || 'Nenhuma'}
               </button>
             )}
 
-            {/* BOTÃO DA COSTUREIRA: + ENVIAR ORÇAMENTO (SÓ APARECE SE AINDA NÃO FOI ACEITO) */}
             {podeEnviarOrçamento && (
               <button
                 onClick={() => {
@@ -678,7 +680,6 @@ Observações: ${medidas.observacoes_medidas || 'Nenhuma'}
               </button>
             )}
 
-            {/* BOTÕES DA COSTUREIRA: AGENDAR PROVA E CONCLUIR PEÇA (SEMPRE DISPONÍVEIS NA PRODUÇÃO/INÍCIO) */}
             {isCostureira && orcamentoAtual.status !== 'Cancelado' && (
               <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
                 <button
@@ -699,7 +700,6 @@ Observações: ${medidas.observacoes_medidas || 'Nenhuma'}
               </div>
             )}
 
-            {/* BOTÃO DE CANCELAR PEDIDO (SEMPRE DISPONÍVEL SE NÃO TIVER CANCELADO OU ENTREGUE) */}
             {orcamentoAtual.status !== 'Cancelado' && orcamentoAtual.status !== 'Entregue' && (
               <button
                 onClick={handleCancelarPedido}
@@ -709,7 +709,6 @@ Observações: ${medidas.observacoes_medidas || 'Nenhuma'}
               </button>
             )}
 
-            {/* BOTÕES DE EXPORTAÇÃO PDF E TXT */}
             <div style={{ marginTop: '15px', borderTop: '1px solid #eee', paddingTop: '15px', display: 'flex', flexDirection: 'column', gap: '8px' }}>
               <button
                 onClick={handleExportarPDF}
@@ -727,7 +726,6 @@ Observações: ${medidas.observacoes_medidas || 'Nenhuma'}
 
           </div>
 
-          {/* Ficha de Medidas */}
           <div style={{ background: '#fff', borderRadius: '12px', padding: '20px', boxShadow: '0 4px 16px rgba(62, 36, 69, 0.12)' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' }}>
               <h3 style={{ margin: 0, color: '#3E2445', fontSize: '17px', fontWeight: 'bold' }}>Ficha de Medidas</h3>
@@ -753,7 +751,6 @@ Observações: ${medidas.observacoes_medidas || 'Nenhuma'}
 
       </div>
 
-      {/* MODAL: ENVIAR PROPOSTA DE ORÇAMENTO (SEM LOCALIZAÇÃO & COM HORA OBRIGATÓRIA) */}
       {mostrarModalProposta && (
         <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000 }}>
           <div style={{ background: '#fff', padding: '25px', borderRadius: '12px', width: '450px', maxWidth: '90%' }}>
@@ -840,7 +837,6 @@ Observações: ${medidas.observacoes_medidas || 'Nenhuma'}
         </div>
       )}
 
-      {/* MODAL: AGENDAR PROVA */}
       {mostrarModalProva && (
         <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000 }}>
           <div style={{ background: '#fff', padding: '25px', borderRadius: '12px', width: '400px', maxWidth: '90%' }}>
@@ -926,7 +922,6 @@ Observações: ${medidas.observacoes_medidas || 'Nenhuma'}
         </div>
       )}
 
-      {/* MODAL: FICHA DE MEDIDAS */}
       {mostrarModalMedidas && (
         <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000 }}>
           <div style={{ background: '#fff', padding: '25px', borderRadius: '12px', width: '400px', maxWidth: '90%' }}>
@@ -967,5 +962,4 @@ Observações: ${medidas.observacoes_medidas || 'Nenhuma'}
     </div>
   );
 }
-
-export default Chat;
+*/

@@ -1,35 +1,53 @@
+const pool = require('../config/database');
 const notificacaoModel = require('../models/notificacaoModel');
 
-const notificacaoController = {
-  async listarPorUsuario(req, res) {
+class NotificacaoController {
+  // Buscar notificações não lidas do usuário
+  static async listarPorUsuario(req, res) {
+    const { idUsuario } = req.params;
     try {
-      const idUsuario = req.params.idUsuario || req.params.usuario_id;
-      const notificacoes = await notificacaoModel.buscarPorUsuario(idUsuario);
-      return res.json(notificacoes);
+      const query = `
+        SELECT * FROM notificacoes 
+        WHERE id_usuario = $1 
+        ORDER BY data_criacao DESC;
+      `;
+      const result = await pool.query(query, [idUsuario]);
+      return res.json(result.rows);
     } catch (err) {
+      console.error('Erro ao listar notificações:', err);
       return res.status(500).json({ erro: 'Erro ao buscar notificações.' });
     }
-  },
+  }
 
-  async marcarComoLida(req, res) {
+  // MARCAR UMA NOTIFICAÇÃO COMO LIDA (Persiste no Banco)
+  static async marcarComoLida(req, res) {
+    const { idNotificacao } = req.params;
     try {
-      const idNotificacao = req.params.idNotificacao || req.params.id;
-      await notificacaoModel.marcarComoLida(idNotificacao);
-      return res.json({ mensagem: 'Notificação lida com sucesso.' });
+      await pool.query(
+        `UPDATE notificacoes SET lida = TRUE WHERE id_notificacao = $1;`,
+        [idNotificacao]
+      );
+      return res.json({ mensagem: 'Notificação marcada como lida.' });
     } catch (err) {
+      console.error('Erro ao atualizar notificação:', err);
       return res.status(500).json({ erro: 'Erro ao atualizar notificação.' });
     }
-  },
+  }
 
-  async marcarTodasComoLidas(req, res) {
+  // MARCAR TODAS COMO LIDAS
+  static async marcarTodasComoLidas(req, res) {
+    const { idUsuario } = req.params;
     try {
-      const idUsuario = req.params.idUsuario || req.params.usuario_id;
-      await notificacaoModel.marcarTodasComoLidas(idUsuario);
+      await pool.query(
+        `UPDATE notificacoes SET lida = TRUE WHERE id_usuario = $1 AND lida = FALSE;`,
+        [idUsuario]
+      );
       return res.json({ mensagem: 'Todas as notificações foram marcadas como lidas.' });
     } catch (err) {
+      console.error('Erro ao atualizar notificações:', err);
       return res.status(500).json({ erro: 'Erro ao atualizar notificações.' });
     }
   }
-};
+}
 
-module.exports = notificacaoController;
+module.exports = NotificacaoController;

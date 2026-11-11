@@ -18,6 +18,10 @@ router.get('/usuarios/:id/agenda', UsuarioController.obterAgenda);
 router.get('/usuarios/:id/medidas', UsuarioController.obterMedidas);
 router.put('/usuarios/:id/medidas', UsuarioController.salvarMedidas);
 
+// ROTA DE DELEÇÃO DE TABELA DE PREÇOS
+router.delete('/tabela-precos/:idPreco', UsuarioController.deletarPrecoReferencial);
+router.delete('/usuarios/tabela-precos/:idPreco', UsuarioController.deletarPrecoReferencial);
+
 // Preferências de Notificações
 router.get('/usuarios/:id/configuracoes-notificacoes', UsuarioController.obterConfigNotificacoes);
 router.put('/usuarios/:id/configuracoes-notificacoes', UsuarioController.salvarConfigNotificacoes);

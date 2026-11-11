@@ -25,7 +25,7 @@ function Perfil({ usuario, onNavigate, onUpdateUsuario }) {
   const [erro, setErro] = useState('');
   const [erroImagem, setErroImagem] = useState(false);
 
-  // Estados integrados para Avaliações e Agenda de Compromissos
+  // Estados de Avaliações e Agenda de Compromissos
   const [reputacao, setReputacao] = useState({ media: 0, totalAvaliacoes: 0, depoimentos: [] });
   const [ordensServico, setOrdensServico] = useState([]);
   const [dataSelecionada, setDataSelecionada] = useState(new Date());
@@ -60,14 +60,13 @@ function Perfil({ usuario, onNavigate, onUpdateUsuario }) {
         })
         .catch(() => {});
 
-      // 2. Carrega a Agenda de compromissos da Costureira / Cliente
+      // 2. Carrega a Agenda completa (Provas e Entregas)
       fetch(`/api/usuarios/${idUsuario}/agenda`)
         .then((res) => res.json())
         .then((data) => {
           if (Array.isArray(data)) {
             setOrdensServico(data);
           } else {
-            // Fallback para a rota de ordens de serviço
             fetch(`/api/ordens-servico/usuario/${idUsuario}`)
               .then((r) => r.json())
               .then((osData) => {
@@ -78,7 +77,7 @@ function Perfil({ usuario, onNavigate, onUpdateUsuario }) {
         })
         .catch(() => {});
 
-      // 3. Se for Costureira, carrega a média e os depoimentos da tabela avaliacoes
+      // 3. Avaliações (Costureira)
       if (!isCliente) {
         fetch(`/api/avaliacoes/costureira/${idUsuario}`)
           .then((res) => res.json())
@@ -116,6 +115,12 @@ function Perfil({ usuario, onNavigate, onUpdateUsuario }) {
     }
   };
 
+  // REMOVER / EXCLUIR FOTO DE PERFIL
+  const handleRemoverFoto = () => {
+    setErroImagem(false);
+    setFormData((prev) => ({ ...prev, foto_perfil: '' }));
+  };
+
   const handleIniciarEdicao = (e) => {
     e.preventDefault();
     e.stopPropagation();
@@ -137,13 +142,12 @@ function Perfil({ usuario, onNavigate, onUpdateUsuario }) {
         body: JSON.stringify(formData)
       });
 
-      // Proteção contra respostas HTML (erro 404/500 em formato Unexpected token <)
       const textResponse = await response.text();
       let data;
       try {
         data = JSON.parse(textResponse);
       } catch (jsonErr) {
-        throw new Error('Servidor retornou uma resposta inválida. Verifique se a rota API está ativa.');
+        throw new Error('Servidor retornou uma resposta inválida.');
       }
 
       if (!response.ok) {
@@ -179,13 +183,34 @@ function Perfil({ usuario, onNavigate, onUpdateUsuario }) {
     return '★'.repeat(valor) + '☆'.repeat(5 - valor);
   };
 
-  // Filtro seguro de datas para o calendário
-  const ordensDoDia = ordensServico.filter((os) => {
-    const dataEntrega = os.previsaoEntrega || os.previsao_entrega;
-    if (!dataEntrega) return false;
-    const d = new Date(dataEntrega);
-    return !isNaN(d.getTime()) && d.toDateString() === dataSelecionada.toDateString();
-  });
+  // --- FILTRO INTELIGENTE DA AGENDA (PROVAS E ENTREGAS COM FUSO BRASÍLIA) ---
+  const formatarDataIsoLocal = (dateObjOrStr) => {
+    if (!dateObjOrStr) return '';
+    if (typeof dateObjOrStr === 'string' && /^\d{4}-\d{2}-\d{2}/.test(dateObjOrStr)) {
+      return dateObjOrStr.split('T')[0];
+    }
+    const d = new Date(dateObjOrStr);
+    if (isNaN(d.getTime())) return '';
+    const ano = d.getFullYear();
+    const mes = String(d.getMonth() + 1).padStart(2, '0');
+    const dia = String(d.getDate()).padStart(2, '0');
+    return `${ano}-${mes}-${dia}`;
+  };
+
+  const dataSelIso = formatarDataIsoLocal(dataSelecionada);
+
+  const ordensDoDia = ordensServico.reduce((acc, item) => {
+    const dProva = formatarDataIsoLocal(item.data_prova || item.dataProva);
+    const dEntrega = formatarDataIsoLocal(item.previsao_entrega || item.previsaoEntrega);
+
+    if (dProva && dProva === dataSelIso) {
+      acc.push({ ...item, tipoCompromisso: 'Prova Agendada 📅', dataCompromisso: dProva });
+    }
+    if (dEntrega && dEntrega === dataSelIso) {
+      acc.push({ ...item, tipoCompromisso: 'Previsão de Entrega 📦', dataCompromisso: dEntrega });
+    }
+    return acc;
+  }, []);
 
   return (
     <div style={{ maxWidth: '750px', margin: '30px auto', background: '#fff', padding: '30px', borderRadius: '12px', boxShadow: '0 4px 16px rgba(62, 36, 69, 0.12)', fontFamily: "'Segoe UI', Tahoma, Geneva, Verdana, sans-serif" }}>
@@ -246,10 +271,20 @@ function Perfil({ usuario, onNavigate, onUpdateUsuario }) {
           </div>
 
           {editando && (
-            <div>
-              <label htmlFor="foto-upload" style={{ cursor: 'pointer', padding: '6px 14px', background: '#3E2445', color: '#fff', borderRadius: '6px', fontSize: '12px', fontWeight: 'bold', display: 'inline-block' }}>
+            <div style={{ display: 'flex', gap: '8px', justifyContent: 'center' }}>
+              <label htmlFor="foto-upload" style={{ cursor: 'pointer', padding: '6px 14px', background: '#3E2445', color: '#fff', borderRadius: '6px', fontSize: '12px', fontWeight: 'bold' }}>
                 Alterar Foto
               </label>
+
+              {formData.foto_perfil && (
+                <button
+                  type="button"
+                  onClick={handleRemoverFoto}
+                  style={{ padding: '6px 14px', background: '#C62828', color: '#fff', border: 'none', borderRadius: '6px', fontSize: '12px', fontWeight: 'bold', cursor: 'pointer' }}
+                >
+                  Remover Foto
+                </button>
+              )}
 
               <input
                 id="foto-upload"
@@ -301,7 +336,7 @@ function Perfil({ usuario, onNavigate, onUpdateUsuario }) {
           />
         </div>
 
-        {/* Campos adicionais para Costureira */}
+        {/* Campos de Costureira */}
         {!isCliente && (
           <>
             <div style={{ marginBottom: '15px' }}>
@@ -387,14 +422,28 @@ function Perfil({ usuario, onNavigate, onUpdateUsuario }) {
           
           <div style={{ flex: 1, minWidth: '250px' }}>
             <h4 style={{ margin: '0 0 10px 0', color: '#555', fontSize: '15px' }}>
-              Entregas em {dataSelecionada.toLocaleDateString('pt-BR')}:
+              Compromissos em {dataSelecionada.toLocaleDateString('pt-BR')}:
             </h4>
             {ordensDoDia.length === 0 ? (
               <p style={{ color: '#888', fontSize: '13px' }}>Sem entregas ou provas previstas para esta data.</p>
             ) : (
-              ordensDoDia.map((item) => (
-                <div key={item.id || item.id_ordem_servico} style={{ background: '#F9F9F9', borderLeft: `4px solid ${(item.statusKanban || item.status_kanban) === 'Aguardando Prova' ? '#E67E22' : '#2E7D32'}`, padding: '10px', marginBottom: '8px', borderRadius: '4px' }}>
-                  <strong style={{ fontSize: '13px', color: '#3E2445' }}>Status: {item.statusKanban || item.status_kanban}</strong><br />
+              ordensDoDia.map((item, idx) => (
+                <div 
+                  key={item.id || item.id_ordem_servico || idx} 
+                  style={{ 
+                    background: '#F9F9F9', 
+                    borderLeft: `4px solid ${item.tipoCompromisso.includes('Prova') ? '#E67E22' : '#2E7D32'}`, 
+                    padding: '10px', 
+                    marginBottom: '8px', 
+                    borderRadius: '4px' 
+                  }}
+                >
+                  <span style={{ fontSize: '11px', fontWeight: 'bold', color: item.tipoCompromisso.includes('Prova') ? '#E67E22' : '#2E7D32', textTransform: 'uppercase' }}>
+                    {item.tipoCompromisso}
+                  </span>
+                  <div style={{ fontSize: '13px', color: '#3E2445', fontWeight: 'bold', marginTop: '2px' }}>
+                    Status: {item.statusKanban || item.status_kanban || 'Em Andamento'}
+                  </div>
                   <small style={{ color: '#555', display: 'block', marginTop: '3px' }}>{item.pedidoDescricao || item.pedido_descricao}</small>
                   <small style={{ color: '#888', display: 'block', marginTop: '2px' }}>
                     {isCliente ? `Costureira: ${item.costureiraNome || item.costureira_nome}` : `Cliente: ${item.clienteNome || item.cliente_nome}`}
@@ -423,10 +472,10 @@ function Perfil({ usuario, onNavigate, onUpdateUsuario }) {
         </div>
       )}
 
-      {/* Tabela de Preços e Portfólio (Exibidos apenas no perfil de costureiras) */}
+      {/* Tabela de Preços e Portfólio (Costureira) */}
       {!isCliente && (
         <>
-          <TabelaPrecos modoEdicao={editando} />
+          <TabelaPrecos modoEdicao={editando} idCostureira={idUsuario} />
           <Portfolio idCostureira={idUsuario} modoEdicao={editando} />
         </>
       )}

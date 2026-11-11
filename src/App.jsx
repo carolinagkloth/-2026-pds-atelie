@@ -10,6 +10,7 @@ import Perfil from './components/Perfil.jsx';
 import PublicarPedido from './components/PublicarPedido.jsx';
 import Chat from './components/Chat.jsx';
 import MeusChats from './components/MeusChats.jsx';
+import Portfolio from './components/Portfolio.jsx';
 import BotaoNotificacoes from './components/BotaoNotificacoes.jsx';
 import ConfiguracoesNotificacoes from './components/ConfiguracoesNotificacoes.jsx';
 
@@ -25,6 +26,7 @@ function App() {
 
   const [pedidoSelecionado, setPedidoSelecionado] = useState(null);
   const [dadosCadastroGoogle, setDadosCadastroGoogle] = useState(null);
+  const [idCostureiraPortfolio, setIdCostureiraPortfolio] = useState(null);
 
   // Inicialização inteligente da tela considerando F5 e aba nova
   const [telaAtual, setTelaAtual] = useState(() => {
@@ -53,7 +55,7 @@ function App() {
     return 'inicio';
   });
 
-  // Inclui a rota de configurações de notificações nas rotas protegidas
+  // Lista de rotas autenticadas (inclui portfolio e configuracoesNotificacoes)
   const rotasPrivadas = [
     'meusPedidos', 
     'feedPedidos', 
@@ -61,6 +63,7 @@ function App() {
     'publicarPedido', 
     'chat', 
     'meusChats', 
+    'portfolio',
     'configuracoesNotificacoes'
   ];
 
@@ -87,7 +90,11 @@ function App() {
       if (event.state && event.state.tela) {
         setTelaAtual(event.state.tela);
         if (event.state.dadosExtra) {
-          setPedidoSelecionado(event.state.dadosExtra);
+          if (event.state.tela === 'portfolio') {
+            setIdCostureiraPortfolio(event.state.dadosExtra);
+          } else {
+            setPedidoSelecionado(event.state.dadosExtra);
+          }
         }
       } else {
         setTelaAtual('inicio');
@@ -109,6 +116,8 @@ function App() {
     if (dadosExtra) {
       if (novaTela === 'cadastro') {
         setDadosCadastroGoogle(dadosExtra);
+      } else if (novaTela === 'portfolio') {
+        setIdCostureiraPortfolio(dadosExtra);
       } else {
         setPedidoSelecionado(dadosExtra);
       }
@@ -157,9 +166,12 @@ function App() {
     }
   };
 
+  const idUsuarioLogado = usuarioLogado?.id_usuario || usuarioLogado?.id;
+  const tipoUsuarioLogado = (usuarioLogado?.tipo_usuario || usuarioLogado?.tipoUsuario || '').toString().toLowerCase();
+
   return (
     <div>
-      {/* Sininho de Notificações estilo Pop-up posicionado no topo superior direito */}
+      {/* Sininho de Notificações no topo superior direito */}
       {usuarioLogado && rotasPrivadas.includes(telaAtual) && (
         <div style={{ position: 'fixed', top: '15px', right: '20px', zIndex: 1100 }}>
           <BotaoNotificacoes usuario={usuarioLogado} onNavigate={handleNavigate} />
@@ -229,6 +241,17 @@ function App() {
 
       {usuarioLogado && telaAtual === 'meusChats' && (
         <MeusChats usuario={usuarioLogado} onNavigate={handleNavigate} />
+      )}
+
+      {usuarioLogado && telaAtual === 'portfolio' && (
+        <Portfolio
+          idCostureira={idCostureiraPortfolio || idUsuarioLogado}
+          modoEdicao={
+            tipoUsuarioLogado === 'costureira' &&
+            Number(idCostureiraPortfolio || idUsuarioLogado) === Number(idUsuarioLogado)
+          }
+          onNavigate={handleNavigate}
+        />
       )}
 
       {usuarioLogado && telaAtual === 'configuracoesNotificacoes' && (

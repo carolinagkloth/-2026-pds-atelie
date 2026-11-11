@@ -1,5 +1,6 @@
 const bcrypt = require('bcrypt');
 const crypto = require('crypto');
+const pool = require('../config/database');
 const { OAuth2Client } = require('google-auth-library');
 const usuarioModel = require('../models/usuarioModel');
 const { enviarEmailNovoAcesso, enviarEmailRecuperacao } = require('../services/emailService');
@@ -9,48 +10,62 @@ const googleClient = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
 class UsuarioController {
   // --- AUTENTICAÇÃO E CONTA ---
   static async cadastrar(req, res) {
+    const { nome, email, senha, telefone, tipo_usuario, endereco } = req.body;
+
+    if (!email || !senha || !nome) {
+      return res.status(400).json({ erro: 'Preencha todos os campos obrigatórios.' });
+    }
+
     try {
-      const { nome, email, senha, telefone, cpf_cnpj, tipo_usuario } = req.body;
+      const queryVerificacao = `
+        SELECT email, telefone FROM usuarios 
+        WHERE LOWER(email) = LOWER($1) 
+           OR ($2::text IS NOT NULL AND $2::text <> '' AND telefone = $2::text);
+      `;
+      const resultVerificacao = await pool.query(queryVerificacao, [
+        email.trim(), 
+        telefone ? telefone.trim() : null
+      ]);
 
-      if (!nome || !email || !senha || !telefone) {
-        return res.status(400).json({ erro: 'Preencha todos os campos obrigatórios (nome, e-mail, senha e telefone).' });
+      if (resultVerificacao.rows.length > 0) {
+        const usuarioExistente = resultVerificacao.rows[0];
+        if (usuarioExistente.email.toLowerCase() === email.trim().toLowerCase()) {
+          return res.status(400).json({ erro: 'Este e-mail já está cadastrado em outra conta.' });
+        }
+        if (telefone && usuarioExistente.telefone === telefone.trim()) {
+          return res.status(400).json({ erro: 'Este número de telefone/WhatsApp já está cadastrado em outra conta.' });
+        }
       }
 
-      if (senha.length < 8) {
-        return res.status(400).json({ erro: 'A senha deve conter no mínimo 8 caracteres.' });
-      }
+      const queryInsert = `
+        INSERT INTO usuarios (nome, email, senha, telefone, tipo_usuario, endereco)
+        VALUES ($1, $2, $3, $4, $5, $6)
+        RETURNING id_usuario, nome, email, telefone, tipo_usuario, endereco;
+      `;
 
-      const usuarioExistente = await usuarioModel.buscarPorEmail(email);
-      if (usuarioExistente) {
-        return res.status(400).json({ erro: 'Este e-mail já está cadastrado.' });
-      }
-
-      const senhaHash = await bcrypt.hash(senha, 10);
-      const perfil = tipo_usuario || 'Cliente';
-
-      const novoUser = await usuarioModel.criarUsuario({
-        nome,
-        email,
-        senhaHash,
-        telefone,
-        cpf_cnpj,
-        perfil
-      });
+      const novoUsuario = await pool.query(queryInsert, [
+        nome.trim(),
+        email.trim().toLowerCase(),
+        senha,
+        telefone ? telefone.trim() : null,
+        tipo_usuario || 'Cliente',
+        endereco || ''
+      ]);
 
       return res.status(201).json({
         mensagem: 'Usuário cadastrado com sucesso!',
-        usuario: novoUser
+        usuario: novoUsuario.rows[0]
       });
-    } catch (error) {
-      console.error('Erro no cadastro:', error);
-      return res.status(500).json({ erro: 'Erro interno ao realizar cadastro.' });
+
+    } catch (err) {
+      console.error('Erro ao cadastrar usuário:', err);
+      return res.status(500).json({ erro: 'Erro interno do servidor ao cadastrar usuário.' });
     }
   }
 
   static async login(req, res) {
     try {
       const { email, senha } = req.body;
-
       if (!email || !senha) return res.status(400).json({ erro: 'Preencha o e-mail e a senha.' });
 
       const usuario = await usuarioModel.buscarPorEmail(email);
@@ -176,6 +191,7 @@ class UsuarioController {
     }
   }
 
+  // ACEITA REMOÇÃO DA FOTO (foto_perfil pode vir null ou vazio)
   static async atualizarPerfil(req, res) {
     const { id } = req.params;
     const { nome, telefone, bio, especialidades, foto_perfil } = req.body;
@@ -185,33 +201,79 @@ class UsuarioController {
     }
 
     try {
-      const usuarioAtualizado = await usuarioModel.atualizarPerfil(id, {
-        nome: nome.trim(),
-        telefone,
-        bio,
-        especialidades,
-        foto_perfil
-      });
+      const query = `
+        UPDATE usuarios 
+        SET nome = $1, telefone = $2, bio = $3, especialidades = $4, foto_perfil = $5
+        WHERE id_usuario = $6
+        RETURNING id_usuario, nome, email, telefone, bio, especialidades, foto_perfil, tipo_usuario;
+      `;
 
-      if (!usuarioAtualizado) {
+      const result = await pool.query(query, [
+        nome.trim(),
+        telefone || null,
+        bio || null,
+        especialidades || null,
+        foto_perfil || null, // Se vier '', salva NULL no banco
+        id
+      ]);
+
+      if (result.rows.length === 0) {
         return res.status(404).json({ erro: 'Usuário não encontrado.' });
       }
 
-      return res.json({ mensagem: 'Perfil atualizado com sucesso!', usuario: usuarioAtualizado });
+      return res.json({ mensagem: 'Perfil atualizado com sucesso!', usuario: result.rows[0] });
     } catch (err) {
       console.error('Erro ao atualizar perfil:', err);
       return res.status(500).json({ erro: 'Erro ao atualizar dados do perfil.' });
     }
   }
 
+  // AGENDA COMPLETA (Tanto para Costureiras quanto para Clientes)
   static async obterAgenda(req, res) {
     const { id } = req.params;
     try {
-      const agenda = await usuarioModel.buscarAgendaUsuario(id);
-      return res.json(agenda);
+      const query = `
+        SELECT 
+          os.id_ordem_servico,
+          os.id_pedido,
+          os.id_costureira,
+          os.status_kanban,
+          os.previsao_entrega,
+          os.data_prova,
+          os.horario_prova,
+          p.descricao AS pedido_descricao,
+          u_cli.nome AS cliente_nome,
+          u_cost.nome AS costureira_nome
+        FROM ordens_servico os
+        JOIN pedidos p ON os.id_pedido = p.id_pedido
+        LEFT JOIN usuarios u_cli ON p.id_cliente = u_cli.id_usuario
+        LEFT JOIN usuarios u_cost ON os.id_costureira = u_cost.id_usuario
+        WHERE p.id_cliente = $1 OR os.id_costureira = $1
+        ORDER BY os.previsao_entrega ASC;
+      `;
+      const result = await pool.query(query, [id]);
+      return res.json(result.rows);
     } catch (err) {
       console.error('Erro ao buscar agenda:', err);
       return res.status(500).json({ erro: 'Erro ao carregar compromissos da agenda.' });
+    }
+  }
+
+  // --- EXCLUSÃO DE PREÇOS REFERENCIAIS / FIXOS ---
+  static async deletarPrecoReferencial(req, res) {
+    const { idPreco } = req.params;
+    try {
+      const result = await pool.query(
+        'DELETE FROM tabela_precos WHERE id_preco = $1 OR id = $1 RETURNING *;',
+        [idPreco]
+      );
+      if (result.rowCount === 0) {
+        return res.status(404).json({ erro: 'Item de preço não encontrado.' });
+      }
+      return res.json({ mensagem: 'Item de preço excluído com sucesso!' });
+    } catch (err) {
+      console.error('Erro ao excluir preço:', err);
+      return res.status(500).json({ erro: 'Erro ao excluir item da tabela de preços.' });
     }
   }
 
