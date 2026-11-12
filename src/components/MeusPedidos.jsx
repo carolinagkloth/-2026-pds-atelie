@@ -20,7 +20,7 @@ function MeusPedidos({ usuario, onNavigate }) {
       const data = await response.json();
       if (Array.isArray(data)) {
         // Filtra apenas os pedidos pertencentes ao cliente logado
-        const meus = data.filter((p) => Number(p.clienteId) === Number(idUsuario));
+        const meus = data.filter((p) => Number(p.clienteId || p.id_cliente) === Number(idUsuario));
         setPedidos(meus);
       }
     } catch (err) {
@@ -28,6 +28,91 @@ function MeusPedidos({ usuario, onNavigate }) {
     } finally {
       setCarregando(false);
     }
+  };
+
+  // Separa Tipo de Serviço (sem colchetes), Localização e Descrição real
+  const extrairInformacoes = (texto, localizacaoPadrao) => {
+    if (!texto) {
+      return {
+        tipo: 'Pedido de Costura',
+        localizacao: localizacaoPadrao || 'Não informada',
+        descricao: ''
+      };
+    }
+
+    let tipo = 'Pedido de Costura';
+    let localizacao = localizacaoPadrao || 'Não informada';
+    let descricao = texto;
+
+    if (texto.includes('Localização:')) {
+      const partes = texto.split('Localização:');
+
+      const tipoExtraido = partes[0]
+        .replace(/[\[\]]/g, '')
+        .replace(/\s*-\s*$/, '')
+        .trim();
+
+      if (tipoExtraido) {
+        tipo = tipoExtraido;
+      }
+
+      const resto = partes[1].trim();
+      const quebraDupla = resto.indexOf('\n\n');
+
+      if (quebraDupla !== -1) {
+        localizacao = resto.substring(0, quebraDupla).trim();
+        descricao = resto.substring(quebraDupla).trim();
+      } else {
+        const primeiraLinha = resto.split('\n')[0];
+        localizacao = primeiraLinha.trim();
+        descricao = resto.substring(primeiraLinha.length).trim();
+      }
+    } else {
+      const matchColchetes = texto.match(/^\[([^\]]+)\]\s*(?:-?\s*)([\s\S]*)$/);
+      if (matchColchetes) {
+        tipo = matchColchetes[1].trim();
+        descricao = matchColchetes[2].trim();
+      }
+    }
+
+    return { tipo, localizacao, descricao };
+  };
+
+  // Formata data sem deslocamento de fuso horário
+  const formatarData = (dataIso) => {
+    if (!dataIso) return 'A combinar';
+    if (typeof dataIso === 'string' && /^\d{4}-\d{2}-\d{2}/.test(dataIso)) {
+      const [ano, mes, dia] = dataIso.split('T')[0].split('-');
+      return `${dia}/${mes}/${ano}`;
+    }
+    const data = new Date(dataIso);
+    return isNaN(data.getTime()) ? 'A combinar' : data.toLocaleDateString('pt-BR', { timeZone: 'America/Sao_Paulo' });
+  };
+
+  // Define cores distintas por status
+  const obterEstiloStatus = (statusRaw) => {
+    const s = (statusRaw || 'Aberto').toLowerCase().trim();
+
+    if (s === 'aberto' || s === 'disponível' || s === 'disponivel') {
+      return { background: '#E8F5E9', color: '#2E7D32', border: '1px solid #C8E6C9' }; // Verde
+    }
+    if (s === 'aguardando prova') {
+      return { background: '#FFF3E0', color: '#E65100', border: '1px solid #FFE082' }; // Laranja
+    }
+    if (s === 'em produção' || s === 'em producao' || s === 'a fazer') {
+      return { background: '#E3F2FD', color: '#1565C0', border: '1px solid #BBDEFB' }; // Azul
+    }
+    if (s === 'concluído' || s === 'concluido') {
+      return { background: '#E0F2F1', color: '#00695C', border: '1px solid #B2DFDB' }; // Verde-água
+    }
+    if (s === 'entregue') {
+      return { background: '#F3E5F5', color: '#6A1B9A', border: '1px solid #E1BEE7' }; // Roxo
+    }
+    if (s === 'cancelado') {
+      return { background: '#FFEBEE', color: '#C62828', border: '1px solid #FFCDD2' }; // Vermelho
+    }
+
+    return { background: '#F5F5F5', color: '#616161', border: '1px solid #E0E0E0' };
   };
 
   const handleCancelarPedido = async (idPedido) => {
@@ -48,10 +133,18 @@ function MeusPedidos({ usuario, onNavigate }) {
   };
 
   const handleAbrirEdicao = (pedido) => {
-    setPedidoParaEditar(pedido);
+    const info = extrairInformacoes(pedido.descricao, pedido.localizacao);
+    const prazoRaw = pedido.prazoDesejado || pedido.prazo_desejado;
+    const prazoFormatado = prazoRaw
+      ? (typeof prazoRaw === 'string' && /^\d{4}-\d{2}-\d{2}/.test(prazoRaw)
+          ? prazoRaw.split('T')[0]
+          : new Date(prazoRaw).toISOString().split('T')[0])
+      : '';
+
+    setPedidoParaEditar({ ...pedido, infoExtraida: info });
     setFormEdicao({
-      descricao: pedido.descricao || '',
-      prazo_desejado: pedido.prazoDesejado ? new Date(pedido.prazoDesejado).toISOString().split('T')[0] : ''
+      descricao: info.descricao || pedido.descricao || '',
+      prazo_desejado: prazoFormatado
     });
   };
 
@@ -59,13 +152,19 @@ function MeusPedidos({ usuario, onNavigate }) {
     e.preventDefault();
     if (!pedidoParaEditar) return;
 
+    const info = pedidoParaEditar.infoExtraida;
+    const descricaoCompleta =
+      info && info.localizacao && info.localizacao !== 'Não informada'
+        ? `[${info.tipo}] - Localização: ${info.localizacao}\n\n${formEdicao.descricao.trim()}`
+        : formEdicao.descricao.trim();
+
     try {
-      const response = await fetch(`/api/pedidos/${pedidoParaEditar.id}`, {
+      const response = await fetch(`/api/pedidos/${pedidoParaEditar.id || pedidoParaEditar.id_pedido}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           id_cliente: idUsuario,
-          descricao: formEdicao.descricao,
+          descricao: descricaoCompleta,
           prazo_desejado: formEdicao.prazo_desejado
         })
       });
@@ -137,11 +236,14 @@ function MeusPedidos({ usuario, onNavigate }) {
       ) : (
         <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
           {pedidos.map((pedido) => {
-            const isAberto = (pedido.status || '').toLowerCase() === 'aberto';
+            const statusAtual = pedido.status || pedido.status_pedido || 'Aberto';
+            const isAberto = statusAtual.toLowerCase() === 'aberto';
+            const info = extrairInformacoes(pedido.descricao, pedido.localizacao);
+            const estiloStatus = obterEstiloStatus(statusAtual);
 
             return (
               <div
-                key={pedido.id}
+                key={pedido.id || pedido.id_pedido}
                 style={{
                   background: '#fff',
                   borderRadius: '12px',
@@ -158,15 +260,15 @@ function MeusPedidos({ usuario, onNavigate }) {
                   <img
                     src={pedido.fotoReferencia}
                     alt="Referência"
-                    style={{ width: '130px', height: '130px', objectFit: 'cover', borderRadius: '8px', border: '1px solid #eee' }}
+                    style={{ width: '130px', height: '130px', objectFit: 'cover', borderRadius: '8px', border: '1px solid #eee', flexShrink: 0 }}
                   />
                 )}
 
                 {/* Detalhes do Pedido */}
                 <div style={{ flex: 1 }}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px', flexWrap: 'wrap', gap: '8px' }}>
                     <h3 style={{ margin: 0, color: '#3E2445', fontSize: '18px' }}>
-                      {pedido.descricao ? pedido.descricao.split('\n')[0] : 'Pedido de Costura'}
+                      {info.tipo}
                     </h3>
                     
                     <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
@@ -176,30 +278,31 @@ function MeusPedidos({ usuario, onNavigate }) {
                           borderRadius: '20px',
                           fontSize: '12px',
                           fontWeight: 'bold',
-                          background: isAberto ? '#EADCEB' : '#FFF3E0',
-                          color: isAberto ? '#3E2445' : '#E65100'
+                          ...estiloStatus
                         }}
                       >
-                        Status: {pedido.status || 'Aberto'}
+                        Status: {statusAtual}
                       </span>
                       <span style={{ fontSize: '12px', color: '#888' }}>
-                        {pedido.dataPublicacao ? new Date(pedido.dataPublicacao).toLocaleDateString('pt-BR') : ''}
+                        {formatarData(pedido.dataPublicacao || pedido.data_publicacao)}
                       </span>
                     </div>
                   </div>
 
                   <div style={{ fontSize: '13px', color: '#555', lineHeight: '1.6', marginBottom: '15px' }}>
-                    <div><strong>Localização:</strong> {pedido.localizacao || 'Não informada'}</div>
-                    <div style={{ marginTop: '4px', whiteSpace: 'pre-line' }}><strong>Descrição:</strong> {pedido.descricao}</div>
+                    <div><strong>Localização:</strong> {info.localizacao}</div>
+                    {info.descricao && (
+                      <div style={{ marginTop: '4px', whiteSpace: 'pre-line' }}>
+                        <strong>Descrição:</strong> {info.descricao}
+                      </div>
+                    )}
                     <div style={{ marginTop: '4px' }}>
-                      <strong>Prazo desejado:</strong> {pedido.prazoDesejado ? new Date(pedido.prazoDesejado).toLocaleDateString('pt-BR') : 'A combinar'}
+                      <strong>Prazo desejado:</strong> {formatarData(pedido.prazoDesejado || pedido.prazo_desejado)}
                     </div>
                   </div>
 
                   {/* Ações Condicionais do Cliente */}
                   <div style={{ display: 'flex', gap: '10px', marginTop: '10px' }}>
-                    
-                    {/* Botão de Chat: visível APENAS para pedidos que NÃO estão mais "Aberto" */}
                     {!isAberto && (
                       <button
                         onClick={() => onNavigate && onNavigate('chat', pedido)}
@@ -209,7 +312,6 @@ function MeusPedidos({ usuario, onNavigate }) {
                       </button>
                     )}
 
-                    {/* Botões de Edição/Cancelamento: Apenas para pedidos "Aberto" */}
                     {isAberto && (
                       <>
                         <button
@@ -220,14 +322,13 @@ function MeusPedidos({ usuario, onNavigate }) {
                         </button>
 
                         <button
-                          onClick={() => handleCancelarPedido(pedido.id)}
+                          onClick={() => handleCancelarPedido(pedido.id || pedido.id_pedido)}
                           style={{ padding: '9px 18px', background: '#C62828', color: '#fff', border: 'none', borderRadius: '6px', fontWeight: 'bold', cursor: 'pointer', fontSize: '13px' }}
                         >
                           Cancelar Pedido
                         </button>
                       </>
                     )}
-
                   </div>
                 </div>
               </div>

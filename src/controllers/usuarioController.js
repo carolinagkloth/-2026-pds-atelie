@@ -10,7 +10,7 @@ const googleClient = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
 class UsuarioController {
   // --- AUTENTICAÇÃO E CONTA ---
   static async cadastrar(req, res) {
-    const { nome, email, senha, telefone, tipo_usuario, endereco } = req.body;
+    const { nome, email, senha, telefone, tipo_usuario, perfil, endereco, cpf_cnpj } = req.body;
 
     if (!email || !senha || !nome) {
       return res.status(400).json({ erro: 'Preencha todos os campos obrigatórios.' });
@@ -37,24 +37,34 @@ class UsuarioController {
         }
       }
 
+      const senhaHash = await bcrypt.hash(senha, 10);
+
       const queryInsert = `
-        INSERT INTO usuarios (nome, email, senha, telefone, tipo_usuario, endereco)
-        VALUES ($1, $2, $3, $4, $5, $6)
-        RETURNING id_usuario, nome, email, telefone, tipo_usuario, endereco;
+        INSERT INTO usuarios (nome, email, senha, telefone, tipo_usuario, endereco, cpf_cnpj)
+        VALUES ($1, $2, $3, $4, $5, $6, $7)
+        RETURNING id_usuario AS id, id_usuario, nome, email, telefone, tipo_usuario, endereco, foto_perfil;
       `;
 
       const novoUsuario = await pool.query(queryInsert, [
         nome.trim(),
         email.trim().toLowerCase(),
-        senha,
+        senhaHash,
         telefone ? telefone.trim() : null,
-        tipo_usuario || 'Cliente',
-        endereco || ''
+        tipo_usuario || perfil || 'Cliente',
+        endereco || '',
+        cpf_cnpj || null
       ]);
+
+      const usuarioCriado = novoUsuario.rows[0];
+
+      await pool.query(
+        'INSERT INTO configuracoes_notificacoes (id_usuario) VALUES ($1) ON CONFLICT DO NOTHING;',
+        [usuarioCriado.id_usuario]
+      );
 
       return res.status(201).json({
         mensagem: 'Usuário cadastrado com sucesso!',
-        usuario: novoUsuario.rows[0]
+        usuario: usuarioCriado
       });
 
     } catch (err) {
@@ -68,7 +78,7 @@ class UsuarioController {
       const { email, senha } = req.body;
       if (!email || !senha) return res.status(400).json({ erro: 'Preencha o e-mail e a senha.' });
 
-      const usuario = await usuarioModel.buscarPorEmail(email);
+      const usuario = await usuarioModel.buscarPorEmail(email.trim().toLowerCase());
       if (!usuario) return res.status(400).json({ erro: 'E-mail ou senha incorretos.' });
 
       const senhaValida = await bcrypt.compare(senha, usuario.senha);
@@ -85,7 +95,8 @@ class UsuarioController {
           email: usuario.email,
           tipo_usuario: usuario.tipo_usuario || 'Cliente',
           foto_perfil: usuario.foto_perfil || null,
-          telefone: usuario.telefone || null
+          telefone: usuario.telefone || null,
+          endereco: usuario.endereco || ''
         }
       });
     } catch (error) {
@@ -107,7 +118,7 @@ class UsuarioController {
       const payload = ticket.getPayload();
       const { email, name, picture } = payload;
 
-      const usuario = await usuarioModel.buscarPorEmail(email);
+      const usuario = await usuarioModel.buscarPorEmail(email.trim().toLowerCase());
 
       if (!usuario) {
         return res.json({
@@ -128,7 +139,8 @@ class UsuarioController {
           email: usuario.email,
           tipo_usuario: usuario.tipo_usuario || 'Cliente',
           foto_perfil: usuario.foto_perfil || picture || null,
-          telefone: usuario.telefone || null
+          telefone: usuario.telefone || null,
+          endereco: usuario.endereco || ''
         }
       });
     } catch (err) {
@@ -142,7 +154,7 @@ class UsuarioController {
     if (!email) return res.status(400).json({ erro: 'Informe o seu e-mail.' });
 
     try {
-      const usuario = await usuarioModel.buscarPorEmail(email);
+      const usuario = await usuarioModel.buscarPorEmail(email.trim().toLowerCase());
       if (!usuario) return res.status(404).json({ erro: 'Este e-mail não está cadastrado.' });
 
       const token = crypto.randomBytes(32).toString('hex');
@@ -191,10 +203,9 @@ class UsuarioController {
     }
   }
 
-  // ACEITA REMOÇÃO DA FOTO (foto_perfil pode vir null ou vazio)
   static async atualizarPerfil(req, res) {
     const { id } = req.params;
-    const { nome, telefone, bio, especialidades, foto_perfil } = req.body;
+    const { nome, telefone, endereco, bio, especialidades, foto_perfil } = req.body;
 
     if (!nome || !nome.trim()) {
       return res.status(400).json({ erro: 'O nome é obrigatório.' });
@@ -203,17 +214,18 @@ class UsuarioController {
     try {
       const query = `
         UPDATE usuarios 
-        SET nome = $1, telefone = $2, bio = $3, especialidades = $4, foto_perfil = $5
-        WHERE id_usuario = $6
-        RETURNING id_usuario, nome, email, telefone, bio, especialidades, foto_perfil, tipo_usuario;
+        SET nome = $1, telefone = $2, endereco = $3, bio = $4, especialidades = $5, foto_perfil = $6
+        WHERE id_usuario = $7
+        RETURNING id_usuario AS id, id_usuario, nome, email, telefone, endereco, bio, especialidades, foto_perfil, tipo_usuario;
       `;
 
       const result = await pool.query(query, [
         nome.trim(),
         telefone || null,
+        endereco || null,
         bio || null,
         especialidades || null,
-        foto_perfil || null, // Se vier '', salva NULL no banco
+        foto_perfil || null,
         id
       ]);
 
@@ -228,43 +240,62 @@ class UsuarioController {
     }
   }
 
-  // AGENDA COMPLETA (Tanto para Costureiras quanto para Clientes)
   static async obterAgenda(req, res) {
     const { id } = req.params;
     try {
-      const query = `
-        SELECT 
-          os.id_ordem_servico,
-          os.id_pedido,
-          os.id_costureira,
-          os.status_kanban,
-          os.previsao_entrega,
-          os.data_prova,
-          os.horario_prova,
-          p.descricao AS pedido_descricao,
-          u_cli.nome AS cliente_nome,
-          u_cost.nome AS costureira_nome
-        FROM ordens_servico os
-        JOIN pedidos p ON os.id_pedido = p.id_pedido
-        LEFT JOIN usuarios u_cli ON p.id_cliente = u_cli.id_usuario
-        LEFT JOIN usuarios u_cost ON os.id_costureira = u_cost.id_usuario
-        WHERE p.id_cliente = $1 OR os.id_costureira = $1
-        ORDER BY os.previsao_entrega ASC;
-      `;
-      const result = await pool.query(query, [id]);
-      return res.json(result.rows);
+      const agenda = await usuarioModel.buscarAgendaUsuario(id);
+      return res.json(agenda);
     } catch (err) {
       console.error('Erro ao buscar agenda:', err);
       return res.status(500).json({ erro: 'Erro ao carregar compromissos da agenda.' });
     }
   }
 
-  // --- EXCLUSÃO DE PREÇOS REFERENCIAIS / FIXOS ---
+  // --- TABELA DE PREÇOS REFERENCIAIS ---
+  static async listarTabelaPrecos(req, res) {
+    const { id } = req.params;
+    try {
+      const result = await pool.query(
+        `SELECT id_preco AS id, id_preco, id_costureira, servico, categoria, valor 
+         FROM tabela_precos 
+         WHERE id_costureira = $1 
+         ORDER BY id_preco ASC;`,
+        [id]
+      );
+      return res.json(result.rows);
+    } catch (err) {
+      console.error('Erro ao listar tabela de preços:', err);
+      return res.status(500).json({ erro: 'Erro ao carregar tabela de preços.' });
+    }
+  }
+
+  static async adicionarPrecoReferencial(req, res) {
+    const { id } = req.params;
+    const { servico, categoria, valor } = req.body;
+
+    if (!servico || !servico.trim() || valor === undefined || valor === null || isNaN(Number(valor))) {
+      return res.status(400).json({ erro: 'Informe o nome do serviço e um valor válido.' });
+    }
+
+    try {
+      const result = await pool.query(
+        `INSERT INTO tabela_precos (id_costureira, servico, categoria, valor)
+         VALUES ($1, $2, $3, $4)
+         RETURNING id_preco AS id, id_preco, id_costureira, servico, categoria, valor;`,
+        [id, servico.trim(), categoria || 'Ajustes', Number(valor)]
+      );
+      return res.status(201).json(result.rows[0]);
+    } catch (err) {
+      console.error('Erro ao adicionar preço referencial:', err);
+      return res.status(500).json({ erro: 'Erro ao salvar item na tabela de preços.' });
+    }
+  }
+
   static async deletarPrecoReferencial(req, res) {
     const { idPreco } = req.params;
     try {
       const result = await pool.query(
-        'DELETE FROM tabela_precos WHERE id_preco = $1 OR id = $1 RETURNING *;',
+        'DELETE FROM tabela_precos WHERE id_preco = $1 RETURNING *;',
         [idPreco]
       );
       if (result.rowCount === 0) {

@@ -10,16 +10,19 @@ function ChatSidebar({
   medidas,
   pedido,
   idPedido,
+  jaAvaliado,
   onOpenProposta,
   onOpenProva,
   onConcluirServico,
   onConfirmarEntrega,
+  onOpenAvaliacao,
   onCancelarPedido,
   onOpenMedidas,
   onNavigate
 }) {
   const contratoAtivo = ['Em Produção', 'Aguardando Prova', 'Concluído', 'Entregue'].includes(orcamentoAtual.status);
-  const podeEnviarProposta = isCostureira && !contratoAtivo && orcamentoAtual.status !== 'Cancelado';
+  const pedidoFinalizado = ['Cancelado', 'Entregue'].includes(orcamentoAtual.status);
+  const podeEnviarProposta = isCostureira && !contratoAtivo && !pedidoFinalizado;
   const nomeCostureiraExibir = costureiraNome || pedido?.costureiraNome || 'Não informada';
   const nomeClienteExibir = clienteNome || pedido?.clienteNome || pedido?.nomeCliente || 'Cliente';
 
@@ -56,10 +59,13 @@ function ChatSidebar({
           </div>
         )}
 
-        {/* Botão de Portfólio (Visível apenas para a Cliente) */}
+        {/* Botão de Perfil Público da Costureira (Visível apenas para a Cliente) */}
         {!isCostureira && idCostureiraPedido && (
-          <button onClick={() => onNavigate && onNavigate('portfolio', idCostureiraPedido)} style={{ width: '100%', padding: '9px', background: '#F4EFF5', color: '#3E2445', border: '1px solid #3E2445', borderRadius: '6px', fontWeight: 'bold', fontSize: '12px', marginBottom: '10px', cursor: 'pointer' }}>
-            🖼️ Ver Portfólio da Costureira
+          <button
+            onClick={() => onNavigate && onNavigate('portfolio', idCostureiraPedido)}
+            style={{ width: '100%', padding: '9px', background: '#F4EFF5', color: '#3E2445', border: '1px solid #3E2445', borderRadius: '6px', fontWeight: 'bold', fontSize: '12px', marginBottom: '10px', cursor: 'pointer' }}
+          >
+            👤 Ver Perfil da Costureira
           </button>
         )}
 
@@ -76,7 +82,8 @@ function ChatSidebar({
           </button>
         )}
 
-        {isCostureira && orcamentoAtual.status !== 'Cancelado' && (
+        {/* Botões da Costureira (ocultos após Entregue ou Cancelado) */}
+        {isCostureira && !pedidoFinalizado && (
           <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
             <button onClick={onOpenProva} style={{ width: '100%', padding: '9px', background: '#2E7D32', color: '#fff', border: 'none', borderRadius: '6px', fontWeight: 'bold', fontSize: '13px', cursor: 'pointer' }}>
               Agendar Prova da Peça
@@ -87,13 +94,24 @@ function ChatSidebar({
           </div>
         )}
 
+        {/* Confirmação de Recebimento pela Cliente */}
         {!isCostureira && orcamentoAtual.status === 'Concluído' && (
           <button onClick={onConfirmarEntrega} style={{ width: '100%', padding: '10px', background: '#2E7D32', color: '#fff', border: 'none', borderRadius: '6px', fontWeight: 'bold', fontSize: '13px', marginTop: '10px', cursor: 'pointer' }}>
             🎉 Confirmar Recebimento da Peça
           </button>
         )}
 
-        {orcamentoAtual.status !== 'Cancelado' && orcamentoAtual.status !== 'Entregue' && (
+        {/* Botão de Avaliação Posterior (Visível para a Cliente se Entregue e ainda não avaliado) */}
+        {!isCostureira && orcamentoAtual.status === 'Entregue' && !jaAvaliado && (
+          <button
+            onClick={onOpenAvaliacao}
+            style={{ width: '100%', padding: '10px', background: '#FFB400', color: '#3E2445', border: 'none', borderRadius: '6px', fontWeight: 'bold', fontSize: '13px', marginTop: '10px', cursor: 'pointer' }}
+          >
+            ⭐ Avaliar Serviço da Costureira
+          </button>
+        )}
+
+        {!pedidoFinalizado && (
           <button onClick={onCancelarPedido} style={{ width: '100%', padding: '9px', background: '#C62828', color: '#fff', border: 'none', borderRadius: '6px', fontWeight: 'bold', fontSize: '13px', marginTop: '10px', cursor: 'pointer' }}>
             ❌ {isCostureira ? 'Cancelar / Desistir do Pedido' : 'Cancelar Pedido'}
           </button>

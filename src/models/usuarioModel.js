@@ -55,11 +55,11 @@ class UsuarioModel {
     await pool.query(query, [senhaHash, idUsuario]);
   }
 
-  // --- ATUALIZAR PERFIL E AGENDA ---
+  // --- ATUALIZAR PERFIL ---
   static async atualizarPerfil(idUsuario, { nome, telefone, bio, especialidades, foto_perfil }) {
     const query = `
       UPDATE usuarios 
-      SET nome = $1, telefone = $2, bio = $3, especialidades = $4, foto_perfil = COALESCE($5, foto_perfil)
+      SET nome = $1, telefone = $2, bio = $3, especialidades = $4, foto_perfil = $5
       WHERE id_usuario = $6
       RETURNING id_usuario AS id, id_usuario, nome, email, telefone, bio, especialidades, foto_perfil, tipo_usuario;
     `;
@@ -74,16 +74,58 @@ class UsuarioModel {
     return result.rows[0];
   }
 
+  // --- AGENDA UNIFICADA (TODAS AS PROVAS + TODAS AS ENTREGAS) ---
   static async buscarAgendaUsuario(idUsuario) {
     const query = `
-      SELECT os.id_ordem_servico, os.id_pedido, os.previsao_entrega, os.status_kanban,
-             p.descricao AS pedido_descricao, cli.nome AS cliente_nome, cli.telefone AS cliente_telefone
-      FROM ordens_servico os
-      JOIN pedidos p ON os.id_pedido = p.id_pedido
-      JOIN usuarios cli ON p.id_cliente = cli.id_usuario
-      WHERE (os.id_costureira = $1 OR p.id_cliente = $1)
-        AND os.status_kanban NOT IN ('Cancelado')
-      ORDER BY os.previsao_entrega ASC;
+      SELECT * FROM (
+        -- 1. Todas as provas agendadas (mesmo que sejam várias do mesmo cliente)
+        SELECT 
+          ('prova-' || ap.id_prova) AS id_evento,
+          'prova' AS tipo_evento,
+          ap.data_prova AS data_evento,
+          ap.horario_prova AS horario_evento,
+          ap.observacao AS observacao_evento,
+          ap.id_pedido,
+          COALESCE(os.status_kanban, p.status_pedido, 'Aguardando Prova') AS status_kanban,
+          p.descricao AS pedido_descricao,
+          cli.nome AS cliente_nome,
+          cli.telefone AS cliente_telefone,
+          cost.nome AS costureira_nome,
+          cost.telefone AS costureira_telefone
+        FROM agendamentos_prova ap
+        JOIN pedidos p ON ap.id_pedido = p.id_pedido
+        JOIN usuarios cli ON p.id_cliente = cli.id_usuario
+        LEFT JOIN ordens_servico os ON os.id_pedido = p.id_pedido
+        LEFT JOIN usuarios cost ON COALESCE(ap.id_costureira, os.id_costureira) = cost.id_usuario
+        WHERE (COALESCE(ap.id_costureira, os.id_costureira) = $1 OR p.id_cliente = $1)
+          AND COALESCE(ap.status, 'Agendada') <> 'Cancelada'
+          AND COALESCE(p.status_pedido, '') <> 'Cancelado'
+
+        UNION ALL
+
+        -- 2. Todas as previsões de entrega
+        SELECT 
+          ('entrega-' || os.id_ordem_servico) AS id_evento,
+          'entrega' AS tipo_evento,
+          os.previsao_entrega AS data_evento,
+          NULL AS horario_evento,
+          NULL AS observacao_evento,
+          os.id_pedido,
+          os.status_kanban,
+          p.descricao AS pedido_descricao,
+          cli.nome AS cliente_nome,
+          cli.telefone AS cliente_telefone,
+          cost.nome AS costureira_nome,
+          cost.telefone AS costureira_telefone
+        FROM ordens_servico os
+        JOIN pedidos p ON os.id_pedido = p.id_pedido
+        JOIN usuarios cli ON p.id_cliente = cli.id_usuario
+        LEFT JOIN usuarios cost ON os.id_costureira = cost.id_usuario
+        WHERE (os.id_costureira = $1 OR p.id_cliente = $1)
+          AND os.previsao_entrega IS NOT NULL
+          AND os.status_kanban NOT IN ('Cancelado')
+      ) eventos
+      ORDER BY data_evento ASC;
     `;
     const result = await pool.query(query, [idUsuario]);
     return result.rows;

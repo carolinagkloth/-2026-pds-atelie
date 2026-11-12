@@ -4,6 +4,7 @@ const AvaliacaoController = require('../controllers/avaliacaoController');
 
 // Endpoints de Avaliações
 router.post('/', AvaliacaoController.criar);
+router.get('/pedido/:idPedido', AvaliacaoController.verificarPorPedido);
 
 // Suporta idCostureira e costureiraId
 router.get('/costureira/:idCostureira', AvaliacaoController.listarPorCostureira);

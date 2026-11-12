@@ -19,6 +19,7 @@ function FeedPedidos({ usuario, usuarioLogado, onNavigate, onDemonstrarInteresse
 
   const [filtroServico, setFiltroServico] = useState('Todos');
   const [buscaLocalizacao, setBuscaLocalizacao] = useState('');
+  const [filtroPrazo, setFiltroPrazo] = useState(''); // Formato YYYY-MM
 
   const normalizarTexto = (texto) => {
     return texto
@@ -57,26 +58,26 @@ function FeedPedidos({ usuario, usuarioLogado, onNavigate, onDemonstrarInteresse
     }
   };
 
+  // Extrai Tipo de Serviço (sem colchetes), Localização e Descrição limpa
   const extrairInformacoes = (texto, localizacaoPadrao) => {
     if (!texto) {
       return {
-        tipo: 'Ajuste / Conserto',
+        tipo: 'Pedido de Costura',
         localizacao: localizacaoPadrao || 'Não informada',
         descricao: ''
       };
     }
 
-    let tipo = 'Ajuste / Conserto';
+    let tipo = 'Pedido de Costura';
     let localizacao = localizacaoPadrao || 'Não informada';
     let descricao = texto;
 
     if (texto.includes('Localização:')) {
       const partes = texto.split('Localização:');
 
-      let tipoExtraido = partes[0]
-        .replace('[', '')
-        .replace(']', '')
-        .replace('-', '')
+      const tipoExtraido = partes[0]
+        .replace(/[\[\]]/g, '')
+        .replace(/\s*-\s*$/, '')
         .trim();
 
       if (tipoExtraido) {
@@ -84,25 +85,49 @@ function FeedPedidos({ usuario, usuarioLogado, onNavigate, onDemonstrarInteresse
       }
 
       const resto = partes[1].trim();
-      const quebra = resto.indexOf('\n\n');
+      const quebraDupla = resto.indexOf('\n\n');
 
-      if (quebra !== -1) {
-        localizacao = resto.substring(0, quebra).trim();
-        descricao = resto.substring(quebra).trim();
+      if (quebraDupla !== -1) {
+        localizacao = resto.substring(0, quebraDupla).trim();
+        descricao = resto.substring(quebraDupla).trim();
       } else {
         const primeiraLinha = resto.split('\n')[0];
         localizacao = primeiraLinha.trim();
         descricao = resto.substring(primeiraLinha.length).trim();
+      }
+    } else {
+      const matchColchetes = texto.match(/^\[([^\]]+)\]\s*(?:-?\s*)([\s\S]*)$/);
+      if (matchColchetes) {
+        tipo = matchColchetes[1].trim();
+        descricao = matchColchetes[2].trim();
       }
     }
 
     return { tipo, localizacao, descricao };
   };
 
+  // Formata data sem deslocamento de fuso horário UTC
   const formatarData = (dataIso) => {
     if (!dataIso) return '-';
+    if (typeof dataIso === 'string' && /^\d{4}-\d{2}-\d{2}/.test(dataIso)) {
+      const [ano, mes, dia] = dataIso.split('T')[0].split('-');
+      return `${dia}/${mes}/${ano}`;
+    }
     const data = new Date(dataIso);
-    return data.toLocaleDateString('pt-BR');
+    return isNaN(data.getTime()) ? '-' : data.toLocaleDateString('pt-BR', { timeZone: 'America/Sao_Paulo' });
+  };
+
+  // Extrai "YYYY-MM" do prazo do pedido para comparar com o filtro de Mês/Ano
+  const extrairMesAno = (dataIso) => {
+    if (!dataIso) return '';
+    if (typeof dataIso === 'string' && /^\d{4}-\d{2}/.test(dataIso)) {
+      return dataIso.split('T')[0].substring(0, 7);
+    }
+    const d = new Date(dataIso);
+    if (isNaN(d.getTime())) return '';
+    const ano = d.getFullYear();
+    const mes = String(d.getMonth() + 1).padStart(2, '0');
+    return `${ano}-${mes}`;
   };
 
   const handleInteresse = (pedido) => {
@@ -116,7 +141,8 @@ function FeedPedidos({ usuario, usuarioLogado, onNavigate, onDemonstrarInteresse
   const listaPedidos = Array.isArray(pedidos) ? pedidos : [];
   const pedidosFiltrados = listaPedidos.filter((pedido) => {
     const info = extrairInformacoes(pedido.descricao, pedido.localizacao);
-    const statusAberto = pedido.status === 'Aberto' || pedido.status === 'Disponível' || !pedido.status;
+    const statusAtual = pedido.status || pedido.status_pedido;
+    const statusAberto = statusAtual === 'Aberto' || statusAtual === 'Disponível' || !statusAtual;
     
     const tipoNorm = normalizarTexto(info.tipo);
     const filtroServicoNorm = normalizarTexto(filtroServico);
@@ -126,7 +152,11 @@ function FeedPedidos({ usuario, usuarioLogado, onNavigate, onDemonstrarInteresse
     const buscaLocalNorm = normalizarTexto(buscaLocalizacao);
     const atendeLocal = localNorm.includes(buscaLocalNorm);
 
-    return statusAberto && atendeServico && atendeLocal;
+    const prazoPedido = pedido.prazoDesejado || pedido.prazo_desejado;
+    const mesAnoPedido = extrairMesAno(prazoPedido);
+    const atendePrazo = !filtroPrazo || mesAnoPedido === filtroPrazo;
+
+    return statusAberto && atendeServico && atendeLocal && atendePrazo;
   });
 
   return (
@@ -169,6 +199,7 @@ function FeedPedidos({ usuario, usuarioLogado, onNavigate, onDemonstrarInteresse
         </div>
       </div>
 
+      {/* Barra de Filtros: Serviço, Localização e Prazo (Mês/Ano) */}
       <div style={{ background: '#F9F6F9', padding: '16px', borderRadius: '8px', border: '1px solid #EADFEA', marginBottom: '25px', display: 'flex', gap: '15px', flexWrap: 'wrap' }}>
         <div style={{ flex: '1 1 200px' }}>
           <label style={{ fontSize: '12px', fontWeight: 'bold', color: '#3E2445', display: 'block', marginBottom: '6px' }}>Filtrar por Serviço:</label>
@@ -196,6 +227,28 @@ function FeedPedidos({ usuario, usuarioLogado, onNavigate, onDemonstrarInteresse
             style={{ width: '100%', padding: '9px', borderRadius: '6px', border: '1px solid #ccc', boxSizing: 'border-box', outline: 'none', fontSize: '14px', background: '#fff' }}
           />
         </div>
+
+        <div style={{ flex: '1 1 200px' }}>
+          <label style={{ fontSize: '12px', fontWeight: 'bold', color: '#3E2445', display: 'block', marginBottom: '6px' }}>Prazo Desejado (Mês/Ano):</label>
+          <div style={{ display: 'flex', gap: '6px', alignItems: 'center' }}>
+            <input
+              type="month"
+              value={filtroPrazo}
+              onChange={(e) => setFiltroPrazo(e.target.value)}
+              style={{ flex: 1, padding: '8px 9px', borderRadius: '6px', border: '1px solid #ccc', boxSizing: 'border-box', outline: 'none', fontSize: '14px', background: '#fff', color: '#333' }}
+            />
+            {filtroPrazo && (
+              <button
+                type="button"
+                onClick={() => setFiltroPrazo('')}
+                title="Limpar filtro de mês/ano"
+                style={{ padding: '9px 11px', background: '#EADCEB', color: '#3E2445', border: '1px solid #3E2445', borderRadius: '6px', cursor: 'pointer', fontWeight: 'bold', fontSize: '12px' }}
+              >
+                ✕
+              </button>
+            )}
+          </div>
+        </div>
       </div>
 
       {carregando && <p style={{ textAlign: 'center', color: '#666' }}>Carregando pedidos do mural...</p>}
@@ -210,10 +263,11 @@ function FeedPedidos({ usuario, usuarioLogado, onNavigate, onDemonstrarInteresse
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(380px, 1fr))', gap: '20px' }}>
           {pedidosFiltrados.map((pedido) => {
             const info = extrairInformacoes(pedido.descricao, pedido.localizacao);
+            const prazoPedido = pedido.prazoDesejado || pedido.prazo_desejado;
 
             return (
               <div 
-                key={pedido.id} 
+                key={pedido.id || pedido.id_pedido} 
                 style={{ 
                   background: '#fff', 
                   border: '1px solid #E0E0E0', 
@@ -241,21 +295,23 @@ function FeedPedidos({ usuario, usuarioLogado, onNavigate, onDemonstrarInteresse
                       {info.tipo}
                     </span>
                     <span style={{ fontSize: '12px', color: '#888' }}>
-                      {formatarData(pedido.dataPublicacao)}
+                      {formatarData(pedido.dataPublicacao || pedido.data_publicacao)}
                     </span>
                   </div>
 
                   <h3 style={{ margin: '0 0 10px 0', color: '#3E2445', fontSize: '17px', fontWeight: 'bold' }}>
-                    Solicitação de {pedido.clienteNome || 'Cliente'}
+                    Solicitação de {pedido.clienteNome || pedido.cliente_nome || 'Cliente'}
                   </h3>
 
-                  <p style={{ fontSize: '14px', color: '#444', lineHeight: '1.5', marginBottom: '15px', whiteSpace: 'pre-line' }}>
-                    {info.descricao}
-                  </p>
+                  {info.descricao && (
+                    <p style={{ fontSize: '14px', color: '#444', lineHeight: '1.5', marginBottom: '15px', whiteSpace: 'pre-line' }}>
+                      {info.descricao}
+                    </p>
+                  )}
 
                   <div style={{ fontSize: '13px', color: '#555', marginBottom: '18px', display: 'flex', flexDirection: 'column', gap: '6px', background: '#FBF9FB', padding: '10px', borderRadius: '6px' }}>
                     <div><strong>Localização:</strong> {info.localizacao}</div>
-                    <div><strong>Prazo desejado:</strong> {formatarData(pedido.prazoDesejado)}</div>
+                    <div><strong>Prazo desejado:</strong> {formatarData(prazoPedido)}</div>
                   </div>
                 </div>
 

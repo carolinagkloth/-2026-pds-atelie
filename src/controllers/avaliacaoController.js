@@ -1,3 +1,4 @@
+const pool = require('../config/database');
 const AvaliacaoModel = require('../models/avaliacaoModel');
 const { dispararNotificacao } = require('../services/notificacaoService');
 
@@ -72,6 +73,34 @@ class AvaliacaoController {
     } catch (error) {
       if (next) return next(error);
       return res.status(500).json({ error: error.message });
+    }
+  }
+
+  // Verifica se o pedido já foi avaliado e retorna o id_ordem_servico
+  static async verificarPorPedido(req, res, next) {
+    try {
+      const { idPedido } = req.params;
+      const query = `
+        SELECT os.id_ordem_servico, a.id_avaliacao
+        FROM ordens_servico os
+        LEFT JOIN avaliacoes a ON a.id_ordem_servico = os.id_ordem_servico
+        WHERE os.id_pedido = $1
+        LIMIT 1;
+      `;
+      const result = await pool.query(query, [idPedido]);
+
+      if (result.rows.length === 0) {
+        return res.status(200).json({ id_ordem_servico: null, avaliado: false });
+      }
+
+      const row = result.rows[0];
+      return res.status(200).json({
+        id_ordem_servico: row.id_ordem_servico,
+        avaliado: Boolean(row.id_avaliacao)
+      });
+    } catch (error) {
+      if (next) return next(error);
+      return res.status(500).json({ erro: 'Erro ao verificar avaliação do pedido.' });
     }
   }
 

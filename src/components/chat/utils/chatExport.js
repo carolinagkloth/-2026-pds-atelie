@@ -13,20 +13,29 @@ export const formatarDataBR = (dataStr) => {
   return d.toLocaleDateString('pt-BR', { timeZone: 'America/Sao_Paulo' });
 };
 
-// Limpa o texto da descrição e remove os colchetes [ ]
-export const parsePedidoDescricao = (rawDesc) => {
-  if (!rawDesc) return { tipo: 'Serviço', localizacao: '', descricao: '' };
+// Extrai Tipo de Serviço (sem colchetes), Localização e Descrição limpa
+export const parsePedidoDescricao = (rawDesc, localizacaoPadrao = '') => {
+  if (!rawDesc) return { tipo: 'Serviço', localizacao: localizacaoPadrao, descricao: '' };
+
   const tipoMatch = rawDesc.match(/^\[(.*?)\]/);
-  const tipo = tipoMatch ? tipoMatch[1] : 'Serviço';
+  const tipo = tipoMatch ? tipoMatch[1].trim() : 'Serviço';
+
+  let localizacao = localizacaoPadrao;
+  const locMatch = rawDesc.match(/Localização:\s*([^\n]+)/i);
+  if (locMatch && locMatch[1]) {
+    localizacao = locMatch[1].trim();
+  }
+
   const limpa = rawDesc
-    .replace(/^\[.*?\]\s*-\s*Localização:.*?\n\n?/gi, '')
-    .replace(/^\[.*?\]\s*/, '')
+    .replace(/^\[.*?\]\s*-\s*Localização:[^\n]*\n+/gi, '')
+    .replace(/^\[.*?\]\s*(?:-?\s*)/, '')
     .trim();
-  return { tipo, localizacao: '', descricao: limpa };
+
+  return { tipo, localizacao, descricao: limpa };
 };
 
 export const exportarTXT = ({ idPedido, orcamentoAtual, medidas, pedido, costureiraNome }) => {
-  const info = parsePedidoDescricao(pedido?.descricao);
+  const info = parsePedidoDescricao(pedido?.descricao, pedido?.localizacao);
   const dataEntrega = formatarDataBR(orcamentoAtual.prazo);
   const nomeCostureiraExibir = costureiraNome || pedido?.costureiraNome || 'Não informada';
 
@@ -70,7 +79,7 @@ export const exportarPDF = ({ idPedido, orcamentoAtual, medidas, pedido, costure
   const printWindow = window.open('', '_blank');
   if (!printWindow) return alert('Por favor, permita pop-ups no navegador para gerar o PDF.');
 
-  const info = parsePedidoDescricao(pedido?.descricao);
+  const info = parsePedidoDescricao(pedido?.descricao, pedido?.localizacao);
   const dataEntregaFormatada = formatarDataBR(orcamentoAtual.prazo);
   const nomeCostureiraExibir = costureiraNome || pedido?.costureiraNome || 'Não informada';
 

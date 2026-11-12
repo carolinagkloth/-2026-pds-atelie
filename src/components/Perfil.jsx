@@ -25,9 +25,8 @@ function Perfil({ usuario, onNavigate, onUpdateUsuario }) {
   const [erro, setErro] = useState('');
   const [erroImagem, setErroImagem] = useState(false);
 
-  // Estados de Avaliações e Agenda de Compromissos
   const [reputacao, setReputacao] = useState({ media: 0, totalAvaliacoes: 0, depoimentos: [] });
-  const [ordensServico, setOrdensServico] = useState([]);
+  const [eventosAgenda, setEventosAgenda] = useState([]);
   const [dataSelecionada, setDataSelecionada] = useState(new Date());
 
   const [formData, setFormData] = useState({
@@ -42,7 +41,7 @@ function Perfil({ usuario, onNavigate, onUpdateUsuario }) {
 
   useEffect(() => {
     if (idUsuario) {
-      // 1. Carrega os dados do Perfil
+      // 1. Dados do Perfil
       fetch(`/api/usuarios/${idUsuario}`)
         .then((res) => res.json())
         .then((data) => {
@@ -54,25 +53,18 @@ function Perfil({ usuario, onNavigate, onUpdateUsuario }) {
               endereco: data.endereco || '',
               bio: data.bio || '',
               especialidades: data.especialidades || '',
-              foto_perfil: data.foto_perfil || user?.foto_perfil || ''
+              foto_perfil: data.foto_perfil || ''
             });
           }
         })
         .catch(() => {});
 
-      // 2. Carrega a Agenda completa (Provas e Entregas)
+      // 2. Agenda Unificada (Provas e Entregas)
       fetch(`/api/usuarios/${idUsuario}/agenda`)
         .then((res) => res.json())
         .then((data) => {
           if (Array.isArray(data)) {
-            setOrdensServico(data);
-          } else {
-            fetch(`/api/ordens-servico/usuario/${idUsuario}`)
-              .then((r) => r.json())
-              .then((osData) => {
-                if (Array.isArray(osData)) setOrdensServico(osData);
-              })
-              .catch(() => {});
+            setEventosAgenda(data);
           }
         })
         .catch(() => {});
@@ -115,7 +107,6 @@ function Perfil({ usuario, onNavigate, onUpdateUsuario }) {
     }
   };
 
-  // REMOVER / EXCLUIR FOTO DE PERFIL
   const handleRemoverFoto = () => {
     setErroImagem(false);
     setFormData((prev) => ({ ...prev, foto_perfil: '' }));
@@ -146,7 +137,7 @@ function Perfil({ usuario, onNavigate, onUpdateUsuario }) {
       let data;
       try {
         data = JSON.parse(textResponse);
-      } catch (jsonErr) {
+      } catch {
         throw new Error('Servidor retornou uma resposta inválida.');
       }
 
@@ -183,7 +174,7 @@ function Perfil({ usuario, onNavigate, onUpdateUsuario }) {
     return '★'.repeat(valor) + '☆'.repeat(5 - valor);
   };
 
-  // --- FILTRO INTELIGENTE DA AGENDA (PROVAS E ENTREGAS COM FUSO BRASÍLIA) ---
+  // --- HELPER DE DATA SEM DESLOCAMENTO DE FUSO ---
   const formatarDataIsoLocal = (dateObjOrStr) => {
     if (!dateObjOrStr) return '';
     if (typeof dateObjOrStr === 'string' && /^\d{4}-\d{2}-\d{2}/.test(dateObjOrStr)) {
@@ -199,18 +190,28 @@ function Perfil({ usuario, onNavigate, onUpdateUsuario }) {
 
   const dataSelIso = formatarDataIsoLocal(dataSelecionada);
 
-  const ordensDoDia = ordensServico.reduce((acc, item) => {
-    const dProva = formatarDataIsoLocal(item.data_prova || item.dataProva);
-    const dEntrega = formatarDataIsoLocal(item.previsao_entrega || item.previsaoEntrega);
+  // Filtra todos os eventos (provas e entregas) do dia selecionado
+  const eventosDoDia = eventosAgenda.filter((ev) => {
+    const dataEv = formatarDataIsoLocal(ev.data_evento);
+    return dataEv && dataEv === dataSelIso;
+  });
 
-    if (dProva && dProva === dataSelIso) {
-      acc.push({ ...item, tipoCompromisso: 'Prova Agendada 📅', dataCompromisso: dProva });
-    }
-    if (dEntrega && dEntrega === dataSelIso) {
-      acc.push({ ...item, tipoCompromisso: 'Previsão de Entrega 📦', dataCompromisso: dEntrega });
-    }
-    return acc;
-  }, []);
+  // Marca no calendário os dias que possuem Prova (laranja) ou Entrega (verde)
+  const renderMarcadoresCalendario = ({ date, view }) => {
+    if (view !== 'month') return null;
+    const diaIso = formatarDataIsoLocal(date);
+    const temProva = eventosAgenda.some((ev) => ev.tipo_evento === 'prova' && formatarDataIsoLocal(ev.data_evento) === diaIso);
+    const temEntrega = eventosAgenda.some((ev) => ev.tipo_evento === 'entrega' && formatarDataIsoLocal(ev.data_evento) === diaIso);
+
+    if (!temProva && !temEntrega) return null;
+
+    return (
+      <div style={{ display: 'flex', justifyContent: 'center', gap: '3px', marginTop: '2px' }}>
+        {temProva && <span title="Prova Agendada" style={{ width: '6px', height: '6px', borderRadius: '50%', background: '#E67E22', display: 'inline-block' }} />}
+        {temEntrega && <span title="Previsão de Entrega" style={{ width: '6px', height: '6px', borderRadius: '50%', background: '#2E7D32', display: 'inline-block' }} />}
+      </div>
+    );
+  };
 
   return (
     <div style={{ maxWidth: '750px', margin: '30px auto', background: '#fff', padding: '30px', borderRadius: '12px', boxShadow: '0 4px 16px rgba(62, 36, 69, 0.12)', fontFamily: "'Segoe UI', Tahoma, Geneva, Verdana, sans-serif" }}>
@@ -311,7 +312,7 @@ function Perfil({ usuario, onNavigate, onUpdateUsuario }) {
           />
         </div>
 
-        {/* E-mail (Somente Leitura) */}
+        {/* E-mail */}
         <div style={{ marginBottom: '15px' }}>
           <label style={{ display: 'block', fontWeight: 'bold', fontSize: '14px', marginBottom: '5px', color: '#3E2445' }}>E-mail (Não editável)</label>
           <input
@@ -336,7 +337,7 @@ function Perfil({ usuario, onNavigate, onUpdateUsuario }) {
           />
         </div>
 
-        {/* Campos de Costureira */}
+        {/* Campos adicionais para Costureira */}
         {!isCliente && (
           <>
             <div style={{ marginBottom: '15px' }}>
@@ -414,42 +415,56 @@ function Perfil({ usuario, onNavigate, onUpdateUsuario }) {
 
       {/* Agenda de Entregas e Provas */}
       <div style={{ marginTop: '30px', borderTop: '2px solid #F4EFF5', paddingTop: '20px' }}>
-        <h3 style={{ color: '#3E2445', marginTop: 0, fontSize: '18px' }}>
-          Agenda de Entregas e Provas
-        </h3>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '10px' }}>
+          <h3 style={{ color: '#3E2445', margin: 0, fontSize: '18px' }}>
+            Agenda de Entregas e Provas
+          </h3>
+          <div style={{ display: 'flex', gap: '12px', fontSize: '12px', color: '#555' }}>
+            <span><strong style={{ color: '#E67E22' }}>●</strong> Prova</span>
+            <span><strong style={{ color: '#2E7D32' }}>●</strong> Entrega</span>
+          </div>
+        </div>
+
         <div style={{ display: 'flex', gap: '20px', flexWrap: 'wrap', marginTop: '15px' }}>
-          <Calendar onChange={setDataSelecionada} value={dataSelecionada} />
+          <Calendar 
+            onChange={setDataSelecionada} 
+            value={dataSelecionada} 
+            tileContent={renderMarcadoresCalendario}
+          />
           
           <div style={{ flex: 1, minWidth: '250px' }}>
             <h4 style={{ margin: '0 0 10px 0', color: '#555', fontSize: '15px' }}>
               Compromissos em {dataSelecionada.toLocaleDateString('pt-BR')}:
             </h4>
-            {ordensDoDia.length === 0 ? (
+            {eventosDoDia.length === 0 ? (
               <p style={{ color: '#888', fontSize: '13px' }}>Sem entregas ou provas previstas para esta data.</p>
             ) : (
-              ordensDoDia.map((item, idx) => (
-                <div 
-                  key={item.id || item.id_ordem_servico || idx} 
-                  style={{ 
-                    background: '#F9F9F9', 
-                    borderLeft: `4px solid ${item.tipoCompromisso.includes('Prova') ? '#E67E22' : '#2E7D32'}`, 
-                    padding: '10px', 
-                    marginBottom: '8px', 
-                    borderRadius: '4px' 
-                  }}
-                >
-                  <span style={{ fontSize: '11px', fontWeight: 'bold', color: item.tipoCompromisso.includes('Prova') ? '#E67E22' : '#2E7D32', textTransform: 'uppercase' }}>
-                    {item.tipoCompromisso}
-                  </span>
-                  <div style={{ fontSize: '13px', color: '#3E2445', fontWeight: 'bold', marginTop: '2px' }}>
-                    Status: {item.statusKanban || item.status_kanban || 'Em Andamento'}
+              eventosDoDia.map((item) => {
+                const isProva = item.tipo_evento === 'prova';
+                return (
+                  <div 
+                    key={item.id_evento} 
+                    style={{ 
+                      background: '#F9F9F9', 
+                      borderLeft: `4px solid ${isProva ? '#E67E22' : '#2E7D32'}`, 
+                      padding: '10px', 
+                      marginBottom: '8px', 
+                      borderRadius: '4px' 
+                    }}
+                  >
+                    <span style={{ fontSize: '11px', fontWeight: 'bold', color: isProva ? '#E67E22' : '#2E7D32', textTransform: 'uppercase' }}>
+                      {isProva ? `Prova Agendada 📅 ${item.horario_evento ? `(${item.horario_evento})` : ''}` : 'Previsão de Entrega 📦'}
+                    </span>
+                    <div style={{ fontSize: '13px', color: '#3E2445', fontWeight: 'bold', marginTop: '2px' }}>
+                      Pedido #{item.id_pedido} — {item.status_kanban}
+                    </div>
+                    <small style={{ color: '#555', display: 'block', marginTop: '3px' }}>{item.pedido_descricao}</small>
+                    <small style={{ color: '#888', display: 'block', marginTop: '2px' }}>
+                      {isCliente ? `Costureira: ${item.costureira_nome || 'A definir'}` : `Cliente: ${item.cliente_nome}`}
+                    </small>
                   </div>
-                  <small style={{ color: '#555', display: 'block', marginTop: '3px' }}>{item.pedidoDescricao || item.pedido_descricao}</small>
-                  <small style={{ color: '#888', display: 'block', marginTop: '2px' }}>
-                    {isCliente ? `Costureira: ${item.costureiraNome || item.costureira_nome}` : `Cliente: ${item.clienteNome || item.cliente_nome}`}
-                  </small>
-                </div>
-              ))
+                );
+              })
             )}
           </div>
         </div>

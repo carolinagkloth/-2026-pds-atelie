@@ -1,35 +1,89 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 
-function TabelaPrecos({ modoEdicao = false }) {
-  const [precos, setPrecos] = useState([
-    { id: 1, servico: 'Ajuste de Barra (Calça/Saia)', valor: 30.00, categoria: 'Ajustes' },
-    { id: 2, servico: 'Ajuste de Cintura', valor: 45.00, categoria: 'Ajustes' },
-    { id: 3, servico: 'Troca de Zíper', valor: 25.00, categoria: 'Consertos' },
-    { id: 4, servico: 'Vestido Sob Medida (Simples)', valor: 250.00, categoria: 'Confecção' }
-  ]);
+function TabelaPrecos({ idCostureira, modoEdicao = false }) {
+  const usuarioSalvo = (() => {
+    try {
+      const item = localStorage.getItem('usuarioAtelie');
+      return item && item !== 'undefined' ? JSON.parse(item) : {};
+    } catch {
+      return {};
+    }
+  })();
+
+  const idEfetivo = idCostureira || usuarioSalvo?.id_usuario || usuarioSalvo?.id;
+
+  const [precos, setPrecos] = useState([]);
+  const [carregando, setCarregando] = useState(true);
+  const [salvando, setSalvando] = useState(false);
 
   const [novoServico, setNovoServico] = useState('');
   const [novoValor, setNovoValor] = useState('');
   const [novaCategoria, setNovaCategoria] = useState('Ajustes');
 
-  const handleAdicionarPreco = (e) => {
+  useEffect(() => {
+    if (!idEfetivo) {
+      setCarregando(false);
+      return;
+    }
+
+    setCarregando(true);
+    fetch(`/api/usuarios/${idEfetivo}/tabela-precos`)
+      .then((res) => res.json())
+      .then((data) => {
+        setPrecos(Array.isArray(data) ? data : []);
+      })
+      .catch((err) => console.error('Erro ao buscar tabela de preços:', err))
+      .finally(() => setCarregando(false));
+  }, [idEfetivo]);
+
+  const handleAdicionarPreco = async (e) => {
     e.preventDefault();
-    if (!novoServico || !novoValor) return;
+    if (!novoServico.trim() || !novoValor || !idEfetivo) return;
 
-    const item = {
-      id: Date.now(),
-      servico: novoServico,
-      valor: parseFloat(novoValor),
-      categoria: novaCategoria
-    };
+    setSalvando(true);
+    try {
+      const response = await fetch(`/api/usuarios/${idEfetivo}/tabela-precos`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          servico: novoServico.trim(),
+          valor: parseFloat(novoValor),
+          categoria: novaCategoria
+        })
+      });
 
-    setPrecos([...precos, item]);
-    setNovoServico('');
-    setNovoValor('');
+      const data = await response.json();
+      if (!response.ok) {
+        throw new Error(data.erro || 'Erro ao adicionar preço.');
+      }
+
+      setPrecos((prev) => [...prev, data]);
+      setNovoServico('');
+      setNovoValor('');
+    } catch (err) {
+      alert(`Erro: ${err.message}`);
+    } finally {
+      setSalvando(false);
+    }
   };
 
-  const handleRemover = (id) => {
-    setPrecos(precos.filter((p) => p.id !== id));
+  const handleRemover = async (idPreco) => {
+    if (!window.confirm('Deseja realmente remover este serviço da tabela de preços?')) return;
+
+    try {
+      const response = await fetch(`/api/tabela-precos/${idPreco}`, {
+        method: 'DELETE'
+      });
+
+      if (!response.ok) {
+        const data = await response.json().catch(() => ({}));
+        throw new Error(data.erro || 'Erro ao excluir item.');
+      }
+
+      setPrecos((prev) => prev.filter((p) => (p.id_preco || p.id) !== idPreco));
+    } catch (err) {
+      alert(`Erro: ${err.message}`);
+    }
   };
 
   return (
@@ -53,6 +107,7 @@ function TabelaPrecos({ modoEdicao = false }) {
           <input
             type="number"
             step="0.01"
+            min="0"
             placeholder="Valor (R$)"
             value={novoValor}
             onChange={(e) => setNovoValor(e.target.value)}
@@ -64,15 +119,23 @@ function TabelaPrecos({ modoEdicao = false }) {
             <option value="Consertos">Consertos</option>
             <option value="Confecção">Confecção</option>
           </select>
-          <button type="submit" style={{ padding: '8px 14px', background: '#3E2445', color: '#fff', border: 'none', borderRadius: '4px', cursor: 'pointer', fontWeight: 'bold', fontSize: '13px' }}>
-            + Adicionar
+          <button
+            type="submit"
+            disabled={salvando}
+            style={{ padding: '8px 14px', background: '#3E2445', color: '#fff', border: 'none', borderRadius: '4px', cursor: salvando ? 'not-allowed' : 'pointer', fontWeight: 'bold', fontSize: '13px' }}
+          >
+            {salvando ? 'Salvando...' : '+ Adicionar'}
           </button>
         </form>
       )}
 
       {/* Tabela de Exibição */}
-      {precos.length === 0 ? (
-        <p style={{ color: '#888', fontSize: '13px', fontStyle: 'italic' }}>Nenhum preço cadastrado.</p>
+      {carregando ? (
+        <p style={{ color: '#888', fontSize: '13px' }}>Carregando tabela de preços...</p>
+      ) : precos.length === 0 ? (
+        <p style={{ color: '#888', fontSize: '13px', fontStyle: 'italic' }}>
+          Nenhum preço cadastrado. {modoEdicao ? 'Use o formulário acima para adicionar seus valores.' : 'Clique em "Editar Perfil" para cadastrar seus valores.'}
+        </p>
       ) : (
         <table style={{ width: '100%', borderCollapse: 'collapse', marginTop: '10px', fontSize: '13px' }}>
           <thead>
@@ -84,20 +147,29 @@ function TabelaPrecos({ modoEdicao = false }) {
             </tr>
           </thead>
           <tbody>
-            {precos.map((item, index) => (
-              <tr key={item.id} style={{ borderBottom: '1px solid #eee', background: index % 2 === 0 ? '#FAF7F5' : '#fff' }}>
-                <td style={{ padding: '8px 12px' }}>{item.servico}</td>
-                <td style={{ padding: '8px 12px' }}>{item.categoria}</td>
-                <td style={{ padding: '8px 12px', fontWeight: 'bold', color: '#2e7d32' }}>R$ {item.valor.toFixed(2)}</td>
-                {modoEdicao && (
-                  <td style={{ padding: '8px 12px', textAlign: 'center' }}>
-                    <button onClick={() => handleRemover(item.id)} style={{ background: '#c62828', color: '#fff', border: 'none', padding: '4px 8px', borderRadius: '4px', cursor: 'pointer', fontSize: '11px' }}>
-                      Excluir
-                    </button>
+            {precos.map((item, index) => {
+              const idItem = item.id_preco || item.id;
+              return (
+                <tr key={idItem} style={{ borderBottom: '1px solid #eee', background: index % 2 === 0 ? '#FAF7F5' : '#fff' }}>
+                  <td style={{ padding: '8px 12px' }}>{item.servico}</td>
+                  <td style={{ padding: '8px 12px' }}>{item.categoria}</td>
+                  <td style={{ padding: '8px 12px', fontWeight: 'bold', color: '#2e7d32' }}>
+                    R$ {Number(item.valor || 0).toFixed(2)}
                   </td>
-                )}
-              </tr>
-            ))}
+                  {modoEdicao && (
+                    <td style={{ padding: '8px 12px', textAlign: 'center' }}>
+                      <button
+                        type="button"
+                        onClick={() => handleRemover(idItem)}
+                        style={{ background: '#c62828', color: '#fff', border: 'none', padding: '4px 8px', borderRadius: '4px', cursor: 'pointer', fontSize: '11px' }}
+                      >
+                        Excluir
+                      </button>
+                    </td>
+                  )}
+                </tr>
+              );
+            })}
           </tbody>
         </table>
       )}

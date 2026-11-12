@@ -10,7 +10,7 @@ router.post('/auth/google', UsuarioController.googleAuth);
 router.post('/recuperar-senha', UsuarioController.recuperarSenha);
 router.post('/redefinir-senha', UsuarioController.redefinirSenha);
 
-// Perfil & Medidas (inclui atualização de perfil e consulta de agenda)
+// Perfil & Medidas
 router.get('/usuarios/:id', UsuarioController.obterPerfil);
 router.put('/usuarios/:id', UsuarioController.atualizarPerfil);
 router.get('/usuarios/:id/agenda', UsuarioController.obterAgenda);
@@ -18,7 +18,9 @@ router.get('/usuarios/:id/agenda', UsuarioController.obterAgenda);
 router.get('/usuarios/:id/medidas', UsuarioController.obterMedidas);
 router.put('/usuarios/:id/medidas', UsuarioController.salvarMedidas);
 
-// ROTA DE DELEÇÃO DE TABELA DE PREÇOS
+// Tabela de Preços Referenciais
+router.get('/usuarios/:id/tabela-precos', UsuarioController.listarTabelaPrecos);
+router.post('/usuarios/:id/tabela-precos', UsuarioController.adicionarPrecoReferencial);
 router.delete('/tabela-precos/:idPreco', UsuarioController.deletarPrecoReferencial);
 router.delete('/usuarios/tabela-precos/:idPreco', UsuarioController.deletarPrecoReferencial);
 

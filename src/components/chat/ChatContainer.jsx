@@ -22,12 +22,13 @@ function ChatContainer({ pedido, usuario, idCostureiraProp, onNavigate }) {
     isCostureira ? idUsuario : (idCostureiraProp || pedido?.costureiraId || pedido?.id_costureira || null)
   );
 
-  // Modais
+  // Modais e controle de avaliação
   const [mostrarProposta, setMostrarProposta] = useState(false);
   const [mostrarProva, setMostrarProva] = useState(false);
   const [mostrarMedidas, setMostrarMedidas] = useState(false);
   const [mostrarAvaliacao, setMostrarAvaliacao] = useState(false);
   const [idOrdemServicoAvaliacao, setIdOrdemServicoAvaliacao] = useState(null);
+  const [jaAvaliado, setJaAvaliado] = useState(false);
 
   const [orcamentoAtual, setOrcamentoAtual] = useState({
     total: 0,
@@ -40,23 +41,20 @@ function ChatContainer({ pedido, usuario, idCostureiraProp, onNavigate }) {
   const [medidas, setMedidas] = useState({ busto: '', cintura: '', quadril: '', observacoes_medidas: '' });
 
   const infoDesc = parsePedidoDescricao(pedido?.descricao);
-  const tituloChat = `${infoDesc.tipo} - ${infoDesc.descricao}`;
+  const tituloChat = `${infoDesc.tipo}\n${infoDesc.descricao}`;
 
-  // RESOLUÇÃO ROBUTA DO NOME DA COSTUREIRA
+  // RESOLUÇÃO ROBUSTA DO NOME DA COSTUREIRA
   const resolverNomeCostureira = useCallback(async (idCost, msgsList = []) => {
-    // Se for a própria costureira logada
     if (isCostureira) {
       setCostureiraNome(user?.nome || 'Costureira');
       return;
     }
 
-    // Se veio no objeto pedido
     if (pedido?.costureiraNome || pedido?.costureira_nome) {
       setCostureiraNome(pedido.costureiraNome || pedido.costureira_nome);
       return;
     }
 
-    // Tenta encontrar o nome nas mensagens enviadas pela costureira
     const msgOutro = msgsList.find(
       (m) => Number(m.id_remetente || m.idRemetente) !== Number(idUsuario)
     );
@@ -65,7 +63,6 @@ function ChatContainer({ pedido, usuario, idCostureiraProp, onNavigate }) {
       return;
     }
 
-    // Busca direta na API do Usuário caso tenhamos o ID
     if (idCost) {
       try {
         const res = await fetch(`/api/usuarios/${idCost}`);
@@ -88,16 +85,16 @@ function ChatContainer({ pedido, usuario, idCostureiraProp, onNavigate }) {
         ? `/api/mensagens-chat/${idPedido}?id_costureira=${idCostureiraChat}`
         : `/api/mensagens-chat/${idPedido}`;
 
-      const [resMsgs, resPed] = await Promise.all([
+      const [resMsgs, resPed, resAval] = await Promise.all([
         fetch(url),
-        fetch(`/api/pedidos/${idPedido}`).catch(() => null)
+        fetch(`/api/pedidos/${idPedido}`).catch(() => null),
+        !isCostureira ? fetch(`/api/avaliacoes/pedido/${idPedido}`).catch(() => null) : Promise.resolve(null)
       ]);
 
       const data = await resMsgs.json();
       if (Array.isArray(data)) {
         setMensagens(data);
 
-        // Identifica se há proposta e extrai a costureira
         const propostaExistente = [...data].reverse().find(
           (m) => m.tipo_mensagem === 'proposta' || (m.conteudo && m.conteudo.includes('Proposta de Orçamento:'))
         );
@@ -124,7 +121,6 @@ function ChatContainer({ pedido, usuario, idCostureiraProp, onNavigate }) {
           }));
         }
 
-        // Resolve o nome com base no ID e nas mensagens carregadas
         resolverNomeCostureira(costureiraIdIdentificado, data);
       }
 
@@ -133,12 +129,20 @@ function ChatContainer({ pedido, usuario, idCostureiraProp, onNavigate }) {
         const statusReal = pedData.status_kanban || pedData.status_pedido || pedData.status;
         if (statusReal) setOrcamentoAtual((prev) => ({ ...prev, status: statusReal }));
       }
+
+      if (resAval && resAval.ok) {
+        const avalData = await resAval.json();
+        if (avalData.id_ordem_servico) {
+          setIdOrdemServicoAvaliacao(avalData.id_ordem_servico);
+        }
+        setJaAvaliado(Boolean(avalData.avaliado));
+      }
     } catch (err) {
       console.error('Erro ao carregar chat:', err);
     } finally {
       setCarregando(false);
     }
-  }, [idPedido, idCostureiraChat, resolverNomeCostureira]);
+  }, [idPedido, idCostureiraChat, isCostureira, resolverNomeCostureira]);
 
   useEffect(() => {
     carregarMensagens();
@@ -335,10 +339,12 @@ function ChatContainer({ pedido, usuario, idCostureiraProp, onNavigate }) {
           medidas={medidas}
           pedido={pedido}
           idPedido={idPedido}
+          jaAvaliado={jaAvaliado}
           onOpenProposta={() => setMostrarProposta(true)}
           onOpenProva={() => setMostrarProva(true)}
           onConcluirServico={handleConcluirServico}
           onConfirmarEntrega={handleConfirmarEntrega}
+          onOpenAvaliacao={() => setMostrarAvaliacao(true)}
           onCancelarPedido={handleCancelarPedido}
           onOpenMedidas={() => setMostrarMedidas(true)}
           onNavigate={onNavigate}
@@ -407,9 +413,13 @@ function ChatContainer({ pedido, usuario, idCostureiraProp, onNavigate }) {
                 comentario
               })
             });
+            const data = await res.json().catch(() => ({}));
             if (res.ok) {
               alert('Obrigado pela sua avaliação!');
+              setJaAvaliado(true);
               setMostrarAvaliacao(false);
+            } else {
+              alert(data.erro || data.error || 'Não foi possível enviar a avaliação.');
             }
           } catch (err) { alert(err.message); }
         }}

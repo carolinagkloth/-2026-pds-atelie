@@ -26,12 +26,17 @@ class OrdemServicoModel {
     return result.rows[0];
   }
 
-  // Aceitar Proposta e Gerar OS (Dentro de Transação)
+  // Aceitar Proposta e Gerar OS (Preserva data_prova caso já tenha sido agendada)
   static async aceitarProposta(client, { id_pedido, id_costureira, valor_total, previsao_entrega, valor_entrada }) {
     const queryOS = `
       INSERT INTO ordens_servico (id_pedido, id_costureira, valor_total, previsao_entrega, valor_entrada, status_kanban)
       VALUES ($1, $2, $3, $4, $5, 'Em Produção')
-      ON CONFLICT (id_pedido) DO UPDATE SET valor_total = $3, previsao_entrega = $4, valor_entrada = $5, status_kanban = 'Em Produção'
+      ON CONFLICT (id_pedido) DO UPDATE SET 
+        id_costureira = $2,
+        valor_total = $3, 
+        previsao_entrega = $4, 
+        valor_entrada = $5, 
+        status_kanban = 'Em Produção'
       RETURNING *;
     `;
     const osResult = await client.query(queryOS, [
@@ -45,31 +50,6 @@ class OrdemServicoModel {
     await client.query(`UPDATE pedidos SET status_pedido = 'Em Produção' WHERE id_pedido = $1`, [id_pedido]);
 
     return osResult.rows[0];
-  }
-
-  // Agendar Prova de Peça (Dentro de Transação)
-  static async agendarProva(client, { id_pedido, dataProva, observacao, id_costureira }) {
-    await client.query(
-      `INSERT INTO ordens_servico (id_pedido, id_costureira, valor_total, previsao_entrega, status_kanban)
-       VALUES ($1, $2, 0, $3, 'Aguardando Prova')
-       ON CONFLICT (id_pedido) DO UPDATE SET status_kanban = 'Aguardando Prova', previsao_entrega = $3;`,
-      [id_pedido, id_costureira || null, dataProva]
-    );
-
-    await client.query(`UPDATE pedidos SET status_pedido = 'Aguardando Prova' WHERE id_pedido = $1`, [id_pedido]);
-
-    const pedRes = await client.query('SELECT id_cliente FROM pedidos WHERE id_pedido = $1', [id_pedido]);
-    const idCliente = pedRes.rows[0]?.id_cliente;
-
-    const dataFormatada = new Date(dataProva + 'T12:00:00').toLocaleDateString('pt-BR');
-    const msgTexto = `Sua prova da peça foi agendada para o dia ${dataFormatada}.${observacao ? ` Obs: ${observacao}` : ''}`;
-
-    await client.query(
-      `INSERT INTO mensagens_chat (id_pedido, id_remetente, conteudo, tipo_mensagem) VALUES ($1, $2, $3, 'texto')`,
-      [id_pedido, id_costureira, `📅 PROVA AGENDADA!\n${msgTexto}`]
-    );
-
-    return { idCliente, msgTexto };
   }
 
   // Listar todas as Ordens de Serviço
@@ -107,19 +87,26 @@ class OrdemServicoModel {
     return result.rows[0];
   }
 
-  // Listar Ordens por Usuário (Cliente ou Costureira)
+  // Listar Ordens por Usuário (Cliente ou Costureira) com Prova e Entrega
   static async listarPorUsuario(idUsuario) {
     const query = `
-      SELECT os.id_ordem_servico AS id, os.id_ordem_servico, os.id_pedido AS "idPedido", os.valor_total AS "valorTotal", os.valor_entrada AS "valorEntrada",
-             os.data_inicio AS "dataInicio", os.previsao_entrega AS "previsaoEntrega", os.status_kanban AS "statusKanban",
-             p.descricao AS "pedidoDescricao", cli.nome AS "clienteNome", cli.telefone AS "clienteTelefone",
-             cost.nome AS "costureiraNome", cost.telefone AS "costureiraTelefone"
+      SELECT os.id_ordem_servico AS id, os.id_ordem_servico, os.id_pedido AS "idPedido", 
+             os.valor_total AS "valorTotal", os.valor_entrada AS "valorEntrada",
+             os.data_inicio AS "dataInicio", 
+             os.previsao_entrega, os.previsao_entrega AS "previsaoEntrega", 
+             os.data_prova, os.data_prova AS "dataProva",
+             os.horario_prova, os.horario_prova AS "horarioProva",
+             os.status_kanban, os.status_kanban AS "statusKanban",
+             p.descricao AS pedido_descricao, p.descricao AS "pedidoDescricao", 
+             cli.nome AS cliente_nome, cli.nome AS "clienteNome", cli.telefone AS "clienteTelefone",
+             cost.nome AS costureira_nome, cost.nome AS "costureiraNome", cost.telefone AS "costureiraTelefone"
       FROM ordens_servico os
       JOIN pedidos p ON os.id_pedido = p.id_pedido
       JOIN usuarios cli ON p.id_cliente = cli.id_usuario
-      JOIN usuarios cost ON os.id_costureira = cost.id_usuario
-      WHERE p.id_cliente = $1 OR os.id_costureira = $1
-      ORDER BY os.previsao_entrega ASC;
+      LEFT JOIN usuarios cost ON os.id_costureira = cost.id_usuario
+      WHERE (p.id_cliente = $1 OR os.id_costureira = $1)
+        AND os.status_kanban NOT IN ('Cancelado')
+      ORDER BY COALESCE(os.data_prova, os.previsao_entrega) ASC;
     `;
     const result = await pool.query(query, [idUsuario]);
     return result.rows;
