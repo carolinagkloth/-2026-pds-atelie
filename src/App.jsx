@@ -24,9 +24,29 @@ function App() {
     }
   });
 
-  const [pedidoSelecionado, setPedidoSelecionado] = useState(null);
+  const [pedidoSelecionado, setPedidoSelecionado] = useState(() => {
+    const params = new URLSearchParams(window.location.search);
+    const pedidoParam = params.get('pedido');
+    const costureiraParam = params.get('costureira');
+    if (pedidoParam) {
+      return {
+        id: Number(pedidoParam),
+        id_pedido: Number(pedidoParam),
+        ...(costureiraParam
+          ? { id_costureira: Number(costureiraParam), costureiraId: Number(costureiraParam) }
+          : {})
+      };
+    }
+    return null;
+  });
+
   const [dadosCadastroGoogle, setDadosCadastroGoogle] = useState(null);
-  const [idCostureiraPortfolio, setIdCostureiraPortfolio] = useState(null);
+
+  const [idCostureiraPortfolio, setIdCostureiraPortfolio] = useState(() => {
+    const params = new URLSearchParams(window.location.search);
+    const costureiraParam = params.get('costureira');
+    return costureiraParam ? Number(costureiraParam) : null;
+  });
 
   // Inicialização inteligente da tela considerando F5 e aba nova
   const [telaAtual, setTelaAtual] = useState(() => {
@@ -42,7 +62,6 @@ function App() {
       return telaParam;
     }
 
-    // Se usuário já está logado, entra direto na tela dele
     try {
       const item = localStorage.getItem('usuarioAtelie');
       const user = item && item !== 'undefined' ? JSON.parse(item) : null;
@@ -55,14 +74,13 @@ function App() {
     return 'inicio';
   });
 
-  // Lista de rotas autenticadas (inclui portfolio e configuracoesNotificacoes)
   const rotasPrivadas = [
-    'meusPedidos', 
-    'feedPedidos', 
-    'perfil', 
-    'publicarPedido', 
-    'chat', 
-    'meusChats', 
+    'meusPedidos',
+    'feedPedidos',
+    'perfil',
+    'publicarPedido',
+    'chat',
+    'meusChats',
     'portfolio',
     'configuracoesNotificacoes'
   ];
@@ -84,16 +102,31 @@ function App() {
     return () => window.removeEventListener('storage', handleStorageChange);
   }, []);
 
-  // 2. Navegação pelo botão Voltar/Avançar do navegador
+  // 2. Navegação pelo botão Voltar/Avançar do navegador (funciona mesmo após F5)
   useEffect(() => {
     const handlePopState = (event) => {
-      if (event.state && event.state.tela) {
-        setTelaAtual(event.state.tela);
-        if (event.state.dadosExtra) {
-          if (event.state.tela === 'portfolio') {
-            setIdCostureiraPortfolio(event.state.dadosExtra);
+      const params = new URLSearchParams(window.location.search);
+      const telaUrl = event.state?.tela || params.get('tela');
+      const dadosExtra = event.state?.dadosExtra;
+
+      if (telaUrl) {
+        setTelaAtual(telaUrl);
+        if (telaUrl === 'portfolio') {
+          const costId = dadosExtra || params.get('costureira');
+          setIdCostureiraPortfolio(costId ? Number(costId) : null);
+        } else if (telaUrl === 'chat') {
+          if (dadosExtra) {
+            setPedidoSelecionado(dadosExtra);
           } else {
-            setPedidoSelecionado(event.state.dadosExtra);
+            const pedId = params.get('pedido');
+            const costId = params.get('costureira');
+            if (pedId) {
+              setPedidoSelecionado({
+                id: Number(pedId),
+                id_pedido: Number(pedId),
+                ...(costId ? { id_costureira: Number(costId), costureiraId: Number(costId) } : {})
+              });
+            }
           }
         }
       } else {
@@ -109,18 +142,33 @@ function App() {
   useEffect(() => {
     if (!usuarioLogado && rotasPrivadas.includes(telaAtual)) {
       setTelaAtual('login');
+      window.history.replaceState({ tela: 'login' }, '', '?tela=login');
     }
   }, [usuarioLogado, telaAtual]);
 
   const handleNavigate = (novaTela, dadosExtra = null, pushToHistory = true) => {
+    let idPedidoParaUrl = null;
+    let idCostureiraParaUrl = null;
+
     if (dadosExtra) {
       if (novaTela === 'cadastro') {
         setDadosCadastroGoogle(dadosExtra);
       } else if (novaTela === 'portfolio') {
-        setIdCostureiraPortfolio(dadosExtra);
+        idCostureiraParaUrl = Number(dadosExtra);
+        setIdCostureiraPortfolio(idCostureiraParaUrl);
+      } else if (novaTela === 'chat') {
+        const pedidoObj =
+          typeof dadosExtra === 'object'
+            ? dadosExtra
+            : { id: Number(dadosExtra), id_pedido: Number(dadosExtra) };
+        setPedidoSelecionado(pedidoObj);
+        idPedidoParaUrl = pedidoObj.id_pedido || pedidoObj.id || pedidoObj.idPedido;
+        idCostureiraParaUrl = pedidoObj.id_costureira || pedidoObj.costureiraId || null;
       } else {
         setPedidoSelecionado(dadosExtra);
       }
+    } else if (novaTela === 'portfolio') {
+      setIdCostureiraPortfolio(null);
     }
 
     if (!usuarioLogado && rotasPrivadas.includes(novaTela)) {
@@ -129,7 +177,17 @@ function App() {
     }
 
     if (pushToHistory) {
-      window.history.pushState({ tela: novaTela, dadosExtra }, '', `?tela=${novaTela}`);
+      const urlParams = new URLSearchParams();
+      urlParams.set('tela', novaTela);
+      if (novaTela === 'chat' && idPedidoParaUrl) {
+        urlParams.set('pedido', idPedidoParaUrl);
+        if (idCostureiraParaUrl) urlParams.set('costureira', idCostureiraParaUrl);
+      }
+      if (novaTela === 'portfolio' && idCostureiraParaUrl) {
+        urlParams.set('costureira', idCostureiraParaUrl);
+      }
+
+      window.history.pushState({ tela: novaTela, dadosExtra }, '', `?${urlParams.toString()}`);
     }
 
     setTelaAtual(novaTela);

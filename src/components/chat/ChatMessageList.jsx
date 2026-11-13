@@ -1,5 +1,30 @@
 import React, { useState, useRef, useEffect } from 'react';
 
+const obterEstiloStatus = (status) => {
+  const s = (status || '').toLowerCase();
+
+  if (s === 'aberto' || s === 'disponível') {
+    return { background: '#E8F5E9', border: '1px solid #A5D6A7', color: '#2E7D32' };
+  }
+  if (s === 'aguardando prova') {
+    return { background: '#FFF3E0', border: '1px solid #FFCC80', color: '#E65100' };
+  }
+  if (s === 'em produção' || s === 'a fazer') {
+    return { background: '#E3F2FD', border: '1px solid #90CAF9', color: '#1565C0' };
+  }
+  if (s === 'concluído') {
+    return { background: '#E0F2F1', border: '1px solid #80CBC4', color: '#00695C' };
+  }
+  if (s === 'entregue') {
+    return { background: '#F3E5F5', border: '1px solid #CE93D8', color: '#6A1B9A' };
+  }
+  if (s === 'cancelado') {
+    return { background: '#FFEBEE', border: '1px solid #EF9A9A', color: '#C62828' };
+  }
+
+  return { background: '#F5F5F5', border: '1px solid #E0E0E0', color: '#616161' };
+};
+
 function ChatMessageList({ mensagens, idUsuario, idPedido, tituloChat, statusPedido, isCostureira, onEnviarMensagem, onAceitarProposta, onRecusarProposta }) {
   const [novaMensagem, setNovaMensagem] = useState('');
   const chatBottomRef = useRef(null);
@@ -25,26 +50,44 @@ function ChatMessageList({ mensagens, idUsuario, idPedido, tituloChat, statusPed
 
     if (d.toDateString() === hoje.toDateString()) return 'Hoje';
     if (d.toDateString() === ontem.toDateString()) return 'Ontem';
-    return d.toLocaleDateString('pt-BR', { timeZone: 'America/Sao_Paulo' });
+    return d.toLocaleDateString('pt-BR');
   };
 
   const formatarHoraMsg = (dataStr) => {
     if (!dataStr) return '';
     const d = new Date(dataStr);
-    return isNaN(d.getTime()) ? '' : d.toLocaleTimeString('pt-BR', { timeZone: 'America/Sao_Paulo', hour: '2-digit', minute: '2-digit' });
+    return isNaN(d.getTime()) ? '' : d.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
   };
 
   let ultimaDataHeader = null;
   const contratoAtivo = ['Em Produção', 'Aguardando Prova', 'Concluído', 'Entregue'].includes(statusPedido);
+  const estiloStatus = obterEstiloStatus(statusPedido);
 
   return (
     <div style={{ background: '#fff', borderRadius: '12px', boxShadow: '0 4px 16px rgba(62, 36, 69, 0.12)', display: 'flex', flexDirection: 'column', height: '620px', overflow: 'hidden' }}>
       
-      <div style={{ background: '#3E2445', color: '#fff', padding: '15px 20px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-        <h3 style={{ margin: 0, fontSize: '15px', fontWeight: 'bold', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', maxWidth: '80%' }}>
+      <div style={{ background: '#3E2445', color: '#fff', padding: '15px 20px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '12px' }}>
+        <h3 style={{ margin: 0, fontSize: '15px', fontWeight: 'bold', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', flex: 1 }}>
           {tituloChat || `Pedido #${idPedido}`}
         </h3>
-        <span style={{ fontSize: '12px', opacity: 0.8 }}>Pedido #{idPedido}</span>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flexShrink: 0 }}>
+          {statusPedido && (
+            <span
+              style={{
+                background: estiloStatus.background,
+                border: estiloStatus.border,
+                color: estiloStatus.color,
+                padding: '4px 12px',
+                borderRadius: '20px',
+                fontSize: '12px',
+                fontWeight: 'bold'
+              }}
+            >
+              Status: {statusPedido}
+            </span>
+          )}
+          <span style={{ fontSize: '12px', opacity: 0.85 }}>Pedido #{idPedido}</span>
+        </div>
       </div>
 
       <div style={{ flex: 1, padding: '20px', overflowY: 'auto', background: '#FAF7FA', display: 'flex', flexDirection: 'column', gap: '12px' }}>

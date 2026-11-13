@@ -1,9 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import Calendar from 'react-calendar';
-import 'react-calendar/dist/Calendar.css';
 import "../styles/Perfil.css";
 import Portfolio from './Portfolio';
 import TabelaPrecos from './TabelaPrecos';
+import Agenda from './Agenda';
 
 function Perfil({ usuario, onNavigate, onUpdateUsuario }) {
   const usuarioSalvo = (() => {
@@ -26,8 +25,6 @@ function Perfil({ usuario, onNavigate, onUpdateUsuario }) {
   const [erroImagem, setErroImagem] = useState(false);
 
   const [reputacao, setReputacao] = useState({ media: 0, totalAvaliacoes: 0, depoimentos: [] });
-  const [eventosAgenda, setEventosAgenda] = useState([]);
-  const [dataSelecionada, setDataSelecionada] = useState(new Date());
 
   const [formData, setFormData] = useState({
     nome: user?.nome || '',
@@ -41,7 +38,6 @@ function Perfil({ usuario, onNavigate, onUpdateUsuario }) {
 
   useEffect(() => {
     if (idUsuario) {
-      // 1. Dados do Perfil
       fetch(`/api/usuarios/${idUsuario}`)
         .then((res) => res.json())
         .then((data) => {
@@ -59,17 +55,6 @@ function Perfil({ usuario, onNavigate, onUpdateUsuario }) {
         })
         .catch(() => {});
 
-      // 2. Agenda Unificada (Provas e Entregas)
-      fetch(`/api/usuarios/${idUsuario}/agenda`)
-        .then((res) => res.json())
-        .then((data) => {
-          if (Array.isArray(data)) {
-            setEventosAgenda(data);
-          }
-        })
-        .catch(() => {});
-
-      // 3. Avaliações (Costureira)
       if (!isCliente) {
         fetch(`/api/avaliacoes/costureira/${idUsuario}`)
           .then((res) => res.json())
@@ -169,48 +154,16 @@ function Perfil({ usuario, onNavigate, onUpdateUsuario }) {
     }
   };
 
+  const handleLogout = () => {
+    localStorage.removeItem('usuarioAtelie');
+    if (onNavigate) {
+      onNavigate('inicio');
+    }
+  };
+
   const renderEstrelas = (nota) => {
     const valor = Math.round(nota || 0);
     return '★'.repeat(valor) + '☆'.repeat(5 - valor);
-  };
-
-  // --- HELPER DE DATA SEM DESLOCAMENTO DE FUSO ---
-  const formatarDataIsoLocal = (dateObjOrStr) => {
-    if (!dateObjOrStr) return '';
-    if (typeof dateObjOrStr === 'string' && /^\d{4}-\d{2}-\d{2}/.test(dateObjOrStr)) {
-      return dateObjOrStr.split('T')[0];
-    }
-    const d = new Date(dateObjOrStr);
-    if (isNaN(d.getTime())) return '';
-    const ano = d.getFullYear();
-    const mes = String(d.getMonth() + 1).padStart(2, '0');
-    const dia = String(d.getDate()).padStart(2, '0');
-    return `${ano}-${mes}-${dia}`;
-  };
-
-  const dataSelIso = formatarDataIsoLocal(dataSelecionada);
-
-  // Filtra todos os eventos (provas e entregas) do dia selecionado
-  const eventosDoDia = eventosAgenda.filter((ev) => {
-    const dataEv = formatarDataIsoLocal(ev.data_evento);
-    return dataEv && dataEv === dataSelIso;
-  });
-
-  // Marca no calendário os dias que possuem Prova (laranja) ou Entrega (verde)
-  const renderMarcadoresCalendario = ({ date, view }) => {
-    if (view !== 'month') return null;
-    const diaIso = formatarDataIsoLocal(date);
-    const temProva = eventosAgenda.some((ev) => ev.tipo_evento === 'prova' && formatarDataIsoLocal(ev.data_evento) === diaIso);
-    const temEntrega = eventosAgenda.some((ev) => ev.tipo_evento === 'entrega' && formatarDataIsoLocal(ev.data_evento) === diaIso);
-
-    if (!temProva && !temEntrega) return null;
-
-    return (
-      <div style={{ display: 'flex', justifyContent: 'center', gap: '3px', marginTop: '2px' }}>
-        {temProva && <span title="Prova Agendada" style={{ width: '6px', height: '6px', borderRadius: '50%', background: '#E67E22', display: 'inline-block' }} />}
-        {temEntrega && <span title="Previsão de Entrega" style={{ width: '6px', height: '6px', borderRadius: '50%', background: '#2E7D32', display: 'inline-block' }} />}
-      </div>
-    );
   };
 
   return (
@@ -414,61 +367,7 @@ function Perfil({ usuario, onNavigate, onUpdateUsuario }) {
       </form>
 
       {/* Agenda de Entregas e Provas */}
-      <div style={{ marginTop: '30px', borderTop: '2px solid #F4EFF5', paddingTop: '20px' }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '10px' }}>
-          <h3 style={{ color: '#3E2445', margin: 0, fontSize: '18px' }}>
-            Agenda de Entregas e Provas
-          </h3>
-          <div style={{ display: 'flex', gap: '12px', fontSize: '12px', color: '#555' }}>
-            <span><strong style={{ color: '#E67E22' }}>●</strong> Prova</span>
-            <span><strong style={{ color: '#2E7D32' }}>●</strong> Entrega</span>
-          </div>
-        </div>
-
-        <div style={{ display: 'flex', gap: '20px', flexWrap: 'wrap', marginTop: '15px' }}>
-          <Calendar 
-            onChange={setDataSelecionada} 
-            value={dataSelecionada} 
-            tileContent={renderMarcadoresCalendario}
-          />
-          
-          <div style={{ flex: 1, minWidth: '250px' }}>
-            <h4 style={{ margin: '0 0 10px 0', color: '#555', fontSize: '15px' }}>
-              Compromissos em {dataSelecionada.toLocaleDateString('pt-BR')}:
-            </h4>
-            {eventosDoDia.length === 0 ? (
-              <p style={{ color: '#888', fontSize: '13px' }}>Sem entregas ou provas previstas para esta data.</p>
-            ) : (
-              eventosDoDia.map((item) => {
-                const isProva = item.tipo_evento === 'prova';
-                return (
-                  <div 
-                    key={item.id_evento} 
-                    style={{ 
-                      background: '#F9F9F9', 
-                      borderLeft: `4px solid ${isProva ? '#E67E22' : '#2E7D32'}`, 
-                      padding: '10px', 
-                      marginBottom: '8px', 
-                      borderRadius: '4px' 
-                    }}
-                  >
-                    <span style={{ fontSize: '11px', fontWeight: 'bold', color: isProva ? '#E67E22' : '#2E7D32', textTransform: 'uppercase' }}>
-                      {isProva ? `Prova Agendada 📅 ${item.horario_evento ? `(${item.horario_evento})` : ''}` : 'Previsão de Entrega 📦'}
-                    </span>
-                    <div style={{ fontSize: '13px', color: '#3E2445', fontWeight: 'bold', marginTop: '2px' }}>
-                      Pedido #{item.id_pedido} — {item.status_kanban}
-                    </div>
-                    <small style={{ color: '#555', display: 'block', marginTop: '3px' }}>{item.pedido_descricao}</small>
-                    <small style={{ color: '#888', display: 'block', marginTop: '2px' }}>
-                      {isCliente ? `Costureira: ${item.costureira_nome || 'A definir'}` : `Cliente: ${item.cliente_nome}`}
-                    </small>
-                  </div>
-                );
-              })
-            )}
-          </div>
-        </div>
-      </div>
+      <Agenda idUsuario={idUsuario} isCliente={isCliente} />
 
       {/* Depoimentos dos Clientes */}
       {!isCliente && reputacao.depoimentos && reputacao.depoimentos.length > 0 && (
@@ -494,6 +393,27 @@ function Perfil({ usuario, onNavigate, onUpdateUsuario }) {
           <Portfolio idCostureira={idUsuario} modoEdicao={editando} />
         </>
       )}
+
+      {/* Botão de Sair no rodapé do Perfil */}
+      <div style={{ marginTop: '35px', borderTop: '2px solid #F4EFF5', paddingTop: '20px' }}>
+        <button
+          type="button"
+          onClick={handleLogout}
+          style={{
+            width: '100%',
+            padding: '12px',
+            background: '#FFEBEE',
+            color: '#C62828',
+            border: '1px solid #EF9A9A',
+            borderRadius: '6px',
+            fontWeight: 'bold',
+            fontSize: '14px',
+            cursor: 'pointer'
+          }}
+        >
+          Sair da Conta
+        </button>
+      </div>
 
     </div>
   );

@@ -321,8 +321,14 @@ class OrdemServicoController {
     try {
       await client.query('BEGIN');
 
+      await client.query(`ALTER TABLE ordens_servico ADD COLUMN IF NOT EXISTS data_entrega DATE;`);
+
       const osResult = await client.query(
-        `UPDATE ordens_servico SET status_kanban = 'Entregue' WHERE id_pedido = $1 RETURNING id_ordem_servico, id_costureira;`,
+        `UPDATE ordens_servico 
+         SET status_kanban = 'Entregue',
+             data_entrega = CURRENT_DATE
+         WHERE id_pedido = $1 
+         RETURNING id_ordem_servico, id_costureira, TO_CHAR(data_entrega, 'YYYY-MM-DD') AS data_entrega;`,
         [id_pedido]
       );
       await client.query(`UPDATE pedidos SET status_pedido = 'Entregue' WHERE id_pedido = $1;`, [id_pedido]);
@@ -350,7 +356,8 @@ class OrdemServicoController {
 
       return res.json({ 
         mensagem: 'Recebimento confirmado com sucesso!', 
-        id_ordem_servico: ordemServico?.id_ordem_servico || null 
+        id_ordem_servico: ordemServico?.id_ordem_servico || null,
+        data_entrega: ordemServico?.data_entrega || null
       });
     } catch (err) {
       await client.query('ROLLBACK');

@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import AvatarPerfil from './AvatarPerfil';
 
 function MeusPedidos({ usuario, onNavigate }) {
   const [pedidos, setPedidos] = useState([]);
@@ -192,7 +193,7 @@ function MeusPedidos({ usuario, onNavigate }) {
           <span style={{ fontSize: '14px', color: '#666' }}>Olá, <strong>{usuario?.nome || 'Cliente'}</strong></span>
         </div>
 
-        <div style={{ display: 'flex', gap: '10px' }}>
+        <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
           <button
             onClick={() => onNavigate && onNavigate('meusChats')}
             style={{ padding: '10px 18px', background: '#F4EFF5', color: '#3E2445', border: '1px solid #3E2445', borderRadius: '8px', fontWeight: 'bold', cursor: 'pointer', fontSize: '13px' }}
@@ -207,22 +208,10 @@ function MeusPedidos({ usuario, onNavigate }) {
             + Novo Pedido
           </button>
 
-          <button
+          <AvatarPerfil
+            usuario={usuario}
             onClick={() => onNavigate && onNavigate('perfil')}
-            style={{ padding: '10px 18px', background: '#F4EFF5', color: '#3E2445', border: '1px solid #3E2445', borderRadius: '8px', fontWeight: 'bold', cursor: 'pointer', fontSize: '13px' }}
-          >
-            Ver Perfil
-          </button>
-
-          <button
-            onClick={() => {
-              localStorage.removeItem('usuarioAtelie');
-              if (onNavigate) onNavigate('inicio');
-            }}
-            style={{ padding: '10px 18px', background: 'transparent', color: '#C62828', border: '1px solid #C62828', borderRadius: '8px', fontWeight: 'bold', cursor: 'pointer', fontSize: '13px' }}
-          >
-            Sair
-          </button>
+          />
         </div>
       </div>
 

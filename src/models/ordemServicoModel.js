@@ -89,11 +89,13 @@ class OrdemServicoModel {
 
   // Listar Ordens por Usuário (Cliente ou Costureira) com Prova e Entrega
   static async listarPorUsuario(idUsuario) {
+    await pool.query(`ALTER TABLE ordens_servico ADD COLUMN IF NOT EXISTS data_entrega DATE;`);
     const query = `
       SELECT os.id_ordem_servico AS id, os.id_ordem_servico, os.id_pedido AS "idPedido", 
              os.valor_total AS "valorTotal", os.valor_entrada AS "valorEntrada",
              os.data_inicio AS "dataInicio", 
-             os.previsao_entrega, os.previsao_entrega AS "previsaoEntrega", 
+             os.previsao_entrega, os.previsao_entrega AS "previsaoEntrega",
+             os.data_entrega, os.data_entrega AS "dataEntrega",
              os.data_prova, os.data_prova AS "dataProva",
              os.horario_prova, os.horario_prova AS "horarioProva",
              os.status_kanban, os.status_kanban AS "statusKanban",
@@ -106,16 +108,27 @@ class OrdemServicoModel {
       LEFT JOIN usuarios cost ON os.id_costureira = cost.id_usuario
       WHERE (p.id_cliente = $1 OR os.id_costureira = $1)
         AND os.status_kanban NOT IN ('Cancelado')
-      ORDER BY COALESCE(os.data_prova, os.previsao_entrega) ASC;
+      ORDER BY COALESCE(os.data_prova, os.data_entrega, os.previsao_entrega) ASC;
     `;
     const result = await pool.query(query, [idUsuario]);
     return result.rows;
   }
 
-  // Atualizar Status Kanban
+  // Atualizar Status Kanban (preenche data_entrega se movido para Entregue)
   static async atualizarStatus(clientOrPool, idOrdem, status_kanban) {
-    const query = `UPDATE ordens_servico SET status_kanban = $1 WHERE id_ordem_servico = $2 RETURNING *;`;
     const db = clientOrPool || pool;
+    await db.query(`ALTER TABLE ordens_servico ADD COLUMN IF NOT EXISTS data_entrega DATE;`);
+
+    const query = `
+      UPDATE ordens_servico 
+      SET status_kanban = $1,
+          data_entrega = CASE 
+            WHEN $1 = 'Entregue' THEN COALESCE(data_entrega, (NOW() AT TIME ZONE 'America/Sao_Paulo')::date)
+            ELSE NULL
+          END
+      WHERE id_ordem_servico = $2 
+      RETURNING *;
+    `;
     const result = await db.query(query, [status_kanban, idOrdem]);
 
     if (result.rowCount === 0) return null;

@@ -68,9 +68,25 @@ class PedidoModel {
   }
 
   static async buscarCostureiraVinculada(id_pedido) {
-    const query = 'SELECT id_costureira FROM ordens_servico WHERE id_pedido = $1';
-    const result = await pool.query(query, [id_pedido]);
-    return result.rows[0]?.id_costureira || null;
+    const osRes = await pool.query(
+      'SELECT id_costureira FROM ordens_servico WHERE id_pedido = $1 AND id_costureira IS NOT NULL LIMIT 1',
+      [id_pedido]
+    );
+    if (osRes.rows[0]?.id_costureira) {
+      return osRes.rows[0].id_costureira;
+    }
+
+    // Fallback: busca a costureira que já interagiu no chat antes da OS ser gerada
+    const chatRes = await pool.query(
+      `SELECT m.id_remetente
+       FROM mensagens_chat m
+       JOIN pedidos p ON m.id_pedido = p.id_pedido
+       WHERE m.id_pedido = $1 AND m.id_remetente != p.id_cliente
+       ORDER BY m.data_hora_envio DESC
+       LIMIT 1`,
+      [id_pedido]
+    );
+    return chatRes.rows[0]?.id_remetente || null;
   }
 }
 

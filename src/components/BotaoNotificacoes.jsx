@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 
 function BotaoNotificacoes({ usuario, onNavigate }) {
   const [notificacoes, setNotificacoes] = useState([]);
@@ -7,13 +7,27 @@ function BotaoNotificacoes({ usuario, onNavigate }) {
 
   const idUsuario = usuario?.id_usuario || usuario?.id;
 
+  const carregarNotificacoes = useCallback(() => {
+    if (!idUsuario) return;
+    fetch(`/api/notificacoes/usuario/${idUsuario}`)
+      .then((res) => res.json())
+      .then((data) => {
+        if (Array.isArray(data)) setNotificacoes(data);
+      })
+      .catch(() => {});
+  }, [idUsuario]);
+
   useEffect(() => {
     if (idUsuario) {
       carregarNotificacoes();
       const interval = setInterval(carregarNotificacoes, 10000);
-      return () => clearInterval(interval);
+      window.addEventListener('notificacoesAtualizadas', carregarNotificacoes);
+      return () => {
+        clearInterval(interval);
+        window.removeEventListener('notificacoesAtualizadas', carregarNotificacoes);
+      };
     }
-  }, [idUsuario]);
+  }, [idUsuario, carregarNotificacoes]);
 
   useEffect(() => {
     const handleClickOutside = (event) => {
@@ -25,19 +39,10 @@ function BotaoNotificacoes({ usuario, onNavigate }) {
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
-  const carregarNotificacoes = () => {
-    fetch(`/api/notificacoes/usuario/${idUsuario}`)
-      .then((res) => res.json())
-      .then((data) => {
-        if (Array.isArray(data)) setNotificacoes(data);
-      })
-      .catch(() => {});
-  };
-
   const handleMarcarTodasLidas = async () => {
     try {
       await fetch(`/api/notificacoes/usuario/${idUsuario}/marcar-todas-lidas`, { method: 'PUT' });
-      setNotificacoes(notificacoes.map((n) => ({ ...n, lida: true })));
+      setNotificacoes((prev) => prev.map((n) => ({ ...n, lida: true })));
     } catch (err) {
       console.error(err);
     }
@@ -46,7 +51,7 @@ function BotaoNotificacoes({ usuario, onNavigate }) {
   const handleClicarNotificacao = async (notif) => {
     if (!notif.lida) {
       await fetch(`/api/notificacoes/${notif.id_notificacao}/lida`, { method: 'PUT' });
-      setNotificacoes(notificacoes.map((n) => n.id_notificacao === notif.id_notificacao ? { ...n, lida: true } : n));
+      setNotificacoes((prev) => prev.map((n) => n.id_notificacao === notif.id_notificacao ? { ...n, lida: true } : n));
     }
 
     if (notif.id_pedido && onNavigate) {

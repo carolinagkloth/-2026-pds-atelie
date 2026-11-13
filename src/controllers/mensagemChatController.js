@@ -1,5 +1,6 @@
 const MensagemChatModel = require('../models/mensagemChatModel');
 const PedidoModel = require('../models/pedidoModel');
+const notificacaoModel = require('../models/notificacaoModel');
 const { dispararNotificacao } = require('../services/notificacaoService');
 
 class MensagemChatController {
@@ -63,6 +64,19 @@ class MensagemChatController {
   static async listar(req, res, next) {
     try {
       const id_pedido = req.params.idPedido || req.params.id_pedido;
+      const idUsuarioLeitor = req.query.id_usuario || req.query.idUsuario || req.usuarioId;
+
+      if (idUsuarioLeitor && id_pedido) {
+        try {
+          await MensagemChatModel.marcarComoLidas(id_pedido, idUsuarioLeitor);
+          if (typeof notificacaoModel.marcarComoLidasPorPedido === 'function') {
+            await notificacaoModel.marcarComoLidasPorPedido(idUsuarioLeitor, id_pedido);
+          }
+        } catch (errLeitura) {
+          console.error('Aviso ao marcar mensagens/notificações como lidas:', errLeitura.message);
+        }
+      }
+
       const mensagens = await MensagemChatModel.listarPorPedido(id_pedido);
       return res.status(200).json(mensagens);
     } catch (error) {

@@ -25,6 +25,17 @@ const notificacaoModel = {
     return result.rows[0];
   },
 
+  async marcarComoLidasPorPedido(idUsuario, idPedido) {
+    if (!idUsuario || !idPedido) return;
+    const query = `
+      UPDATE notificacoes 
+      SET lida = TRUE 
+      WHERE id_usuario = $1 
+        AND id_pedido = $2 
+        AND COALESCE(lida, FALSE) = FALSE`;
+    await pool.query(query, [idUsuario, idPedido]);
+  },
+
   async marcarTodasComoLidas(idUsuario) {
     const query = `UPDATE notificacoes SET lida = TRUE WHERE id_usuario = $1 RETURNING *`;
     const result = await pool.query(query, [idUsuario]);

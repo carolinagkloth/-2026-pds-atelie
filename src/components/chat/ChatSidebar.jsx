@@ -1,6 +1,31 @@
 import React from 'react';
 import { exportarPDF, exportarTXT, formatarDataBR } from './utils/chatExport';
 
+const obterEstiloStatus = (status) => {
+  const s = (status || '').toLowerCase();
+
+  if (s === 'aberto' || s === 'disponível') {
+    return { background: '#E8F5E9', border: '1px solid #A5D6A7', color: '#2E7D32' };
+  }
+  if (s === 'aguardando prova') {
+    return { background: '#FFF3E0', border: '1px solid #FFCC80', color: '#E65100' };
+  }
+  if (s === 'em produção' || s === 'a fazer') {
+    return { background: '#E3F2FD', border: '1px solid #90CAF9', color: '#1565C0' };
+  }
+  if (s === 'concluído') {
+    return { background: '#E0F2F1', border: '1px solid #80CBC4', color: '#00695C' };
+  }
+  if (s === 'entregue') {
+    return { background: '#F3E5F5', border: '1px solid #CE93D8', color: '#6A1B9A' };
+  }
+  if (s === 'cancelado') {
+    return { background: '#FFEBEE', border: '1px solid #EF9A9A', color: '#C62828' };
+  }
+
+  return { background: '#F5F5F5', border: '1px solid #E0E0E0', color: '#616161' };
+};
+
 function ChatSidebar({
   orcamentoAtual,
   isCostureira,
@@ -25,6 +50,7 @@ function ChatSidebar({
   const podeEnviarProposta = isCostureira && !contratoAtivo && !pedidoFinalizado;
   const nomeCostureiraExibir = costureiraNome || pedido?.costureiraNome || 'Não informada';
   const nomeClienteExibir = clienteNome || pedido?.clienteNome || pedido?.nomeCliente || 'Cliente';
+  const estiloStatus = obterEstiloStatus(orcamentoAtual.status);
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
@@ -33,9 +59,9 @@ function ChatSidebar({
       <div style={{ background: '#fff', borderRadius: '12px', padding: '20px', boxShadow: '0 4px 16px rgba(62, 36, 69, 0.12)' }}>
         <h3 style={{ margin: '0 0 15px 0', color: '#3E2445', fontSize: '17px' }}>Status do Pedido</h3>
         
-        <div style={{ background: '#FFF8E1', border: '1px solid #FFE082', borderRadius: '8px', padding: '12px', marginBottom: '12px' }}>
-          <span style={{ fontSize: '12px', color: '#888', display: 'block', marginBottom: '2px' }}>Status Atual:</span>
-          <strong style={{ color: '#E65100', fontSize: '14px' }}>{orcamentoAtual.status}</strong>
+        <div style={{ background: estiloStatus.background, border: estiloStatus.border, borderRadius: '8px', padding: '12px', marginBottom: '12px' }}>
+          <span style={{ fontSize: '12px', color: '#666', display: 'block', marginBottom: '2px' }}>Status Atual:</span>
+          <strong style={{ color: estiloStatus.color, fontSize: '14px' }}>{orcamentoAtual.status}</strong>
         </div>
 
         {/* EXIBIÇÃO CONDICIONAL: NOME DO CLIENTE (para costureira) OU COSTUREIRA (para cliente) */}

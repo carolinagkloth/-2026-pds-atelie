@@ -1,4 +1,30 @@
 import React, { useState, useEffect } from 'react';
+import AvatarPerfil from './AvatarPerfil';
+
+const obterEstiloStatus = (status) => {
+  const s = (status || '').toLowerCase();
+
+  if (s === 'aberto' || s === 'disponível') {
+    return { background: '#E8F5E9', border: '1px solid #A5D6A7', color: '#2E7D32' };
+  }
+  if (s === 'aguardando prova') {
+    return { background: '#FFF3E0', border: '1px solid #FFCC80', color: '#E65100' };
+  }
+  if (s === 'em produção' || s === 'a fazer') {
+    return { background: '#E3F2FD', border: '1px solid #90CAF9', color: '#1565C0' };
+  }
+  if (s === 'concluído') {
+    return { background: '#E0F2F1', border: '1px solid #80CBC4', color: '#00695C' };
+  }
+  if (s === 'entregue') {
+    return { background: '#F3E5F5', border: '1px solid #CE93D8', color: '#6A1B9A' };
+  }
+  if (s === 'cancelado') {
+    return { background: '#FFEBEE', border: '1px solid #EF9A9A', color: '#C62828' };
+  }
+
+  return { background: '#F5F5F5', border: '1px solid #E0E0E0', color: '#616161' };
+};
 
 function MeusChats({ usuario, onNavigate }) {
   const usuarioSalvo = (() => {
@@ -43,11 +69,6 @@ function MeusChats({ usuario, onNavigate }) {
       .finally(() => setCarregando(false));
   };
 
-  const handleLogout = () => {
-    localStorage.removeItem('usuarioAtelie');
-    if (onNavigate) onNavigate('inicio');
-  };
-
   const extrairDescricaoLimpa = (texto) => {
     if (!texto) return '';
     if (texto.includes('Localização:')) {
@@ -81,25 +102,17 @@ function MeusChats({ usuario, onNavigate }) {
           </span>
         </div>
 
-        <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
+        <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
           <button
             onClick={() => onNavigate && onNavigate(isCostureira ? 'feedPedidos' : 'meusPedidos')}
             style={{ padding: '9px 16px', background: '#3E2445', color: '#fff', border: 'none', borderRadius: '6px', fontWeight: 'bold', cursor: 'pointer', fontSize: '13px' }}
           >
-            Ver Pedidos
+            {isCostureira ? 'Ver Pedidos' : 'Meus Pedidos'}
           </button>
-          <button
+          <AvatarPerfil
+            usuario={usuarioAtual}
             onClick={() => onNavigate && onNavigate('perfil')}
-            style={{ padding: '9px 16px', background: '#F4EFF5', color: '#3E2445', border: '1px solid #3E2445', borderRadius: '6px', fontWeight: 'bold', cursor: 'pointer', fontSize: '13px' }}
-          >
-            Ver Perfil
-          </button>
-          <button
-            onClick={handleLogout}
-            style={{ padding: '9px 16px', background: 'transparent', color: '#C62828', border: '1px solid #C62828', borderRadius: '6px', fontWeight: 'bold', cursor: 'pointer', fontSize: '13px' }}
-          >
-            Sair
-          </button>
+          />
         </div>
       </div>
 
@@ -116,6 +129,8 @@ function MeusChats({ usuario, onNavigate }) {
           <option value="Em Produção">Em Produção</option>
           <option value="Aguardando Prova">Aguardando Prova</option>
           <option value="Concluído">Concluído</option>
+          <option value="Entregue">Entregue</option>
+          <option value="Cancelado">Cancelado</option>
         </select>
       </div>
 
@@ -128,25 +143,63 @@ function MeusChats({ usuario, onNavigate }) {
         </div>
       )}
 
-      {/* Lista de Conversas no estilo Inbox / WhatsApp */}
+      {/* Lista de Conversas */}
       <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
         {conversasFiltradas.map((item) => {
           const nomeOutraPessoa = isCostureira ? item.clienteNome : (item.costureiraNome || 'Ateliê');
           const dataFormatada = item.dataUltimaAtividade ? new Date(item.dataUltimaAtividade).toLocaleString('pt-BR', { dateStyle: 'short', timeStyle: 'short' }) : '-';
+          const statusAtual = item.status || 'Aberto';
+          const estiloStatus = obterEstiloStatus(statusAtual);
+          const naoLidas = Number(item.naoLidas || 0);
+          const temNaoLidas = naoLidas > 0;
 
           return (
             <div
               key={item.idPedido}
               onClick={() => onNavigate && onNavigate('chat', item)}
-              style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: '#fff', border: '1px solid #E0E0E0', borderRadius: '10px', padding: '18px', cursor: 'pointer', transition: 'border-color 0.2s', boxShadow: '0 2px 6px rgba(0,0,0,0.03)' }}
-              onMouseEnter={(e) => (e.currentTarget.style.borderColor = '#3E2445')}
-              onMouseLeave={(e) => (e.currentTarget.style.borderColor = '#E0E0E0')}
+              style={{
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'center',
+                background: temNaoLidas ? '#FAF6FA' : '#fff',
+                border: '1px solid #E0E0E0',
+                borderLeft: temNaoLidas ? '4px solid #3E2445' : '1px solid #E0E0E0',
+                borderRadius: '10px',
+                padding: '18px',
+                cursor: 'pointer',
+                transition: 'all 0.2s ease',
+                boxShadow: '0 2px 6px rgba(0,0,0,0.03)'
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.borderTopColor = '#3E2445';
+                e.currentTarget.style.borderRightColor = '#3E2445';
+                e.currentTarget.style.borderBottomColor = '#3E2445';
+                if (!temNaoLidas) e.currentTarget.style.borderLeftColor = '#3E2445';
+                e.currentTarget.style.background = '#FAF6FA';
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.borderTopColor = '#E0E0E0';
+                e.currentTarget.style.borderRightColor = '#E0E0E0';
+                e.currentTarget.style.borderBottomColor = '#E0E0E0';
+                if (!temNaoLidas) e.currentTarget.style.borderLeftColor = '#E0E0E0';
+                e.currentTarget.style.background = temNaoLidas ? '#FAF6FA' : '#fff';
+              }}
             >
-              <div style={{ flex: 1, paddingRight: '20px' }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '6px' }}>
+              <div style={{ flex: 1, paddingRight: '20px', minWidth: 0 }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '6px', flexWrap: 'wrap' }}>
                   <h3 style={{ margin: 0, color: '#3E2445', fontSize: '16px', fontWeight: 'bold' }}>{nomeOutraPessoa || 'Contato'}</h3>
-                  <span style={{ background: '#E8D8E8', color: '#3E2445', padding: '3px 9px', borderRadius: '12px', fontSize: '11px', fontWeight: 'bold' }}>
-                    {item.status || 'Aberto'}
+                  <span
+                    style={{
+                      background: estiloStatus.background,
+                      border: estiloStatus.border,
+                      color: estiloStatus.color,
+                      padding: '3px 10px',
+                      borderRadius: '12px',
+                      fontSize: '11px',
+                      fontWeight: 'bold'
+                    }}
+                  >
+                    {statusAtual}
                   </span>
                 </div>
 
@@ -154,18 +207,46 @@ function MeusChats({ usuario, onNavigate }) {
                   <strong>Pedido:</strong> {extrairDescricaoLimpa(item.descricao) || 'Serviço'}
                 </div>
 
-                <div style={{ fontSize: '13px', color: '#888', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', maxWidth: '500px' }}>
+                <div
+                  style={{
+                    fontSize: '13px',
+                    color: temNaoLidas ? '#3E2445' : '#888',
+                    fontWeight: temNaoLidas ? 'bold' : 'normal',
+                    whiteSpace: 'nowrap',
+                    overflow: 'hidden',
+                    textOverflow: 'ellipsis',
+                    maxWidth: '540px'
+                  }}
+                >
                   {item.ultimaMensagem || 'Nenhuma mensagem trocada ainda.'}
                 </div>
               </div>
 
-              <div style={{ textAlign: 'right', display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '10px' }}>
-                <span style={{ fontSize: '12px', color: '#888' }}>{dataFormatada}</span>
-                <button
-                  style={{ padding: '8px 14px', background: '#3E2445', color: '#fff', border: 'none', borderRadius: '6px', cursor: 'pointer', fontWeight: 'bold', fontSize: '12px' }}
-                >
-                  Abrir Chat
-                </button>
+              <div style={{ textAlign: 'right', display: 'flex', flexDirection: 'column', alignItems: 'flex-end', justifyContent: 'center', gap: '8px', flexShrink: 0 }}>
+                <span style={{ fontSize: '12px', color: temNaoLidas ? '#3E2445' : '#888', fontWeight: temNaoLidas ? 'bold' : 'normal' }}>
+                  {dataFormatada}
+                </span>
+
+                {temNaoLidas && (
+                  <span
+                    title={`${naoLidas} ${naoLidas === 1 ? 'mensagem não lida' : 'mensagens não lidas'}`}
+                    style={{
+                      background: '#3E2445',
+                      color: '#fff',
+                      minWidth: '22px',
+                      height: '22px',
+                      padding: '0 6px',
+                      borderRadius: '11px',
+                      fontSize: '11px',
+                      fontWeight: 'bold',
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      justifyContent: 'center'
+                    }}
+                  >
+                    {naoLidas}
+                  </span>
+                )}
               </div>
             </div>
           );

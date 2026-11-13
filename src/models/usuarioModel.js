@@ -1,5 +1,37 @@
 const pool = require('../config/database');
 
+let colunaDataEntregaVerificada = false;
+
+async function garantirColunaDataEntrega() {
+  if (colunaDataEntregaVerificada) return;
+  try {
+    await pool.query(`ALTER TABLE ordens_servico ADD COLUMN IF NOT EXISTS data_entrega DATE;`);
+
+    // Preenche data_entrega para pedidos já marcados como Entregue que ainda estavam NULL
+    await pool.query(`
+      UPDATE ordens_servico os
+      SET data_entrega = COALESCE(
+        (
+          SELECT (m.data_hora_envio - INTERVAL '3 hours')::date
+          FROM mensagens_chat m
+          WHERE m.id_pedido = os.id_pedido
+            AND m.conteudo LIKE '%ENTREGA CONFIRMADA%'
+          ORDER BY m.data_hora_envio DESC
+          LIMIT 1
+        ),
+        os.previsao_entrega,
+        CURRENT_DATE
+      )
+      WHERE os.status_kanban = 'Entregue'
+        AND os.data_entrega IS NULL;
+    `);
+
+    colunaDataEntregaVerificada = true;
+  } catch (err) {
+    console.error('Erro ao verificar coluna data_entrega:', err);
+  }
+}
+
 class UsuarioModel {
   static async buscarPorEmail(email) {
     const query = 'SELECT * FROM usuarios WHERE email = $1';
@@ -74,15 +106,17 @@ class UsuarioModel {
     return result.rows[0];
   }
 
-  // --- AGENDA UNIFICADA (TODAS AS PROVAS + TODAS AS ENTREGAS) ---
+  // --- AGENDA UNIFICADA (TODAS AS PROVAS + ENTREGAS PREVISTAS/REAIS) ---
   static async buscarAgendaUsuario(idUsuario) {
+    await garantirColunaDataEntrega();
     const query = `
       SELECT * FROM (
-        -- 1. Todas as provas agendadas (mesmo que sejam várias do mesmo cliente)
+        -- 1. Todas as provas agendadas
         SELECT 
           ('prova-' || ap.id_prova) AS id_evento,
           'prova' AS tipo_evento,
-          ap.data_prova AS data_evento,
+          TO_CHAR(ap.data_prova, 'YYYY-MM-DD') AS data_evento,
+          NULL::text AS data_entrega,
           ap.horario_prova AS horario_evento,
           ap.observacao AS observacao_evento,
           ap.id_pedido,
@@ -103,11 +137,18 @@ class UsuarioModel {
 
         UNION ALL
 
-        -- 2. Todas as previsões de entrega
+        -- 2. Entregas (prioriza data_entrega real quando já entregue)
         SELECT 
           ('entrega-' || os.id_ordem_servico) AS id_evento,
           'entrega' AS tipo_evento,
-          os.previsao_entrega AS data_evento,
+          TO_CHAR(
+            CASE 
+              WHEN os.status_kanban = 'Entregue' AND os.data_entrega IS NOT NULL THEN os.data_entrega
+              ELSE os.previsao_entrega
+            END,
+            'YYYY-MM-DD'
+          ) AS data_evento,
+          TO_CHAR(os.data_entrega, 'YYYY-MM-DD') AS data_entrega,
           NULL AS horario_evento,
           NULL AS observacao_evento,
           os.id_pedido,
@@ -122,7 +163,7 @@ class UsuarioModel {
         JOIN usuarios cli ON p.id_cliente = cli.id_usuario
         LEFT JOIN usuarios cost ON os.id_costureira = cost.id_usuario
         WHERE (os.id_costureira = $1 OR p.id_cliente = $1)
-          AND os.previsao_entrega IS NOT NULL
+          AND COALESCE(os.data_entrega, os.previsao_entrega) IS NOT NULL
           AND os.status_kanban NOT IN ('Cancelado')
       ) eventos
       ORDER BY data_evento ASC;

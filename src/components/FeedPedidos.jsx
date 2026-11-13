@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import AvatarPerfil from './AvatarPerfil';
 
 function FeedPedidos({ usuario, usuarioLogado, onNavigate, onDemonstrarInteresse }) {
   const usuarioSalvo = (() => {
@@ -50,13 +51,6 @@ function FeedPedidos({ usuario, usuarioLogado, onNavigate, onDemonstrarInteresse
         setCarregando(false);
       });
   }, []);
-
-  const handleLogout = () => {
-    localStorage.removeItem('usuarioAtelie');
-    if (onNavigate) {
-      onNavigate('inicio');
-    }
-  };
 
   // Extrai Tipo de Serviço (sem colchetes), Localização e Descrição limpa
   const extrairInformacoes = (texto, localizacaoPadrao) => {
@@ -162,7 +156,7 @@ function FeedPedidos({ usuario, usuarioLogado, onNavigate, onDemonstrarInteresse
   return (
     <div style={{ maxWidth: '950px', margin: '30px auto', background: '#fff', padding: '30px', borderRadius: '12px', boxShadow: '0 4px 16px rgba(62, 36, 69, 0.12)', fontFamily: "'Segoe UI', Tahoma, Geneva, Verdana, sans-serif" }}>
       
-      {/* Cabeçalho com Botão de Conversas para Costureira */}
+      {/* Cabeçalho com Botão de Conversas e Avatar */}
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '25px', borderBottom: '1px solid #f0f0f0', paddingBottom: '15px', flexWrap: 'wrap', gap: '15px' }}>
         <div>
           <h2 style={{ color: '#3E2445', margin: 0, fontSize: '22px' }}>
@@ -175,7 +169,7 @@ function FeedPedidos({ usuario, usuarioLogado, onNavigate, onDemonstrarInteresse
           )}
         </div>
 
-        <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
+        <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
           <button
             onClick={() => onNavigate && onNavigate('meusChats')}
             style={{ padding: '9px 16px', background: '#3E2445', color: '#fff', border: 'none', borderRadius: '6px', fontWeight: 'bold', cursor: 'pointer', fontSize: '13px' }}
@@ -183,19 +177,10 @@ function FeedPedidos({ usuario, usuarioLogado, onNavigate, onDemonstrarInteresse
             Minhas Conversas
           </button>
 
-          <button
+          <AvatarPerfil
+            usuario={usuarioAtual}
             onClick={() => onNavigate && onNavigate('perfil')}
-            style={{ padding: '9px 16px', background: '#F4EFF5', color: '#3E2445', border: '1px solid #3E2445', borderRadius: '6px', fontWeight: 'bold', cursor: 'pointer', fontSize: '13px' }}
-          >
-            Ver Perfil
-          </button>
-
-          <button
-            onClick={handleLogout}
-            style={{ padding: '9px 16px', background: 'transparent', color: '#C62828', border: '1px solid #C62828', borderRadius: '6px', fontWeight: 'bold', cursor: 'pointer', fontSize: '13px' }}
-          >
-            Sair
-          </button>
+          />
         </div>
       </div>
 
@@ -299,18 +284,15 @@ function FeedPedidos({ usuario, usuarioLogado, onNavigate, onDemonstrarInteresse
                     </span>
                   </div>
 
-                  <h3 style={{ margin: '0 0 10px 0', color: '#3E2445', fontSize: '17px', fontWeight: 'bold' }}>
+                  <h3 style={{ margin: '0 0 12px 0', color: '#3E2445', fontSize: '17px', fontWeight: 'bold' }}>
                     Solicitação de {pedido.clienteNome || pedido.cliente_nome || 'Cliente'}
                   </h3>
 
-                  {info.descricao && (
-                    <p style={{ fontSize: '14px', color: '#444', lineHeight: '1.5', marginBottom: '15px', whiteSpace: 'pre-line' }}>
-                      {info.descricao}
-                    </p>
-                  )}
-
                   <div style={{ fontSize: '13px', color: '#555', marginBottom: '18px', display: 'flex', flexDirection: 'column', gap: '6px', background: '#FBF9FB', padding: '10px', borderRadius: '6px' }}>
                     <div><strong>Localização:</strong> {info.localizacao}</div>
+                    {info.descricao && (
+                      <div style={{ whiteSpace: 'pre-line' }}><strong>Descrição:</strong> {info.descricao}</div>
+                    )}
                     <div><strong>Prazo desejado:</strong> {formatarData(prazoPedido)}</div>
                   </div>
                 </div>

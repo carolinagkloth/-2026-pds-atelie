@@ -2,14 +2,19 @@ const pool = require('../config/database');
 const notificacaoModel = require('../models/notificacaoModel');
 
 class NotificacaoController {
-  // Buscar notificações não lidas do usuário
+  // Buscar notificações do usuário
   static async listarPorUsuario(req, res) {
-    const { idUsuario } = req.params;
+    const idUsuario = req.params.usuario_id || req.params.idUsuario;
+    if (!idUsuario) {
+      return res.status(400).json({ erro: 'ID do usuário não informado.' });
+    }
+
     try {
       const query = `
         SELECT * FROM notificacoes 
         WHERE id_usuario = $1 
-        ORDER BY data_criacao DESC;
+        ORDER BY data_criacao DESC
+        LIMIT 30;
       `;
       const result = await pool.query(query, [idUsuario]);
       return res.json(result.rows);
@@ -19,9 +24,9 @@ class NotificacaoController {
     }
   }
 
-  // MARCAR UMA NOTIFICAÇÃO COMO LIDA (Persiste no Banco)
+  // MARCAR UMA NOTIFICAÇÃO COMO LIDA
   static async marcarComoLida(req, res) {
-    const { idNotificacao } = req.params;
+    const idNotificacao = req.params.idNotificacao || req.params.id;
     try {
       await pool.query(
         `UPDATE notificacoes SET lida = TRUE WHERE id_notificacao = $1;`,
@@ -36,10 +41,10 @@ class NotificacaoController {
 
   // MARCAR TODAS COMO LIDAS
   static async marcarTodasComoLidas(req, res) {
-    const { idUsuario } = req.params;
+    const idUsuario = req.params.idUsuario || req.params.usuario_id;
     try {
       await pool.query(
-        `UPDATE notificacoes SET lida = TRUE WHERE id_usuario = $1 AND lida = FALSE;`,
+        `UPDATE notificacoes SET lida = TRUE WHERE id_usuario = $1 AND COALESCE(lida, FALSE) = FALSE;`,
         [idUsuario]
       );
       return res.json({ mensagem: 'Todas as notificações foram marcadas como lidas.' });
