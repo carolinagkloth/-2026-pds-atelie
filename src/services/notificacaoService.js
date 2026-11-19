@@ -1,6 +1,9 @@
 const pool = require('../config/database');
 const whatsappClient = require('../config/whatsapp');
 const { transporter, EMAIL_OFICIAL } = require('./emailService');
+const { gerarEmailNotificacao } = require('./emailTemplates');
+
+const FRONTEND_URL = (process.env.FRONTEND_URL || 'http://localhost:5173').replace(/\/$/, '');
 
 async function enviarMensagemWhatsapp(telefone, texto) {
   try {
@@ -57,17 +60,23 @@ async function dispararNotificacao({ idUsuario, titulo, mensagem, tipo, idPedido
       cancelamento: prefs.notif_cancelamento
     };
 
-    // 3. Envio de E-mail
+    // 3. Envio de E-mail com o layout padronizado
     if (mapaEmail[tipo] !== false && usuario.email) {
+      const urlPortal = idPedido ? `${FRONTEND_URL}/?pedido=${idPedido}` : FRONTEND_URL;
+      const htmlEmail = gerarEmailNotificacao({
+        nomeUsuario: usuario.nome,
+        titulo,
+        mensagem,
+        idPedido,
+        urlPortal
+      });
+
       transporter.sendMail({
         from: `"Ateliê Entre Linhas" <${EMAIL_OFICIAL}>`,
         to: usuario.email,
-        subject: `Ateliê - ${titulo}`,
-        html: `<div style="font-family: Arial, sans-serif; padding: 20px;">
-                 <h2 style="color: #3E2445;">Olá, ${usuario.nome}!</h2>
-                 <p style="font-size: 14px; color: #333;">${mensagem}</p>
-                 <br/><small style="color: #888;">Ateliê Entre Linhas</small>
-               </div>`
+        subject: `${titulo} - Ateliê Entre Linhas`,
+        text: `Olá, ${usuario.nome}!\n\n${titulo}\n${mensagem}\n\nAcesse: ${urlPortal}`,
+        html: htmlEmail
       }).catch((err) => console.error('Erro ao enviar e-mail:', err));
     }
 

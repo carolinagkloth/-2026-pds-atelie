@@ -3,6 +3,64 @@ const OrdemServicoModel = require('../models/ordemServicoModel');
 const { dispararNotificacao } = require('../services/notificacaoService');
 
 class OrdemServicoController {
+  // --- TRANSIÇÃO AUTOMÁTICA: 'Aguardando Prova' -> 'Em Produção' NO HORÁRIO DA PROVA ---
+  static async sincronizarProvasVencidas() {
+    const client = await pool.connect();
+    try {
+      await client.query('BEGIN');
+
+      const osVencidas = await client.query(
+        `UPDATE ordens_servico
+         SET status_kanban = 'Em Produção',
+             data_prova = NULL,
+             horario_prova = NULL
+         WHERE status_kanban = 'Aguardando Prova'
+           AND data_prova IS NOT NULL
+           AND (data_prova::date + COALESCE(substring(horario_prova from '^[0-9]{2}:[0-9]{2}'), '23:59')::time) <= (NOW() AT TIME ZONE 'America/Sao_Paulo')
+         RETURNING id_pedido;`
+      );
+
+      if (osVencidas.rows.length > 0) {
+        const idsPedidos = osVencidas.rows.map((r) => r.id_pedido);
+        await client.query(
+          `UPDATE pedidos
+           SET status_pedido = 'Em Produção'
+           WHERE id_pedido = ANY($1::int[])
+             AND status_pedido = 'Aguardando Prova';`,
+          [idsPedidos]
+        );
+      }
+
+      // Garante sincronia caso algum pedido tenha ficado em 'Aguardando Prova' com OS já em produção
+      await client.query(
+        `UPDATE pedidos p
+         SET status_pedido = 'Em Produção'
+         FROM ordens_servico os
+         WHERE p.id_pedido = os.id_pedido
+           AND p.status_pedido = 'Aguardando Prova'
+           AND os.status_kanban = 'Em Produção';`
+      );
+
+      await client.query('COMMIT');
+
+      // Atualiza status na agenda (fora da transação principal para evitar bloqueio por constraint)
+      try {
+        await pool.query(
+          `UPDATE agendamentos_prova
+           SET status = 'Concluída'
+           WHERE COALESCE(status, 'Agendada') = 'Agendada'
+             AND data_prova IS NOT NULL
+             AND (data_prova::date + COALESCE(substring(horario_prova from '^[0-9]{2}:[0-9]{2}'), '23:59')::time) <= (NOW() AT TIME ZONE 'America/Sao_Paulo');`
+        );
+      } catch (_) {}
+    } catch (err) {
+      await client.query('ROLLBACK');
+      console.error('Erro ao sincronizar provas vencidas:', err.message);
+    } finally {
+      client.release();
+    }
+  }
+
   static async criar(req, res) {
     try {
       const { id_pedido, id_costureira, valor_total, previsao_entrega, status_kanban } = req.body;
@@ -15,6 +73,7 @@ class OrdemServicoController {
 
   static async listarTodos(req, res) {
     try {
+      await OrdemServicoController.sincronizarProvasVencidas();
       const ordens = await OrdemServicoModel.listarTodos();
       return res.status(200).json(ordens);
     } catch (error) {
@@ -24,6 +83,7 @@ class OrdemServicoController {
 
   static async buscarPorId(req, res) {
     try {
+      await OrdemServicoController.sincronizarProvasVencidas();
       const { id } = req.params;
       const ordem = await OrdemServicoModel.buscarPorId(id);
       if (!ordem) return res.status(404).json({ error: 'Ordem de serviço não encontrada.' });
@@ -50,7 +110,6 @@ class OrdemServicoController {
     try {
       await client.query('BEGIN');
 
-      // Fallback: busca o prazo da proposta diretamente no chat caso não tenha vindo no body
       if (!previsao_entrega) {
         const msgQuery = id_mensagem
           ? `SELECT prazo_proposta, dados_proposta FROM mensagens_chat WHERE id_mensagem = $1`
@@ -124,28 +183,37 @@ class OrdemServicoController {
     }
   }
 
-  // --- AGENDAMENTO DE PROVA (ACUMULA VÁRIAS DATAS SEM SOBRESCREVER) ---
-  static async agendarProva(req, res) {
-    const { id_pedido, dataProva, horarioProva, semPreferenciaHorario, observacao, id_costureira } = req.body;
-    if (!id_pedido || !dataProva) {
-      return res.status(400).json({ erro: 'ID do pedido e data da prova são obrigatórios.' });
+  // --- ACEITE DE PROPOSTA DE PROVA PELA CLIENTE (HORÁRIO OBRIGATÓRIO) ---
+  static async aceitarProva(req, res) {
+    const {
+      id_pedido,
+      id_mensagem,
+      id_cliente,
+      id_costureira,
+      dataProva,
+      horarioProva,
+      observacao,
+      local
+    } = req.body;
+
+    if (!id_pedido || !dataProva || !horarioProva) {
+      return res.status(400).json({ erro: 'ID do pedido, data e horário da prova são obrigatórios.' });
     }
 
-    const horarioTexto = semPreferenciaHorario ? 'Horário a combinar' : (horarioProva || 'Horário a definir');
-    const observacaoComHorario = `Horário: ${horarioTexto}.${observacao ? ` Obs: ${observacao}` : ''}`;
+    const horarioTexto = String(horarioProva).trim();
 
     const client = await pool.connect();
     try {
       await client.query('BEGIN');
 
-      // 1. Insere um novo registro de prova na tabela agendamentos_prova (mantém todas as datas)
+      // 1. Registra a prova confirmada na agenda
       await client.query(
         `INSERT INTO agendamentos_prova (id_pedido, id_costureira, data_prova, horario_prova, observacao, status)
          VALUES ($1, $2, $3, $4, $5, 'Agendada');`,
         [id_pedido, id_costureira || null, dataProva, horarioTexto, observacao || null]
       );
 
-      // 2. Garante a existência da Ordem de Serviço SEM sobrescrever previsao_entrega
+      // 2. Atualiza Ordem de Serviço e Pedido para 'Aguardando Prova'
       await client.query(
         `INSERT INTO ordens_servico (id_pedido, id_costureira, valor_total, data_prova, horario_prova, status_kanban)
          VALUES ($1, $2, 0, $3, $4, 'Aguardando Prova')
@@ -157,51 +225,95 @@ class OrdemServicoController {
         [id_pedido, id_costureira, dataProva, horarioTexto]
       );
 
-      // 3. Atualiza status no pedido
       await client.query(
         `UPDATE pedidos SET status_pedido = 'Aguardando Prova' WHERE id_pedido = $1;`,
         [id_pedido]
       );
 
-      // 4. Formata a data para a mensagem no chat
+      // 3. Marca a mensagem de proposta de prova como 'aceita'
+      if (id_mensagem) {
+        await client.query(
+          `UPDATE mensagens_chat 
+           SET dados_proposta = jsonb_set(COALESCE(dados_proposta::jsonb, '{}'::jsonb), '{status}', '"aceita"')
+           WHERE id_mensagem = $1;`,
+          [id_mensagem]
+        );
+      }
+
+      // 4. Registra confirmação no chat
       const [ano, mes, dia] = dataProva.split('-');
       const dataFormatada = `${dia}/${mes}/${ano}`;
-      const msgTexto = `📅 PROVA AGENDADA!\nSua prova da peça foi agendada para o dia ${dataFormatada}. ${observacaoComHorario}`;
+      const localTexto = local ? `\nLocal: ${local}` : '';
+      const msgTexto = `📅 PROVA CONFIRMADA!\nA cliente aceitou o agendamento para o dia ${dataFormatada} às ${horarioTexto}.${localTexto}`;
 
       await client.query(
         `INSERT INTO mensagens_chat (id_pedido, id_remetente, conteudo, tipo_mensagem) VALUES ($1, $2, $3, 'texto')`,
-        [id_pedido, id_costureira || null, msgTexto]
+        [id_pedido, id_cliente || null, msgTexto]
       );
 
       await client.query('COMMIT');
 
-      const pedRes = await pool.query('SELECT id_cliente FROM pedidos WHERE id_pedido = $1', [id_pedido]);
-      const idCliente = pedRes.rows[0]?.id_cliente;
-
-      if (idCliente) {
+      if (id_costureira) {
         await dispararNotificacao({
-          idUsuario: idCliente,
-          titulo: 'Prova Agendada! 🗓️',
-          mensagem: `${msgTexto}`,
+          idUsuario: id_costureira,
+          titulo: 'Prova Confirmada pela Cliente! 🗓️',
+          mensagem: `A cliente confirmou a prova do Pedido #${id_pedido} para ${dataFormatada} às ${horarioTexto}.`,
           tipo: 'prova',
           idPedido: id_pedido,
           forcarWhatsapp: true
         });
       }
 
-      return res.json({ mensagem: 'Prova agendada com sucesso!' });
+      return res.json({ mensagem: 'Prova confirmada e adicionada à agenda!' });
     } catch (err) {
       await client.query('ROLLBACK');
-      console.error('Erro ao agendar prova:', err);
+      console.error('Erro ao aceitar prova:', err);
       return res.status(500).json({ erro: err.message });
     } finally {
       client.release();
     }
   }
 
+  // --- RECUSA DE PROPOSTA DE PROVA PELA CLIENTE ---
+  static async recusarProva(req, res) {
+    const { id_pedido, id_mensagem, id_costureira } = req.body;
+    if (!id_pedido || !id_mensagem) {
+      return res.status(400).json({ erro: 'ID do pedido e da mensagem são obrigatórios.' });
+    }
+
+    try {
+      await pool.query(
+        `UPDATE mensagens_chat 
+         SET dados_proposta = jsonb_set(COALESCE(dados_proposta::jsonb, '{}'::jsonb), '{status}', '"recusada"')
+         WHERE id_mensagem = $1;`,
+        [id_mensagem]
+      );
+
+      if (id_costureira) {
+        await dispararNotificacao({
+          idUsuario: id_costureira,
+          titulo: 'Sugestão de Prova Recusada ❌',
+          mensagem: `A cliente não pôde confirmar o horário sugerido para a prova do Pedido #${id_pedido}. Combine outra data pelo chat.`,
+          tipo: 'prova',
+          idPedido: id_pedido,
+          forcarWhatsapp: true
+        });
+      }
+
+      return res.json({ mensagem: 'Sugestão de prova recusada.' });
+    } catch (err) {
+      console.error('Erro ao recusar prova:', err);
+      return res.status(500).json({ erro: 'Erro ao recusar sugestão de prova.' });
+    }
+  }
+
+  static async agendarProva(req, res) {
+    return OrdemServicoController.aceitarProva(req, res);
+  }
+
   // --- CANCELAMENTO DE PROVA ---
   static async cancelarProva(req, res) {
-    const { id_pedido, id_remetente, id_prova } = req.body;
+    const { id_pedido, id_remetente, id_prova, observacao } = req.body;
     if (!id_pedido) {
       return res.status(400).json({ erro: 'ID do pedido é obrigatório.' });
     }
@@ -229,7 +341,20 @@ class OrdemServicoController {
         [id_pedido]
       );
 
-      const msgTexto = `⚠️ PROVA CANCELADA!\nO agendamento da prova do Pedido #${id_pedido} foi cancelado. Alinhe uma nova data no chat.`;
+      await client.query(
+        `UPDATE mensagens_chat
+         SET dados_proposta = jsonb_set(COALESCE(dados_proposta::jsonb, '{}'::jsonb), '{status}', '"cancelada"')
+         WHERE id_pedido = $1
+           AND tipo_mensagem = 'proposta_prova'
+           AND COALESCE(dados_proposta::jsonb->>'status', '') = 'aceita';`,
+        [id_pedido]
+      );
+
+      const obsLimpa = (observacao || '').trim();
+      const msgTexto = obsLimpa
+        ? `⚠️ PROVA CANCELADA!\nO agendamento da prova do Pedido #${id_pedido} foi cancelado.\nObservação: "${obsLimpa}"\nAlinhe uma nova data no chat.`
+        : `⚠️ PROVA CANCELADA!\nO agendamento da prova do Pedido #${id_pedido} foi cancelado. Alinhe uma nova data no chat.`;
+
       await client.query(
         `INSERT INTO mensagens_chat (id_pedido, id_remetente, conteudo, tipo_mensagem) VALUES ($1, $2, $3, 'texto')`,
         [id_pedido, id_remetente || null, msgTexto]
@@ -248,7 +373,9 @@ class OrdemServicoController {
         await dispararNotificacao({
           idUsuario: idDestinatario,
           titulo: 'Prova Cancelada ⚠️',
-          mensagem: `A prova do Pedido #${id_pedido} foi cancelada. Verifique as mensagens no chat.`,
+          mensagem: obsLimpa
+            ? `A prova do Pedido #${id_pedido} foi cancelada. Observação: "${obsLimpa}"`
+            : `A prova do Pedido #${id_pedido} foi cancelada. Verifique as mensagens no chat.`,
           tipo: 'prova',
           idPedido: id_pedido,
           forcarWhatsapp: true
@@ -266,15 +393,30 @@ class OrdemServicoController {
   }
 
   // --- FLUXO DE CONCLUSÃO E ENTREGA ---
+  // --- FLUXO DE CONCLUSÃO E ENTREGA ---
   static async concluirServico(req, res) {
     const { id_pedido, id_costureira } = req.body;
     if (!id_pedido) {
       return res.status(400).json({ erro: 'ID do pedido é obrigatório.' });
     }
 
+    await OrdemServicoController.sincronizarProvasVencidas();
+
     const client = await pool.connect();
     try {
       await client.query('BEGIN');
+
+      const checkRes = await client.query(
+        `SELECT status_kanban FROM ordens_servico WHERE id_pedido = $1;`,
+        [id_pedido]
+      );
+
+      if (checkRes.rows[0]?.status_kanban === 'Aguardando Prova') {
+        await client.query('ROLLBACK');
+        return res.status(400).json({
+          erro: 'Não é possível concluir a peça enquanto houver uma prova agendada. Aguarde a prova ou cancele o agendamento.'
+        });
+      }
 
       await client.query(`UPDATE ordens_servico SET status_kanban = 'Concluído' WHERE id_pedido = $1;`, [id_pedido]);
       await client.query(`UPDATE pedidos SET status_pedido = 'Concluído' WHERE id_pedido = $1;`, [id_pedido]);
@@ -371,6 +513,7 @@ class OrdemServicoController {
   static async listarPorUsuario(req, res) {
     const { idUsuario } = req.params;
     try {
+      await OrdemServicoController.sincronizarProvasVencidas();
       const ordens = await OrdemServicoModel.listarPorUsuario(idUsuario);
       return res.json(ordens);
     } catch (err) {
@@ -422,5 +565,10 @@ class OrdemServicoController {
     }
   }
 }
+
+// Verifica a cada 30 segundos se alguma prova chegou na data/horário agendado
+setInterval(() => {
+  OrdemServicoController.sincronizarProvasVencidas();
+}, 30000);
 
 module.exports = OrdemServicoController;

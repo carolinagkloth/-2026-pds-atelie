@@ -1,6 +1,8 @@
 const nodemailer = require('nodemailer');
+const { gerarEmailAlertaLogin, gerarEmailRecuperacao } = require('./emailTemplates');
 
 const EMAIL_OFICIAL = process.env.EMAIL_USER || 'noreply.atelie.entre.linhas@gmail.com';
+const FRONTEND_URL = (process.env.FRONTEND_URL || 'http://localhost:5173').replace(/\/$/, '');
 
 const transporter = nodemailer.createTransport({
   host: process.env.EMAIL_HOST || 'smtp.gmail.com',
@@ -27,12 +29,32 @@ async function enviarEmail(para, assunto, texto, html) {
   }
 }
 
-async function enviarEmailNovoAcesso(email, nome) {
+async function enviarEmailNovoAcesso(email, nome, tokenOuLink = null) {
   try {
+    const dataHoraAcesso = new Date().toLocaleString('pt-BR', {
+      timeZone: 'America/Sao_Paulo'
+    });
+
+    const linkRedefinicao = tokenOuLink
+      ? (String(tokenOuLink).startsWith('http')
+          ? tokenOuLink
+          : `${FRONTEND_URL}/?tela=redefinirSenha&token=${tokenOuLink}`)
+      : null;
+
+    const urlEsqueciSenha = `${FRONTEND_URL}/?tela=esqueciSenha`;
+
+    const html = gerarEmailAlertaLogin({
+      nomeUsuario: nome,
+      dataHoraAcesso,
+      linkRedefinicao,
+      urlEsqueciSenha
+    });
+
     await enviarEmail(
       email,
       'Novo Acesso Detectado - Ateliê Entre Linhas',
-      `Olá, ${nome}. Identificamos um novo acesso à sua conta no Ateliê Entre Linhas.`
+      `Olá, ${nome}! Registramos uma nova entrada no portal do Ateliê Entre Linhas em ${dataHoraAcesso}. Se não foi você, acesse: ${linkRedefinicao || urlEsqueciSenha}`,
+      html
     );
   } catch (err) {
     console.error('Erro ao enviar e-mail de novo acesso:', err);
@@ -42,25 +64,26 @@ async function enviarEmailNovoAcesso(email, nome) {
 async function enviarEmailRecuperacao(emailUsuario, nomeUsuario, token) {
   if (!process.env.EMAIL_PASS) throw new Error('Senha de e-mail não configurada no .env!');
 
-  const linkRedefinicao = `http://localhost:5173/?tela=redefinirSenha&token=${token}`;
+  const linkRedefinicao = `${FRONTEND_URL}/?tela=redefinirSenha&token=${token}`;
+  const html = gerarEmailRecuperacao({
+    nomeUsuario,
+    linkRedefinicao
+  });
 
   await transporter.sendMail({
     from: `"Ateliê Entre Linhas" <${EMAIL_OFICIAL}>`,
     replyTo: EMAIL_OFICIAL,
     to: emailUsuario,
     subject: 'Redefinição de Senha - Ateliê Entre Linhas',
-    html: `<div style="font-family: Arial, sans-serif; padding: 20px;">
-             <h2>Olá, ${nomeUsuario}!</h2>
-             <p>Clique no link abaixo para redefinir sua senha:</p>
-             <a href="${linkRedefinicao}">${linkRedefinicao}</a>
-           </div>`
+    text: `Olá, ${nomeUsuario}! Acesse o link a seguir (válido por 1 hora) para redefinir sua senha: ${linkRedefinicao}`,
+    html
   });
 }
 
-module.exports = { 
-  transporter, 
-  EMAIL_OFICIAL, 
-  enviarEmail, 
-  enviarEmailNovoAcesso, 
-  enviarEmailRecuperacao 
+module.exports = {
+  transporter,
+  EMAIL_OFICIAL,
+  enviarEmail,
+  enviarEmailNovoAcesso,
+  enviarEmailRecuperacao
 };

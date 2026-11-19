@@ -36,8 +36,11 @@ function ChatSidebar({
   pedido,
   idPedido,
   jaAvaliado,
+  provaAgendada,
+  temProvaPendente,
   onOpenProposta,
   onOpenProva,
+  onCancelarProva,
   onConcluirServico,
   onConfirmarEntrega,
   onOpenAvaliacao,
@@ -45,12 +48,19 @@ function ChatSidebar({
   onOpenMedidas,
   onNavigate
 }) {
-  const contratoAtivo = ['Em Produção', 'Aguardando Prova', 'Concluído', 'Entregue'].includes(orcamentoAtual.status);
+  const emAndamento = ['Em Produção', 'Aguardando Prova', 'Concluído'].includes(orcamentoAtual.status);
   const pedidoFinalizado = ['Cancelado', 'Entregue'].includes(orcamentoAtual.status);
-  const podeEnviarProposta = isCostureira && !contratoAtivo && !pedidoFinalizado;
+  const podeEnviarProposta = isCostureira && !emAndamento && !pedidoFinalizado;
+  const temProvaAgendada = orcamentoAtual.status === 'Aguardando Prova';
+
   const nomeCostureiraExibir = costureiraNome || pedido?.costureiraNome || 'Não informada';
   const nomeClienteExibir = clienteNome || pedido?.clienteNome || pedido?.nomeCliente || 'Cliente';
   const estiloStatus = obterEstiloStatus(orcamentoAtual.status);
+
+  const dataProvaFormatada = provaAgendada?.dataProva ? formatarDataBR(provaAgendada.dataProva) : '';
+  const horarioProvaTexto = provaAgendada?.semPreferenciaHorario
+    ? 'horário a combinar'
+    : (provaAgendada?.horarioProva ? `às ${provaAgendada.horarioProva}` : '');
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
@@ -102,21 +112,94 @@ function ChatSidebar({
           </div>
         )}
 
+        {/* Cartão de Prova Agendada + Botão Cancelar Prova (Visível para Costureira e Cliente) */}
+        {emAndamento && temProvaAgendada && (
+          <div
+            style={{
+              background: '#FFF8E1',
+              border: '1px solid #FFCC80',
+              borderLeft: '4px solid #E65100',
+              borderRadius: '8px',
+              padding: '12px',
+              marginBottom: '12px',
+              fontSize: '12.5px',
+              color: '#4E342E'
+            }}
+          >
+            <strong style={{ display: 'block', color: '#E65100', marginBottom: '4px', fontSize: '13px' }}>
+              🗓️ Prova Agendada
+            </strong>
+            <div style={{ lineHeight: '1.4' }}>
+              {dataProvaFormatada ? (
+                <>
+                  Em <strong>{dataProvaFormatada}</strong> {horarioProvaTexto ? `(${horarioProvaTexto})` : ''} você tem uma prova agendada.
+                </>
+              ) : (
+                <>Você possui uma prova agendada para este pedido.</>
+              )}
+            </div>
+            {provaAgendada?.local && (
+              <div style={{ marginTop: '4px', fontSize: '12px', color: '#5D4037' }}>
+                <strong>📍 Local:</strong> {provaAgendada.local}
+              </div>
+            )}
+            <button
+              type="button"
+              onClick={onCancelarProva}
+              style={{
+                width: '100%',
+                marginTop: '10px',
+                padding: '8px',
+                background: '#fff',
+                color: '#C62828',
+                border: '1px solid #C62828',
+                borderRadius: '6px',
+                fontWeight: 'bold',
+                fontSize: '12px',
+                cursor: 'pointer'
+              }}
+            >
+              Cancelar Prova
+            </button>
+          </div>
+        )}
+
         {podeEnviarProposta && (
           <button onClick={onOpenProposta} style={{ width: '100%', padding: '10px', background: '#3E2445', color: '#fff', border: 'none', borderRadius: '6px', fontWeight: 'bold', fontSize: '13px', marginBottom: '10px', cursor: 'pointer' }}>
             + Enviar Orçamento
           </button>
         )}
 
-        {/* Botões da Costureira (ocultos após Entregue ou Cancelado) */}
-        {isCostureira && !pedidoFinalizado && (
+        {/* Botões da Costureira (visíveis apenas após proposta aceita / contrato em andamento) */}
+        {isCostureira && emAndamento && (
           <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-            <button onClick={onOpenProva} style={{ width: '100%', padding: '9px', background: '#2E7D32', color: '#fff', border: 'none', borderRadius: '6px', fontWeight: 'bold', fontSize: '13px', cursor: 'pointer' }}>
-              Agendar Prova da Peça
-            </button>
-            <button onClick={onConcluirServico} style={{ width: '100%', padding: '9px', background: '#1565C0', color: '#fff', border: 'none', borderRadius: '6px', fontWeight: 'bold', fontSize: '13px', cursor: 'pointer' }}>
-              ✅ Concluir Peça (Pronto p/ Entrega)
-            </button>
+            {!temProvaAgendada && !temProvaPendente && (
+              <button onClick={onOpenProva} style={{ width: '100%', padding: '9px', background: '#2E7D32', color: '#fff', border: 'none', borderRadius: '6px', fontWeight: 'bold', fontSize: '13px', cursor: 'pointer' }}>
+                Agendar Prova da Peça
+              </button>
+            )}
+
+            {!temProvaAgendada && temProvaPendente && (
+              <div
+                style={{
+                  background: '#FAF6FA',
+                  border: '1px solid #EADCEB',
+                  borderRadius: '6px',
+                  padding: '8px 10px',
+                  fontSize: '12px',
+                  color: '#5A3E63',
+                  textAlign: 'center'
+                }}
+              >
+                ⏳ Sugestão de prova enviada — aguardando resposta da cliente.
+              </div>
+            )}
+
+            {orcamentoAtual.status === 'Em Produção' && (
+              <button onClick={onConcluirServico} style={{ width: '100%', padding: '9px', background: '#1565C0', color: '#fff', border: 'none', borderRadius: '6px', fontWeight: 'bold', fontSize: '13px', cursor: 'pointer' }}>
+                ✅ Concluir Peça (Pronto p/ Entrega)
+              </button>
+            )}
           </div>
         )}
 
@@ -137,7 +220,8 @@ function ChatSidebar({
           </button>
         )}
 
-        {!pedidoFinalizado && (
+        {/* Cancelamento disponível apenas enquanto o contrato estiver em andamento */}
+        {emAndamento && (
           <button onClick={onCancelarPedido} style={{ width: '100%', padding: '9px', background: '#C62828', color: '#fff', border: 'none', borderRadius: '6px', fontWeight: 'bold', fontSize: '13px', marginTop: '10px', cursor: 'pointer' }}>
             ❌ {isCostureira ? 'Cancelar / Desistir do Pedido' : 'Cancelar Pedido'}
           </button>

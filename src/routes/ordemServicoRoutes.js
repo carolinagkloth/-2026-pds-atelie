@@ -8,6 +8,8 @@ router.get('/', OrdemServicoController.listarTodos);
 router.post('/aceitar-proposta', OrdemServicoController.aceitarProposta);
 router.post('/recusar-proposta', OrdemServicoController.recusarProposta);
 router.post('/agendar-prova', OrdemServicoController.agendarProva);
+router.post('/aceitar-prova', OrdemServicoController.aceitarProva);
+router.post('/recusar-prova', OrdemServicoController.recusarProva);
 router.post('/cancelar-prova', OrdemServicoController.cancelarProva);
 
 // Endpoints do Fluxo de Conclusão e Entrega

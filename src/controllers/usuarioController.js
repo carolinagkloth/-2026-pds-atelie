@@ -8,12 +8,32 @@ const { enviarEmailNovoAcesso, enviarEmailRecuperacao } = require('../services/e
 const googleClient = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
 
 class UsuarioController {
+  // Helper interno para gerar token de segurança (1h) e disparar alerta de novo acesso
+  static async notificarNovoAcesso(usuario) {
+    try {
+      const idUsuario = usuario.id_usuario || usuario.id;
+      const token = crypto.randomBytes(32).toString('hex');
+      const expiracao = new Date(Date.now() + 60 * 60 * 1000); // 1 hora
+
+      await usuarioModel.salvarTokenRedefinicao(idUsuario, token, expiracao);
+      await enviarEmailNovoAcesso(usuario.email, usuario.nome, token);
+    } catch (err) {
+      console.error('Erro ao gerar token de segurança no login:', err.message);
+      enviarEmailNovoAcesso(usuario.email, usuario.nome);
+    }
+  }
+
   // --- AUTENTICAÇÃO E CONTA ---
   static async cadastrar(req, res) {
     const { nome, email, senha, telefone, tipo_usuario, perfil, endereco, cpf_cnpj } = req.body;
 
     if (!email || !senha || !nome) {
       return res.status(400).json({ erro: 'Preencha todos os campos obrigatórios.' });
+    }
+
+    const tipoFinal = tipo_usuario || perfil || 'Cliente';
+    if (tipoFinal.toLowerCase() === 'costureira' && (!endereco || !endereco.trim())) {
+      return res.status(400).json({ erro: 'O endereço de atendimento é obrigatório para cadastro de costureira.' });
     }
 
     try {
@@ -50,8 +70,8 @@ class UsuarioController {
         email.trim().toLowerCase(),
         senhaHash,
         telefone ? telefone.trim() : null,
-        tipo_usuario || perfil || 'Cliente',
-        endereco || '',
+        tipoFinal,
+        endereco ? endereco.trim() : '',
         cpf_cnpj || null
       ]);
 
@@ -84,7 +104,7 @@ class UsuarioController {
       const senhaValida = await bcrypt.compare(senha, usuario.senha);
       if (!senhaValida) return res.status(400).json({ erro: 'E-mail ou senha incorretos.' });
 
-      enviarEmailNovoAcesso(usuario.email, usuario.nome);
+      UsuarioController.notificarNovoAcesso(usuario);
 
       return res.json({
         mensagem: 'Login realizado com sucesso!',
@@ -127,7 +147,7 @@ class UsuarioController {
         });
       }
 
-      enviarEmailNovoAcesso(usuario.email, usuario.nome);
+      UsuarioController.notificarNovoAcesso(usuario);
 
       return res.json({
         novoUsuario: false,
@@ -158,7 +178,7 @@ class UsuarioController {
       if (!usuario) return res.status(404).json({ erro: 'Este e-mail não está cadastrado.' });
 
       const token = crypto.randomBytes(32).toString('hex');
-      const expiracao = new Date(Date.now() + 15 * 60 * 1000);
+      const expiracao = new Date(Date.now() + 60 * 60 * 1000); // 1 hora
 
       await usuarioModel.salvarTokenRedefinicao(usuario.id_usuario, token, expiracao);
       await enviarEmailRecuperacao(usuario.email, usuario.nome, token);
@@ -212,6 +232,16 @@ class UsuarioController {
     }
 
     try {
+      const tipoRes = await pool.query('SELECT tipo_usuario FROM usuarios WHERE id_usuario = $1;', [id]);
+      if (tipoRes.rows.length === 0) {
+        return res.status(404).json({ erro: 'Usuário não encontrado.' });
+      }
+
+      const tipoUsuarioAtual = (tipoRes.rows[0].tipo_usuario || '').toLowerCase();
+      if (tipoUsuarioAtual === 'costureira' && (!endereco || !endereco.trim())) {
+        return res.status(400).json({ erro: 'O endereço de atendimento é obrigatório para costureiras.' });
+      }
+
       const query = `
         UPDATE usuarios 
         SET nome = $1, telefone = $2, endereco = $3, bio = $4, especialidades = $5, foto_perfil = $6
@@ -222,16 +252,12 @@ class UsuarioController {
       const result = await pool.query(query, [
         nome.trim(),
         telefone || null,
-        endereco || null,
+        endereco ? endereco.trim() : null,
         bio || null,
         especialidades || null,
         foto_perfil || null,
         id
       ]);
-
-      if (result.rows.length === 0) {
-        return res.status(404).json({ erro: 'Usuário não encontrado.' });
-      }
 
       return res.json({ mensagem: 'Perfil atualizado com sucesso!', usuario: result.rows[0] });
     } catch (err) {

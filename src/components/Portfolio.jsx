@@ -9,7 +9,9 @@ function Portfolio({ idCostureira, modoEdicao = false, onNavigate }) {
   const [carregando, setCarregando] = useState(true);
   const [enviando, setEnviando] = useState(false);
   const [erro, setErro] = useState('');
+  const [erroModal, setErroModal] = useState('');
   const [erroFotoPerfil, setErroFotoPerfil] = useState(false);
+  const [idConfirmandoExclusao, setIdConfirmandoExclusao] = useState(null);
 
   // Formulário de novo item
   const [titulo, setTitulo] = useState('');
@@ -77,6 +79,7 @@ function Portfolio({ idCostureira, modoEdicao = false, onNavigate }) {
   const handleFileChange = (e) => {
     const file = e.target.files[0];
     if (file) {
+      setErroModal('');
       const reader = new FileReader();
       reader.onloadend = () => {
         setImagemBase64(reader.result);
@@ -85,9 +88,21 @@ function Portfolio({ idCostureira, modoEdicao = false, onNavigate }) {
     }
   };
 
+  const handleAbrirModalAdd = () => {
+    setTitulo('');
+    setImagemBase64('');
+    setErroModal('');
+    setMostrarModalAdd(true);
+  };
+
   const handleSalvar = async (e) => {
     e.preventDefault();
-    if (!imagemBase64) return alert('Selecione uma imagem para enviar.');
+    setErroModal('');
+
+    if (!imagemBase64) {
+      setErroModal('Selecione uma imagem antes de publicar.');
+      return;
+    }
 
     setEnviando(true);
     try {
@@ -112,23 +127,24 @@ function Portfolio({ idCostureira, modoEdicao = false, onNavigate }) {
       const novosItens = await res.json();
       setItens(Array.isArray(novosItens) ? novosItens : []);
     } catch (err) {
-      alert(`Erro: ${err.message}`);
+      setErroModal(err.message);
     } finally {
       setEnviando(false);
     }
   };
 
   const handleExcluir = async (idMidia) => {
-    if (!window.confirm('Deseja remover esta foto do seu portfólio?')) return;
-
+    setErro('');
     try {
       const response = await fetch(`/api/portfolio/${idMidia}`, { method: 'DELETE' });
       const data = await response.json();
       if (!response.ok) throw new Error(data.erro || 'Erro ao excluir foto.');
 
       setItens((prev) => prev.filter((item) => (item.id || item.id_midia || item.id_portfolio) !== idMidia));
+      setIdConfirmandoExclusao(null);
     } catch (err) {
-      alert(`Erro: ${err.message}`);
+      setErro(err.message);
+      setIdConfirmandoExclusao(null);
     }
   };
 
@@ -187,7 +203,7 @@ function Portfolio({ idCostureira, modoEdicao = false, onNavigate }) {
                 )}
               </div>
 
-              {/* Nome, Especialidade, Telefone e Endereço */}
+              {/* Nome, Especialidade, Telefone e Aviso de Local */}
               <div style={{ flex: 1, minWidth: '240px' }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flexWrap: 'wrap', marginBottom: '6px' }}>
                   <h2 style={{ color: '#3E2445', margin: 0, fontSize: '24px' }}>{nomeCostureira}</h2>
@@ -206,8 +222,8 @@ function Portfolio({ idCostureira, modoEdicao = false, onNavigate }) {
                   <div>
                     <strong>📞 Telefone / WhatsApp:</strong> {costureiraInfo?.telefone || 'Não informado'}
                   </div>
-                  <div>
-                    <strong>📍 Endereço / Ateliê:</strong> {costureiraInfo?.endereco || 'Não informado'}
+                  <div style={{ fontSize: '13px', color: '#666' }}>
+                    <strong>📍 Local de Atendimento:</strong> Compartilhado no chat ao agendar prova da peça
                   </div>
                 </div>
               </div>
@@ -320,7 +336,7 @@ function Portfolio({ idCostureira, modoEdicao = false, onNavigate }) {
           {modoEdicao && (
             <button
               type="button"
-              onClick={() => setMostrarModalAdd(true)}
+              onClick={handleAbrirModalAdd}
               style={{ padding: '9px 16px', background: '#3E2445', color: '#fff', border: 'none', borderRadius: '6px', fontWeight: 'bold', cursor: 'pointer', fontSize: '13px' }}
             >
               + Adicionar Foto
@@ -338,6 +354,8 @@ function Portfolio({ idCostureira, modoEdicao = false, onNavigate }) {
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(210px, 1fr))', gap: '18px' }}>
             {itens.map((item) => {
               const idFoto = item.id || item.id_midia || item.id_portfolio;
+              const confirmandoEsta = idConfirmandoExclusao === idFoto;
+
               return (
                 <div
                   key={idFoto}
@@ -362,10 +380,10 @@ function Portfolio({ idCostureira, modoEdicao = false, onNavigate }) {
                     </div>
                   )}
 
-                  {modoEdicao && (
+                  {modoEdicao && !confirmandoEsta && (
                     <button
                       type="button"
-                      onClick={() => handleExcluir(idFoto)}
+                      onClick={() => setIdConfirmandoExclusao(idFoto)}
                       style={{
                         position: 'absolute',
                         top: '8px',
@@ -388,6 +406,42 @@ function Portfolio({ idCostureira, modoEdicao = false, onNavigate }) {
                       ✕
                     </button>
                   )}
+
+                  {modoEdicao && confirmandoEsta && (
+                    <div
+                      style={{
+                        position: 'absolute',
+                        inset: 0,
+                        background: 'rgba(30, 18, 34, 0.85)',
+                        color: '#fff',
+                        display: 'flex',
+                        flexDirection: 'column',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        padding: '12px',
+                        textAlign: 'center',
+                        gap: '10px'
+                      }}
+                    >
+                      <span style={{ fontSize: '13px', fontWeight: 'bold' }}>Remover esta foto?</span>
+                      <div style={{ display: 'flex', gap: '8px' }}>
+                        <button
+                          type="button"
+                          onClick={() => handleExcluir(idFoto)}
+                          style={{ padding: '6px 12px', background: '#C62828', color: '#fff', border: 'none', borderRadius: '6px', fontSize: '12px', fontWeight: 'bold', cursor: 'pointer' }}
+                        >
+                          Sim, remover
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => setIdConfirmandoExclusao(null)}
+                          style={{ padding: '6px 12px', background: '#fff', color: '#333', border: 'none', borderRadius: '6px', fontSize: '12px', fontWeight: 'bold', cursor: 'pointer' }}
+                        >
+                          Cancelar
+                        </button>
+                      </div>
+                    </div>
+                  )}
                 </div>
               );
             })}
@@ -397,9 +451,15 @@ function Portfolio({ idCostureira, modoEdicao = false, onNavigate }) {
 
       {/* Modal para adicionar nova foto */}
       {mostrarModalAdd && (
-        <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000 }}>
-          <div style={{ background: '#fff', padding: '25px', borderRadius: '12px', width: '400px', maxWidth: '90%' }}>
+        <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(30, 18, 34, 0.6)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1100, padding: '15px' }}>
+          <div style={{ background: '#fff', padding: '25px', borderRadius: '12px', width: '400px', maxWidth: '100%', boxShadow: '0 8px 30px rgba(62, 36, 69, 0.25)' }}>
             <h4 style={{ marginTop: 0, color: '#3E2445', fontSize: '18px' }}>Publicar no Portfólio</h4>
+
+            {erroModal && (
+              <div style={{ background: '#FFEBEE', color: '#C62828', padding: '9px 12px', borderRadius: '6px', fontSize: '12.5px', marginBottom: '12px' }}>
+                {erroModal}
+              </div>
+            )}
 
             <form onSubmit={handleSalvar}>
               <div style={{ marginBottom: '14px' }}>
@@ -434,6 +494,7 @@ function Portfolio({ idCostureira, modoEdicao = false, onNavigate }) {
                 <button
                   type="button"
                   onClick={() => setMostrarModalAdd(false)}
+                  disabled={enviando}
                   style={{ padding: '9px 16px', background: '#757575', color: '#fff', border: 'none', borderRadius: '6px', cursor: 'pointer', fontSize: '13px' }}
                 >
                   Cancelar

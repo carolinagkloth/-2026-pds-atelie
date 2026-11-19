@@ -25,7 +25,19 @@ const obterEstiloStatus = (status) => {
   return { background: '#F5F5F5', border: '1px solid #E0E0E0', color: '#616161' };
 };
 
-function ChatMessageList({ mensagens, idUsuario, idPedido, tituloChat, statusPedido, isCostureira, onEnviarMensagem, onAceitarProposta, onRecusarProposta }) {
+function ChatMessageList({
+  mensagens,
+  idUsuario,
+  idPedido,
+  tituloChat,
+  statusPedido,
+  isCostureira,
+  onEnviarMensagem,
+  onAceitarProposta,
+  onRecusarProposta,
+  onAceitarProva,
+  onRecusarProva
+}) {
   const [novaMensagem, setNovaMensagem] = useState('');
   const chatBottomRef = useRef(null);
 
@@ -40,7 +52,6 @@ function ChatMessageList({ mensagens, idUsuario, idPedido, tituloChat, statusPed
     setNovaMensagem('');
   };
 
-  // Formatação com timeZone explícito para Brasil
   const formatarDataHeader = (dataStr) => {
     if (!dataStr) return '';
     const d = new Date(dataStr);
@@ -61,7 +72,34 @@ function ChatMessageList({ mensagens, idUsuario, idPedido, tituloChat, statusPed
 
   let ultimaDataHeader = null;
   const contratoAtivo = ['Em Produção', 'Aguardando Prova', 'Concluído', 'Entregue'].includes(statusPedido);
+  const pedidoCancelado = statusPedido === 'Cancelado';
+  const pedidoEncerrado = ['Cancelado', 'Entregue'].includes(statusPedido);
   const estiloStatus = obterEstiloStatus(statusPedido);
+
+  const temPropostaPendente =
+    !contratoAtivo &&
+    !pedidoCancelado &&
+    mensagens.some((m) => {
+      const ehProp = m.tipo_mensagem === 'proposta' || (m.conteudo && m.conteudo.includes('Proposta de Orçamento:'));
+      if (!ehProp) return false;
+      let dados = m.dados_proposta || {};
+      if (typeof dados === 'string') {
+        try { dados = JSON.parse(dados); } catch { dados = {}; }
+      }
+      return (dados.status || 'pendente') !== 'recusada';
+    });
+
+  const temProvaPendente =
+    !pedidoEncerrado &&
+    mensagens.some((m) => {
+      const ehProva = m.tipo_mensagem === 'proposta_prova' || (m.conteudo && m.conteudo.includes('Proposta de Agendamento de Prova:'));
+      if (!ehProva) return false;
+      let dados = m.dados_proposta || {};
+      if (typeof dados === 'string') {
+        try { dados = JSON.parse(dados); } catch { dados = {}; }
+      }
+      return (dados.status || 'pendente') === 'pendente';
+    });
 
   return (
     <div style={{ background: '#fff', borderRadius: '12px', boxShadow: '0 4px 16px rgba(62, 36, 69, 0.12)', display: 'flex', flexDirection: 'column', height: '620px', overflow: 'hidden' }}>
@@ -99,12 +137,13 @@ function ChatMessageList({ mensagens, idUsuario, idPedido, tituloChat, statusPed
 
           const ehMinha = Number(msg.id_remetente || msg.idRemetente) === Number(idUsuario);
           const ehProposta = msg.tipo_mensagem === 'proposta' || (msg.conteudo && msg.conteudo.includes('Proposta de Orçamento:'));
+          const ehPropostaProva = msg.tipo_mensagem === 'proposta_prova' || (msg.conteudo && msg.conteudo.includes('Proposta de Agendamento de Prova:'));
 
           let dadosProposta = msg.dados_proposta || {};
           if (typeof dadosProposta === 'string') {
             try { dadosProposta = JSON.parse(dadosProposta); } catch { dadosProposta = {}; }
           }
-          const statusProposta = dadosProposta.status || 'pendente';
+          const statusCard = dadosProposta.status || 'pendente';
 
           return (
             <React.Fragment key={msg.id_mensagem || msg.id || index}>
@@ -126,15 +165,20 @@ function ChatMessageList({ mensagens, idUsuario, idPedido, tituloChat, statusPed
                     {msg.conteudo}
                   </div>
 
+                  {/* Card de Proposta de Orçamento */}
                   {ehProposta && (
                     <div style={{ marginTop: '8px', background: ehMinha ? 'rgba(255,255,255,0.1)' : '#FAF7FA', padding: '10px', borderRadius: '8px', border: '1px solid rgba(62, 36, 69, 0.2)' }}>
-                      {statusProposta === 'recusada' ? (
+                      {statusCard === 'recusada' ? (
                         <div style={{ background: '#FFEBEE', color: '#C62828', padding: '8px', borderRadius: '6px', fontSize: '12px', fontWeight: 'bold', textAlign: 'center' }}>
                           ✕ Orçamento Recusado
                         </div>
                       ) : contratoAtivo ? (
                         <div style={{ background: '#E8F5E9', color: '#2E7D32', padding: '8px', borderRadius: '6px', fontSize: '12px', fontWeight: 'bold', textAlign: 'center' }}>
                           ✓ Orçamento Aprovado (Contrato Ativo)
+                        </div>
+                      ) : pedidoCancelado ? (
+                        <div style={{ background: '#F5F5F5', color: '#616161', padding: '8px', borderRadius: '6px', fontSize: '12px', fontWeight: 'bold', textAlign: 'center' }}>
+                          Pedido Cancelado (Proposta Encerrada)
                         </div>
                       ) : !isCostureira ? (
                         <div style={{ display: 'flex', gap: '8px', marginTop: '6px' }}>
@@ -159,6 +203,44 @@ function ChatMessageList({ mensagens, idUsuario, idPedido, tituloChat, statusPed
                     </div>
                   )}
 
+                  {/* Card de Proposta de Prova */}
+                  {ehPropostaProva && (
+                    <div style={{ marginTop: '8px', background: ehMinha ? 'rgba(255,255,255,0.1)' : '#FAF7FA', padding: '10px', borderRadius: '8px', border: '1px solid rgba(62, 36, 69, 0.2)' }}>
+                      {statusCard === 'recusada' ? (
+                        <div style={{ background: '#FFEBEE', color: '#C62828', padding: '8px', borderRadius: '6px', fontSize: '12px', fontWeight: 'bold', textAlign: 'center' }}>
+                          ✕ Data de Prova Recusada
+                        </div>
+                      ) : statusCard === 'aceita' ? (
+                        <div style={{ background: '#E8F5E9', color: '#2E7D32', padding: '8px', borderRadius: '6px', fontSize: '12px', fontWeight: 'bold', textAlign: 'center' }}>
+                          ✓ Prova Confirmada (Adicionada à Agenda)
+                        </div>
+                      ) : pedidoEncerrado ? (
+                        <div style={{ background: '#F5F5F5', color: '#616161', padding: '8px', borderRadius: '6px', fontSize: '12px', fontWeight: 'bold', textAlign: 'center' }}>
+                          Pedido Encerrado (Sugestão Inválida)
+                        </div>
+                      ) : !isCostureira ? (
+                        <div style={{ display: 'flex', gap: '8px', marginTop: '6px' }}>
+                          <button
+                            onClick={() => onAceitarProva && onAceitarProva(msg.id_mensagem || msg.id, dadosProposta, msg.id_remetente || msg.idRemetente)}
+                            style={{ flex: 1, padding: '8px', background: '#2E7D32', color: '#fff', border: 'none', borderRadius: '6px', cursor: 'pointer', fontWeight: 'bold', fontSize: '12px' }}
+                          >
+                            ✓ Aceitar Prova
+                          </button>
+                          <button
+                            onClick={() => onRecusarProva && onRecusarProva(msg.id_mensagem || msg.id, msg.id_remetente || msg.idRemetente)}
+                            style={{ flex: 1, padding: '8px', background: '#C62828', color: '#fff', border: 'none', borderRadius: '6px', cursor: 'pointer', fontWeight: 'bold', fontSize: '12px' }}
+                          >
+                            ✕ Recusar
+                          </button>
+                        </div>
+                      ) : (
+                        <div style={{ fontSize: '12px', color: ehMinha ? '#EADCEB' : '#666', fontStyle: 'italic', textAlign: 'center' }}>
+                          Aguardando confirmação da cliente...
+                        </div>
+                      )}
+                    </div>
+                  )}
+
                   <div style={{ fontSize: '10px', color: ehMinha ? '#EADCEB' : '#999', textAlign: 'right', marginTop: '4px' }}>
                     {formatarHoraMsg(rawData)}
                   </div>
@@ -170,16 +252,33 @@ function ChatMessageList({ mensagens, idUsuario, idPedido, tituloChat, statusPed
         <div ref={chatBottomRef} />
       </div>
 
+      {pedidoCancelado && (
+        <div style={{ background: '#FFF8E1', borderTop: '1px solid #FFE082', color: '#6D4C41', padding: '8px 16px', fontSize: '12px', textAlign: 'center' }}>
+          <strong>Pedido cancelado:</strong> o chat permanece aberto para vocês combinarem a retirada de peças ou pendências.
+        </div>
+      )}
+
+      {!isCostureira && temPropostaPendente && (
+        <div style={{ background: '#FFF8E1', borderTop: '1px solid #FFE082', color: '#6D4C41', padding: '8px 16px', fontSize: '12px', textAlign: 'center', lineHeight: '1.4' }}>
+          <strong>Orçamento recebido:</strong> confira o perfil e as avaliações da costureira antes de aceitar. O Ateliê Entre Linhas apenas facilita o contato e não se responsabiliza pelos serviços combinados.
+        </div>
+      )}
+
+      {!isCostureira && !temPropostaPendente && temProvaPendente && (
+        <div style={{ background: '#FFF8E1', borderTop: '1px solid #FFE082', color: '#6D4C41', padding: '8px 16px', fontSize: '12px', textAlign: 'center', lineHeight: '1.4' }}>
+          <strong>Sugestão de prova recebida:</strong> confira a data, o horário e o endereço da costureira acima antes de aceitar.
+        </div>
+      )}
+
       <form onSubmit={handleSubmit} style={{ padding: '15px', background: '#fff', borderTop: '1px solid #eee', display: 'flex', gap: '10px' }}>
         <input
           type="text"
           value={novaMensagem}
           onChange={(e) => setNovaMensagem(e.target.value)}
-          placeholder="Digite sua mensagem..."
-          disabled={statusPedido === 'Cancelado'}
+          placeholder={pedidoCancelado ? 'Envie uma mensagem para combinar a retirada ou pendências...' : 'Digite sua mensagem...'}
           style={{ flex: 1, padding: '11px 14px', borderRadius: '6px', border: '1px solid #ccc', outline: 'none' }}
         />
-        <button type="submit" disabled={statusPedido === 'Cancelado'} style={{ padding: '11px 20px', background: '#3E2445', color: '#fff', border: 'none', borderRadius: '6px', fontWeight: 'bold', cursor: 'pointer' }}>
+        <button type="submit" style={{ padding: '11px 20px', background: '#3E2445', color: '#fff', border: 'none', borderRadius: '6px', fontWeight: 'bold', cursor: 'pointer' }}>
           Enviar
         </button>
       </form>

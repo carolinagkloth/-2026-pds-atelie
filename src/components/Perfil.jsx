@@ -109,13 +109,24 @@ function Perfil({ usuario, onNavigate, onUpdateUsuario }) {
     e.preventDefault();
     setMensagem('');
     setErro('');
+
+    if (!isCliente && !formData.endereco.trim()) {
+      setErro('O endereço de atendimento é obrigatório para costureiras.');
+      return;
+    }
+
     setCarregando(true);
 
     try {
+      const payload = {
+        ...formData,
+        endereco: formData.endereco.trim()
+      };
+
       const response = await fetch(`/api/usuarios/${idUsuario}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(formData)
+        body: JSON.stringify(payload)
       });
 
       const textResponse = await response.text();
@@ -130,7 +141,7 @@ function Perfil({ usuario, onNavigate, onUpdateUsuario }) {
         throw new Error(data.erro || data.error || 'Erro ao atualizar perfil.');
       }
 
-      const usuarioAtualizado = data.usuario || { ...user, ...formData };
+      const usuarioAtualizado = data.usuario || { ...user, ...payload };
       localStorage.setItem('usuarioAtelie', JSON.stringify(usuarioAtualizado));
 
       if (onUpdateUsuario) {
@@ -307,14 +318,17 @@ function Perfil({ usuario, onNavigate, onUpdateUsuario }) {
             </div>
 
             <div style={{ marginBottom: '15px' }}>
-              <label style={{ display: 'block', fontWeight: 'bold', fontSize: '14px', marginBottom: '5px', color: '#3E2445' }}>Endereço / Ateliê</label>
+              <label style={{ display: 'block', fontWeight: 'bold', fontSize: '14px', marginBottom: '5px', color: '#3E2445' }}>
+                Endereço de Atendimento / Ateliê *
+              </label>
               <input
                 type="text"
                 name="endereco"
                 value={formData.endereco}
                 onChange={handleChange}
                 disabled={!editando}
-                placeholder="Ex: Centro - Ponta Grossa / PR"
+                required={!isCliente}
+                placeholder="Ex: Rua XV de Novembro, 123 - Centro, Ponta Grossa / PR"
                 style={{ width: '100%', padding: '10px', borderRadius: '6px', border: '1px solid #ccc', boxSizing: 'border-box', background: editando ? '#fff' : '#f9f9f9', fontSize: '14px', outline: 'none' }}
               />
             </div>
@@ -331,6 +345,27 @@ function Perfil({ usuario, onNavigate, onUpdateUsuario }) {
                 style={{ width: '100%', padding: '10px', borderRadius: '6px', border: '1px solid #ccc', boxSizing: 'border-box', background: editando ? '#fff' : '#f9f9f9', fontSize: '14px', outline: 'none' }}
               />
             </div>
+
+            {editando && (
+              <div
+                style={{
+                  background: '#FAF6FA',
+                  border: '1px solid #EADCEB',
+                  borderLeft: '4px solid #3E2445',
+                  borderRadius: '6px',
+                  padding: '11px 14px',
+                  marginBottom: '18px',
+                  fontSize: '12.5px',
+                  color: '#4A3550',
+                  lineHeight: '1.45'
+                }}
+              >
+                <strong style={{ display: 'block', color: '#3E2445', marginBottom: '3px' }}>
+                  Privacidade dos seus dados
+                </strong>
+                Seus dados de contato e endereço (<strong>com exceção do CPF/CNPJ</strong>, que é confidencial e nunca é compartilhado) só ficarão visíveis para as clientes com quem você firmar pedido.
+              </div>
+            )}
           </>
         )}
 

@@ -48,11 +48,13 @@ function Cadastro({ onNavigate, onCadastroSucesso, dadosPreenchidos }) {
   const [telefone, setTelefone] = useState('');
   const [cpfCnpj, setCpfCnpj] = useState('');
   const [tipoUsuario, setTipoUsuario] = useState('Cliente');
+  const [endereco, setEndereco] = useState('');
   const [erro, setErro] = useState('');
   const [sucesso, setSucesso] = useState('');
   const [carregando, setCarregando] = useState(false);
 
-  // Pré-preenche os dados caso venha do redirecionamento do Login com Google
+  const isCostureira = tipoUsuario === 'Costureira';
+
   useEffect(() => {
     if (dadosPreenchidos) {
       if (dadosPreenchidos.nome) setNome(dadosPreenchidos.nome);
@@ -73,15 +75,18 @@ function Cadastro({ onNavigate, onCadastroSucesso, dadosPreenchidos }) {
     setErro('');
     setSucesso('');
 
-    // Validação de telefone obrigatório com DDD (mínimo 14 caracteres na máscara: (XX) XXXX-XXXX)
     if (!telefone || telefone.trim().length < 14) {
       setErro('Por favor, informe um número de WhatsApp/Telefone válido com DDD.');
       return;
     }
 
-    // Validação de tamanho mínimo da senha
     if (senha.length < 8) {
       setErro('A senha deve ter no mínimo 8 dígitos.');
+      return;
+    }
+
+    if (isCostureira && !endereco.trim()) {
+      setErro('O endereço de atendimento é obrigatório para cadastro de costureira.');
       return;
     }
 
@@ -97,7 +102,8 @@ function Cadastro({ onNavigate, onCadastroSucesso, dadosPreenchidos }) {
           senha,
           telefone,
           cpf_cnpj: cpfCnpj,
-          tipo_usuario: tipoUsuario
+          tipo_usuario: tipoUsuario,
+          endereco: isCostureira ? endereco.trim() : ''
         })
       });
 
@@ -120,7 +126,6 @@ function Cadastro({ onNavigate, onCadastroSucesso, dadosPreenchidos }) {
     } catch (err) {
       setErro(err.message);
     } finally {
-      setSalvando(false);
       setCarregando(false);
     }
   };
@@ -193,13 +198,50 @@ function Cadastro({ onNavigate, onCadastroSucesso, dadosPreenchidos }) {
           </div>
         </div>
 
-        <div style={{ marginBottom: '20px' }}>
+        <div style={{ marginBottom: isCostureira ? '15px' : '20px' }}>
           <label style={{ display: 'block', marginBottom: '5px', fontSize: '14px', fontWeight: 'bold', color: '#3E2445' }}>Tipo de Perfil *</label>
           <select value={tipoUsuario} onChange={(e) => setTipoUsuario(e.target.value)} style={{ width: '100%', padding: '10px', borderRadius: '6px', border: '1px solid #ccc', fontSize: '14px', outline: 'none' }}>
             <option value="Cliente">Cliente (Quero contratar serviços)</option>
             <option value="Costureira">Costureira (Quero oferecer serviços)</option>
           </select>
         </div>
+
+        {isCostureira && (
+          <>
+            <div style={{ marginBottom: '15px' }}>
+              <label style={{ display: 'block', marginBottom: '5px', fontSize: '14px', fontWeight: 'bold', color: '#3E2445' }}>
+                Endereço de Atendimento / Ateliê *
+              </label>
+              <input
+                type="text"
+                value={endereco}
+                onChange={(e) => setEndereco(e.target.value)}
+                placeholder="Ex: Rua XV de Novembro, 123 - Centro, Ponta Grossa"
+                required
+                style={{ width: '100%', padding: '10px', borderRadius: '6px', border: '1px solid #ccc', boxSizing: 'border-box', fontSize: '14px', outline: 'none' }}
+              />
+            </div>
+
+            <div
+              style={{
+                background: '#FAF6FA',
+                border: '1px solid #EADCEB',
+                borderLeft: '4px solid #3E2445',
+                borderRadius: '6px',
+                padding: '10px 12px',
+                marginBottom: '20px',
+                fontSize: '12px',
+                color: '#4A3550',
+                lineHeight: '1.45'
+              }}
+            >
+              <strong style={{ display: 'block', color: '#3E2445', marginBottom: '3px' }}>
+                Privacidade dos seus dados
+              </strong>
+              Seus dados de contato e endereço (<strong>com exceção do CPF/CNPJ</strong>, que é confidencial e nunca é compartilhado) só ficarão visíveis para as clientes com quem você firmar pedido.
+            </div>
+          </>
+        )}
 
         <button type="submit" disabled={carregando} style={{ width: '100%', padding: '12px', background: '#3E2445', color: '#fff', border: 'none', borderRadius: '6px', fontWeight: 'bold', fontSize: '14px', cursor: carregando ? 'not-allowed' : 'pointer' }}>
           {carregando ? 'Cadastrando...' : 'Cadastrar'}

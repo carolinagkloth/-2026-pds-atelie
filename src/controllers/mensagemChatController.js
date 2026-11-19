@@ -1,6 +1,7 @@
 const MensagemChatModel = require('../models/mensagemChatModel');
 const PedidoModel = require('../models/pedidoModel');
 const notificacaoModel = require('../models/notificacaoModel');
+const OrdemServicoController = require('./ordemServicoController');
 const { dispararNotificacao } = require('../services/notificacaoService');
 
 class MensagemChatController {
@@ -63,6 +64,8 @@ class MensagemChatController {
 
   static async listar(req, res, next) {
     try {
+      await OrdemServicoController.sincronizarProvasVencidas();
+
       const id_pedido = req.params.idPedido || req.params.id_pedido;
       const idUsuarioLeitor = req.query.id_usuario || req.query.idUsuario || req.usuarioId;
 
@@ -87,6 +90,7 @@ class MensagemChatController {
 
   static async listarConversasDoUsuario(req, res) {
     try {
+      await OrdemServicoController.sincronizarProvasVencidas();
       const { idUsuario } = req.params;
       const conversas = await MensagemChatModel.buscarConversasUsuario(idUsuario);
       return res.status(200).json(conversas);

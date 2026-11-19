@@ -1,4 +1,8 @@
 import React, { useState, useEffect, useCallback } from 'react';
+import ModalCancelarPedido from './modals/ModalCancelarPedido';
+import ModalAceitarProposta from './modals/ModalAceitarProposta';
+import ModalConfirmarEntrega from './modals/ModalConfirmarEntrega';
+import ModalCancelarProva from './modals/ModalCancelarProva';
 import ChatHeader from './ChatHeader';
 import ChatMessageList from './ChatMessageList';
 import ChatSidebar from './ChatSidebar';
@@ -30,17 +34,28 @@ function ChatContainer({ pedido, usuario, idCostureiraProp, onNavigate }) {
   }, [pedido]);
 
   const [costureiraNome, setCostureiraNome] = useState('');
+  const [costureiraEndereco, setCostureiraEndereco] = useState(isCostureira ? (user?.endereco || '') : '');
   const [idCostureiraChat, setIdCostureiraChat] = useState(
     isCostureira
       ? idUsuario
       : (idCostureiraProp || pedido?.costureiraId || pedido?.id_costureira || (idCostureiraUrl ? Number(idCostureiraUrl) : null))
   );
 
-  // Modais e controle de avaliação
+  // Modais e controle de avaliação / prova
   const [mostrarProposta, setMostrarProposta] = useState(false);
   const [mostrarProva, setMostrarProva] = useState(false);
+  const [provaAgendada, setProvaAgendada] = useState(null);
+  const [temProvaPendente, setTemProvaPendente] = useState(false);
+  const [mostrarCancelarProva, setMostrarCancelarProva] = useState(false);
+  const [cancelandoProva, setCancelandoProva] = useState(false);
   const [mostrarMedidas, setMostrarMedidas] = useState(false);
   const [mostrarAvaliacao, setMostrarAvaliacao] = useState(false);
+  const [mostrarCancelar, setMostrarCancelar] = useState(false);
+  const [cancelandoPedido, setCancelandoPedido] = useState(false);
+  const [propostaParaAceitar, setPropostaParaAceitar] = useState(null);
+  const [aceitandoProposta, setAceitandoProposta] = useState(false);
+  const [mostrarConfirmarEntrega, setMostrarConfirmarEntrega] = useState(false);
+  const [confirmandoEntrega, setConfirmandoEntrega] = useState(false);
   const [idOrdemServicoAvaliacao, setIdOrdemServicoAvaliacao] = useState(null);
   const [jaAvaliado, setJaAvaliado] = useState(false);
 
@@ -64,6 +79,24 @@ function ChatContainer({ pedido, usuario, idCostureiraProp, onNavigate }) {
   const tituloChat = descricaoPedido
     ? `${infoDesc.tipo}${infoDesc.descricao ? ` - ${infoDesc.descricao}` : ''}`
     : `Pedido #${idPedido}`;
+
+  // Busca endereço atualizado da costureira no banco
+  useEffect(() => {
+    const idCost = isCostureira ? idUsuario : idCostureiraChat;
+    if (!idCost) return;
+
+    fetch(`/api/usuarios/${idCost}`)
+      .then((res) => (res.ok ? res.json() : null))
+      .then((data) => {
+        if (data?.endereco) {
+          setCostureiraEndereco(data.endereco);
+        }
+        if (data?.nome && !isCostureira) {
+          setCostureiraNome((prev) => prev || data.nome);
+        }
+      })
+      .catch(() => {});
+  }, [isCostureira, idUsuario, idCostureiraChat]);
 
   // RESOLUÇÃO ROBUSTA DO NOME DA COSTUREIRA
   const resolverNomeCostureira = useCallback(async (idCost, msgsList = []) => {
@@ -155,6 +188,39 @@ function ChatContainer({ pedido, usuario, idCostureiraProp, onNavigate }) {
               prazo: dados.previsaoEntrega || '',
               horarioEntrega: dados.horarioEntrega || ''
             }));
+          }
+
+          // Sincroniza estado da última proposta de prova
+          const ultimaPropostaProva = [...data].reverse().find(
+            (m) => m.tipo_mensagem === 'proposta_prova' || (m.conteudo && m.conteudo.includes('Proposta de Agendamento de Prova:'))
+          );
+
+          if (ultimaPropostaProva) {
+            let dadosProvaMsg = ultimaPropostaProva.dados_proposta || {};
+            if (typeof dadosProvaMsg === 'string') {
+              try { dadosProvaMsg = JSON.parse(dadosProvaMsg); } catch { dadosProvaMsg = {}; }
+            }
+            const statusProvaMsg = dadosProvaMsg.status || 'pendente';
+
+            if (statusProvaMsg === 'aceita') {
+              setProvaAgendada({
+                dataProva: dadosProvaMsg.dataProva || '',
+                horarioProva: dadosProvaMsg.horarioProva || '',
+                semPreferenciaHorario: Boolean(dadosProvaMsg.semPreferenciaHorario),
+                local: dadosProvaMsg.local || '',
+                observacao: dadosProvaMsg.observacao || ''
+              });
+              setTemProvaPendente(false);
+            } else if (statusProvaMsg === 'pendente') {
+              setProvaAgendada(null);
+              setTemProvaPendente(true);
+            } else {
+              setProvaAgendada(null);
+              setTemProvaPendente(false);
+            }
+          } else {
+            setProvaAgendada(null);
+            setTemProvaPendente(false);
           }
 
           resolverNomeCostureira(costureiraIdIdentificado, data);
@@ -265,7 +331,140 @@ function ChatContainer({ pedido, usuario, idCostureiraProp, onNavigate }) {
     }
   };
 
-  const handleAceitarProposta = async (dadosProposta, idRemetenteProposta) => {
+ const handleEnviarPropostaProva = async (dadosForm) => {
+    const [ano, mes, dia] = dadosForm.dataProva.split('-');
+    const dataFormatada = `${dia}/${mes}/${ano}`;
+    const horarioTexto = dadosForm.horarioProva;
+    const obsTexto = (dadosForm.observacao || '').trim();
+
+    const textoFormatado =
+      `Proposta de Agendamento de Prova:\n` +
+      `Data: ${dataFormatada}\n` +
+      `Horário: ${horarioTexto}\n` +
+      `Local: ${dadosForm.local}` +
+      (obsTexto ? `\nObservações: ${obsTexto}` : '');
+
+    try {
+      const res = await fetch('/api/mensagens-chat', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          id_pedido: Number(idPedido),
+          id_remetente: Number(idUsuario),
+          id_costureira: Number(idCostureiraChat),
+          conteudo: textoFormatado,
+          tipo_mensagem: 'proposta_prova',
+          dados_proposta: {
+            ...dadosForm,
+            idCostureira: idCostureiraChat,
+            status: 'pendente'
+          }
+        })
+      });
+
+      if (res.ok) {
+        setMostrarProva(false);
+        setTemProvaPendente(true);
+        carregarMensagens(false);
+      }
+    } catch (err) {
+      alert(err.message);
+    }
+  };
+
+  const handleAceitarProva = async (idMensagem, dadosProva, idRemetenteProva) => {
+    try {
+      const res = await fetch('/api/ordens-servico/aceitar-prova', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          id_pedido: Number(idPedido),
+          id_mensagem: Number(idMensagem),
+          id_cliente: Number(idUsuario),
+          id_costureira: Number(dadosProva.idCostureira || idRemetenteProva || idCostureiraChat),
+          dataProva: dadosProva.dataProva,
+          horarioProva: dadosProva.horarioProva,
+          observacao: dadosProva.observacao,
+          local: dadosProva.local
+        })
+      });
+
+      if (res.ok) {
+        setProvaAgendada({
+          dataProva: dadosProva.dataProva || '',
+          horarioProva: dadosProva.horarioProva || '',
+          local: dadosProva.local || costureiraEndereco || '',
+          observacao: dadosProva.observacao || ''
+        });
+        setTemProvaPendente(false);
+        setOrcamentoAtual((prev) => ({ ...prev, status: 'Aguardando Prova' }));
+        carregarMensagens(false);
+      }
+    } catch (err) {
+      alert(err.message);
+    }
+  };
+
+  const handleRecusarProva = async (idMensagem, idRemetenteProva) => {
+    if (!window.confirm('Deseja recusar esta data/horário de prova?')) return;
+    try {
+      const res = await fetch('/api/ordens-servico/recusar-prova', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          id_pedido: Number(idPedido),
+          id_mensagem: Number(idMensagem),
+          id_costureira: Number(idRemetenteProva || idCostureiraChat)
+        })
+      });
+      if (res.ok) {
+        setTemProvaPendente(false);
+        carregarMensagens(false);
+      }
+    } catch (err) {
+      alert(err.message);
+    }
+  };
+
+  const handleCancelarProva = async (observacao = '') => {
+    setCancelandoProva(true);
+    try {
+      const res = await fetch('/api/ordens-servico/cancelar-prova', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          id_pedido: Number(idPedido),
+          id_remetente: Number(idUsuario),
+          observacao
+        })
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        throw new Error(data.erro || data.error || 'Erro ao cancelar prova.');
+      }
+
+      setProvaAgendada(null);
+      setTemProvaPendente(false);
+      setOrcamentoAtual((prev) => ({ ...prev, status: 'Em Produção' }));
+      setMostrarCancelarProva(false);
+      carregarMensagens(false);
+    } finally {
+      setCancelandoProva(false);
+    }
+  };
+
+  const handleAbrirModalAceitarProposta = (dadosProposta, idRemetenteProposta) => {
+    setPropostaParaAceitar({
+      dadosProposta,
+      idRemetenteProposta: idRemetenteProposta || idCostureiraChat
+    });
+  };
+
+  const handleConfirmarAceiteProposta = async () => {
+    if (!propostaParaAceitar) return;
+    const { dadosProposta, idRemetenteProposta } = propostaParaAceitar;
+
+    setAceitandoProposta(true);
     try {
       const res = await fetch('/api/ordens-servico/aceitar-proposta', {
         method: 'POST',
@@ -279,13 +478,16 @@ function ChatContainer({ pedido, usuario, idCostureiraProp, onNavigate }) {
         })
       });
 
-      if (res.ok) {
-        alert('Orçamento aprovado!');
-        setOrcamentoAtual((prev) => ({ ...prev, status: 'Em Produção' }));
-        carregarMensagens(false);
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        throw new Error(data.error || data.erro || 'Não foi possível aprovar o orçamento.');
       }
-    } catch (err) {
-      alert(err.message);
+
+      setOrcamentoAtual((prev) => ({ ...prev, status: 'Em Produção' }));
+      setPropostaParaAceitar(null);
+      carregarMensagens(false);
+    } finally {
+      setAceitandoProposta(false);
     }
   };
 
@@ -315,51 +517,84 @@ function ChatContainer({ pedido, usuario, idCostureiraProp, onNavigate }) {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ id_pedido: Number(idPedido), id_costureira: Number(idCostureiraChat) })
       });
-      if (res.ok) {
-        alert('Peça concluída! Cliente notificado.');
-        setOrcamentoAtual((prev) => ({ ...prev, status: 'Concluído' }));
-        carregarMensagens(false);
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        alert(data.erro || data.error || 'Não foi possível concluir a peça.');
+        return;
       }
+      alert('Peça concluída! Cliente notificado.');
+      setOrcamentoAtual((prev) => ({ ...prev, status: 'Concluído' }));
+      carregarMensagens(false);
     } catch (err) { alert(err.message); }
   };
 
   const handleConfirmarEntrega = async () => {
-    if (!window.confirm('Confirma que recebeu a peça e que está tudo certo?')) return;
+    setConfirmandoEntrega(true);
     try {
       const res = await fetch('/api/ordens-servico/confirmar-entrega', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ id_pedido: Number(idPedido), id_cliente: Number(idUsuario) })
       });
-      const data = await res.json();
-      if (res.ok) {
-        setIdOrdemServicoAvaliacao(data.id_ordem_servico);
-        setOrcamentoAtual((prev) => ({ ...prev, status: 'Entregue' }));
-        carregarMensagens(false);
-        setMostrarAvaliacao(true);
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        throw new Error(data.error || data.erro || 'Não foi possível confirmar o recebimento.');
       }
-    } catch (err) { alert(err.message); }
+      setIdOrdemServicoAvaliacao(data.id_ordem_servico);
+      setOrcamentoAtual((prev) => ({ ...prev, status: 'Entregue' }));
+      setMostrarConfirmarEntrega(false);
+      carregarMensagens(false);
+      setMostrarAvaliacao(true);
+    } finally {
+      setConfirmandoEntrega(false);
+    }
   };
 
-  const handleCancelarPedido = async () => {
-    if (!window.confirm('Deseja cancelar/desistir deste pedido?')) return;
+  const handleCancelarPedido = async (observacao = '') => {
+    setCancelandoPedido(true);
     try {
       const res = await fetch('/api/pedidos/cancelar', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ id_pedido: Number(idPedido), id_usuario: Number(idUsuario) })
+        body: JSON.stringify({
+          id_pedido: Number(idPedido),
+          id_usuario: Number(idUsuario),
+          observacao
+        })
       });
-      if (res.ok) {
-        setOrcamentoAtual((prev) => ({ ...prev, status: 'Cancelado' }));
-        carregarMensagens(false);
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        throw new Error(data.error || data.erro || 'Erro ao cancelar pedido.');
       }
-    } catch (err) { alert(err.message); }
+      setOrcamentoAtual((prev) => ({ ...prev, status: 'Cancelado' }));
+      setMostrarCancelar(false);
+      carregarMensagens(false);
+    } finally {
+      setCancelandoPedido(false);
+    }
   };
+
+  const idCostureiraPerfil =
+    propostaParaAceitar?.dadosProposta?.idCostureira ||
+    propostaParaAceitar?.idRemetenteProposta ||
+    idCostureiraChat;
+
+  const prazoSolicitadoCliente =
+    pedidoDados?.prazo_desejado ||
+    pedidoDados?.prazoDesejado ||
+    pedido?.prazo_desejado ||
+    pedido?.prazoDesejado ||
+    '';
+
+  const provaComLocalFallback = provaAgendada
+    ? { ...provaAgendada, local: provaAgendada.local || costureiraEndereco || '' }
+    : null;
 
   return (
     <div style={{ maxWidth: '1100px', margin: '20px auto', fontFamily: "'Segoe UI', Tahoma, sans-serif" }}>
       <ChatHeader
         nomeUsuario={user?.nome}
+        fotoPerfil={user?.foto_perfil}
         isCostureira={isCostureira}
         onNavigate={onNavigate}
       />
@@ -373,8 +608,10 @@ function ChatContainer({ pedido, usuario, idCostureiraProp, onNavigate }) {
           statusPedido={orcamentoAtual.status}
           isCostureira={isCostureira}
           onEnviarMensagem={handleEnviarMensagem}
-          onAceitarProposta={handleAceitarProposta}
+          onAceitarProposta={handleAbrirModalAceitarProposta}
           onRecusarProposta={handleRecusarProposta}
+          onAceitarProva={handleAceitarProva}
+          onRecusarProva={handleRecusarProva}
         />
 
         <ChatSidebar
@@ -386,12 +623,15 @@ function ChatContainer({ pedido, usuario, idCostureiraProp, onNavigate }) {
           pedido={pedidoDados}
           idPedido={idPedido}
           jaAvaliado={jaAvaliado}
+          provaAgendada={provaComLocalFallback}
+          temProvaPendente={temProvaPendente}
           onOpenProposta={() => setMostrarProposta(true)}
           onOpenProva={() => setMostrarProva(true)}
+          onCancelarProva={() => setMostrarCancelarProva(true)}
           onConcluirServico={handleConcluirServico}
-          onConfirmarEntrega={handleConfirmarEntrega}
+          onConfirmarEntrega={() => setMostrarConfirmarEntrega(true)}
           onOpenAvaliacao={() => setMostrarAvaliacao(true)}
-          onCancelarPedido={handleCancelarPedido}
+          onCancelarPedido={() => setMostrarCancelar(true)}
           onOpenMedidas={() => setMostrarMedidas(true)}
           onNavigate={onNavigate}
         />
@@ -403,25 +643,31 @@ function ChatContainer({ pedido, usuario, idCostureiraProp, onNavigate }) {
         onEnviar={handleEnviarPropostaModal}
         descricaoInicial={infoDesc.descricao}
         tipoInicial={infoDesc.tipo}
+        prazoDesejado={prazoSolicitadoCliente}
       />
 
       <ModalProva
         isOpen={mostrarProva}
         onClose={() => setMostrarProva(false)}
-        onConfirmar={async (dadosProva) => {
-          try {
-            const res = await fetch('/api/ordens-servico/agendar-prova', {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({ ...dadosProva, id_pedido: Number(idPedido), id_costureira: Number(idCostureiraChat) })
-            });
-            if (res.ok) {
-              setMostrarProva(false);
-              setOrcamentoAtual((prev) => ({ ...prev, status: 'Aguardando Prova' }));
-              carregarMensagens(false);
-            }
-          } catch (err) { alert(err.message); }
-        }}
+        onEnviar={handleEnviarPropostaProva}
+        enderecoCostureira={costureiraEndereco}
+        onIrParaPerfil={
+          onNavigate
+            ? () => {
+                setMostrarProva(false);
+                onNavigate('perfil');
+              }
+            : null
+        }
+      />
+
+      <ModalCancelarProva
+        isOpen={mostrarCancelarProva}
+        onClose={() => setMostrarCancelarProva(false)}
+        onConfirmar={handleCancelarProva}
+        provaAgendada={provaComLocalFallback}
+        isCostureira={isCostureira}
+        enviando={cancelandoProva}
       />
 
       <ModalMedidas
@@ -469,6 +715,39 @@ function ChatContainer({ pedido, usuario, idCostureiraProp, onNavigate }) {
             }
           } catch (err) { alert(err.message); }
         }}
+      />
+
+      <ModalCancelarPedido
+        isOpen={mostrarCancelar}
+        onClose={() => setMostrarCancelar(false)}
+        onConfirmar={handleCancelarPedido}
+        isCostureira={isCostureira}
+        enviando={cancelandoPedido}
+      />
+
+      <ModalAceitarProposta
+        isOpen={Boolean(propostaParaAceitar)}
+        onClose={() => setPropostaParaAceitar(null)}
+        onConfirmar={handleConfirmarAceiteProposta}
+        dadosProposta={propostaParaAceitar?.dadosProposta}
+        orcamentoAtual={orcamentoAtual}
+        costureiraNome={costureiraNome}
+        onVerPerfil={
+          onNavigate && idCostureiraPerfil
+            ? () => {
+                setPropostaParaAceitar(null);
+                onNavigate('portfolio', idCostureiraPerfil);
+              }
+            : null
+        }
+        enviando={aceitandoProposta}
+      />
+
+      <ModalConfirmarEntrega
+        isOpen={mostrarConfirmarEntrega}
+        onClose={() => setMostrarConfirmarEntrega(false)}
+        onConfirmar={handleConfirmarEntrega}
+        enviando={confirmandoEntrega}
       />
     </div>
   );
