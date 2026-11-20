@@ -1,0 +1,248 @@
+.menu-principal {
+  width: 100%;
+
+  position: sticky;
+  top: 0;
+
+  z-index: 5000;
+
+  overflow: visible;
+
+  background:
+    rgba(250, 248, 247, 0.98);
+
+  border-bottom:
+    1px solid #E8E0E4;
+
+  backdrop-filter:
+    blur(10px);
+}
+
+
+.menu-principal-inner {
+  width: min(1280px, 96%);
+
+  min-height: 62px;
+
+  margin: 0 auto;
+
+  display: flex;
+
+  align-items: center;
+
+  box-sizing: border-box;
+
+  overflow: visible;
+}
+
+
+/* ==========================================
+   MARCA
+========================================== */
+
+.menu-marca {
+  flex-shrink: 0;
+
+  display: flex;
+
+  flex-direction: column;
+
+  align-items: flex-start;
+
+  padding: 0;
+
+  background: transparent;
+
+  border: none;
+
+  cursor: pointer;
+
+  text-align: left;
+}
+
+
+.menu-marca-pequeno {
+  color: #BB91AD;
+
+  font-size: 7px;
+
+  font-weight: 700;
+
+  letter-spacing: 1.5px;
+
+  text-transform: uppercase;
+}
+
+
+.menu-marca strong {
+  color: #3E2445;
+
+  font-family:
+    "Playfair Display SC",
+    "Playfair Display",
+    Georgia,
+    serif;
+
+  font-size: 15px;
+
+  line-height: 1.1;
+
+  white-space: nowrap;
+}
+
+
+/* ==========================================
+   LINKS
+========================================== */
+
+.menu-links {
+  margin-left: auto;
+
+  display: flex;
+
+  align-items: center;
+
+  justify-content: flex-end;
+
+  gap: 5px;
+
+  padding-left: 70px;
+
+  min-width: 0;
+}
+
+
+.menu-link {
+  min-height: 36px;
+
+  padding: 0 11px;
+
+  flex-shrink: 0;
+
+  background: transparent;
+
+  color: #756A72;
+
+  border: none;
+
+  border-radius: 7px;
+
+  font-family:
+    "Poppins",
+    sans-serif;
+
+  font-size: 9px;
+
+  font-weight: 600;
+
+  white-space: nowrap;
+
+  cursor: pointer;
+
+  transition: 0.2s;
+}
+
+
+.menu-link:hover {
+  background: #F3ECEF;
+
+  color: #7A5B72;
+}
+
+
+.menu-link-ativo {
+  background: #F3ECEF;
+
+  color: #7A5B72;
+
+  font-weight: 700;
+}
+
+
+/* ==========================================
+   SININHO
+========================================== */
+
+.menu-notificacoes {
+  position: relative;
+
+  z-index: 6000;
+
+  flex-shrink: 0;
+
+  display: flex;
+
+  align-items: center;
+
+  justify-content: center;
+
+  margin-left: 7px;
+
+  overflow: visible;
+}
+
+
+/* ==========================================
+   TELAS MENORES
+========================================== */
+
+@media (max-width: 950px) {
+
+  .menu-principal-inner {
+    width: 96%;
+
+    min-width: 0;
+  }
+
+
+  .menu-links {
+    padding-left: 25px;
+
+    overflow-x: auto;
+
+    overflow-y: visible;
+
+    scrollbar-width: none;
+  }
+
+
+  .menu-links::-webkit-scrollbar {
+    display: none;
+  }
+
+
+  .menu-link {
+    padding: 0 9px;
+
+    font-size: 8px;
+  }
+
+}
+
+
+@media (max-width: 650px) {
+
+  .menu-principal-inner {
+    min-height: 58px;
+  }
+
+
+  .menu-marca strong {
+    font-size: 13px;
+  }
+
+
+  .menu-links {
+    padding-left: 18px;
+
+    gap: 2px;
+  }
+
+
+  .menu-link {
+    min-height: 34px;
+
+    padding: 0 8px;
+  }
+
+}

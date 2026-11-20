@@ -13,6 +13,8 @@ import MeusChats from './components/MeusChats.jsx';
 import Portfolio from './components/Portfolio.jsx';
 import BotaoNotificacoes from './components/BotaoNotificacoes.jsx';
 import ConfiguracoesNotificacoes from './components/ConfiguracoesNotificacoes.jsx';
+import MenuPrincipal from './components/MenuPrincipal.jsx';
+
 
 function App() {
   const [usuarioLogado, setUsuarioLogado] = useState(() => {
@@ -229,11 +231,15 @@ function App() {
 
   return (
     <div>
-      {/* Sininho de Notificações no topo superior direito */}
-      {usuarioLogado && rotasPrivadas.includes(telaAtual) && (
-        <div style={{ position: 'fixed', top: '15px', right: '20px', zIndex: 1100 }}>
-          <BotaoNotificacoes usuario={usuarioLogado} onNavigate={handleNavigate} />
-        </div>
+      {usuarioLogado &&
+        rotasPrivadas.includes(telaAtual) && (
+
+          <MenuPrincipal
+            usuario={usuarioLogado}
+            telaAtual={telaAtual}
+            onNavigate={handleNavigate}
+          />
+
       )}
 
       {/* ROTAS PÚBLICAS */}

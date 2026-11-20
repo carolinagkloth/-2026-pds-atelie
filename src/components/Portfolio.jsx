@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 
 
 function Portfolio({
@@ -7,56 +7,35 @@ function Portfolio({
   onNavigate
 }) {
 
-  const [itens, setItens] =
-    useState([]);
+  const [itens, setItens] = useState([]);
+  const [costureiraInfo, setCostureiraInfo] = useState(null);
+  const [precos, setPrecos] = useState([]);
 
-  const [costureiraInfo, setCostureiraInfo] =
-    useState(null);
+  const [reputacao, setReputacao] = useState({
+    media: 0,
+    totalAvaliacoes: 0,
+    depoimentos: []
+  });
 
-  const [precos, setPrecos] =
-    useState([]);
+  const [carregando, setCarregando] = useState(true);
+  const [enviando, setEnviando] = useState(false);
 
-  const [reputacao, setReputacao] =
-    useState({
-      media: 0,
-      totalAvaliacoes: 0,
-      depoimentos: []
-    });
-
-
-  const [carregando, setCarregando] =
-    useState(true);
-
-  const [enviando, setEnviando] =
-    useState(false);
-
-  const [erro, setErro] =
-    useState('');
-
-  const [erroModal, setErroModal] =
-    useState('');
-
-  const [erroFotoPerfil, setErroFotoPerfil] =
-    useState(false);
+  const [erro, setErro] = useState('');
+  const [erroModal, setErroModal] = useState('');
+  const [erroFotoPerfil, setErroFotoPerfil] = useState(false);
 
   const [
     idConfirmandoExclusao,
     setIdConfirmandoExclusao
   ] = useState(null);
 
-
-  const [titulo, setTitulo] =
-    useState('');
-
-  const [imagemBase64, setImagemBase64] =
-    useState('');
-
-  const [mostrarModalAdd, setMostrarModalAdd] =
-    useState(false);
+  const [titulo, setTitulo] = useState('');
+  const [imagemBase64, setImagemBase64] = useState('');
+  const [mostrarModalAdd, setMostrarModalAdd] = useState(false);
 
 
   /* ========================================
-     LÓGICA ATUAL DA CAROLINA
+     LÓGICA ATUAL
   ======================================== */
 
   const exibirPerfilCompleto =
@@ -67,6 +46,7 @@ function Portfolio({
   useEffect(() => {
 
     if (!idCostureira) {
+      setCarregando(false);
       return;
     }
 
@@ -74,7 +54,7 @@ function Portfolio({
     const carregarDados = async () => {
 
       setCarregando(true);
-
+      setErro('');
       setErroFotoPerfil(false);
 
 
@@ -115,10 +95,9 @@ function Portfolio({
           resUser,
           resPrecos,
           resAvaliacoes
-        ] =
-          await Promise.all(
-            requisicoes
-          );
+        ] = await Promise.all(
+          requisicoes
+        );
 
 
         const dataPortfolio =
@@ -136,9 +115,7 @@ function Portfolio({
 
 
         setItens(
-          Array.isArray(
-            dataPortfolio
-          )
+          Array.isArray(dataPortfolio)
             ? dataPortfolio
             : []
         );
@@ -151,7 +128,6 @@ function Portfolio({
 
           const dataUser =
             await resUser.json();
-
 
           setCostureiraInfo(
             dataUser
@@ -168,11 +144,8 @@ function Portfolio({
           const dataPrecos =
             await resPrecos.json();
 
-
           setPrecos(
-            Array.isArray(
-              dataPrecos
-            )
+            Array.isArray(dataPrecos)
               ? dataPrecos
               : []
           );
@@ -217,6 +190,7 @@ function Portfolio({
 
         }
 
+
       } catch (err) {
 
         setErro(
@@ -246,29 +220,30 @@ function Portfolio({
       e.target.files[0];
 
 
-    if (file) {
-
-      setErroModal('');
-
-
-      const reader =
-        new FileReader();
+    if (!file) {
+      return;
+    }
 
 
-      reader.onloadend = () => {
-
-        setImagemBase64(
-          reader.result
-        );
-
-      };
+    setErroModal('');
 
 
-      reader.readAsDataURL(
-        file
+    const reader =
+      new FileReader();
+
+
+    reader.onloadend = () => {
+
+      setImagemBase64(
+        reader.result
       );
 
-    }
+    };
+
+
+    reader.readAsDataURL(
+      file
+    );
 
   };
 
@@ -319,6 +294,7 @@ function Portfolio({
 
             body:
               JSON.stringify({
+
                 id_costureira:
                   idCostureira,
 
@@ -327,6 +303,7 @@ function Portfolio({
 
                 titulo_trabalho:
                   titulo
+
               })
           }
         );
@@ -362,12 +339,11 @@ function Portfolio({
 
 
       setItens(
-        Array.isArray(
-          novosItens
-        )
+        Array.isArray(novosItens)
           ? novosItens
           : []
       );
+
 
     } catch (err) {
 
@@ -396,8 +372,7 @@ function Portfolio({
           await fetch(
             `/api/portfolio/${idMidia}`,
             {
-              method:
-                'DELETE'
+              method: 'DELETE'
             }
           );
 
@@ -433,12 +408,12 @@ function Portfolio({
           null
         );
 
+
       } catch (err) {
 
         setErro(
           err.message
         );
-
 
         setIdConfirmandoExclusao(
           null
@@ -493,10 +468,12 @@ function Portfolio({
         margin:
           exibirPerfilCompleto
             ? '38px auto 70px'
-            : '28px 0 0',
+            : '48px 0 0',
 
-        padding:
-          0,
+        padding: 0,
+
+        boxSizing:
+          'border-box',
 
         fontFamily:
           "'Plus Jakarta Sans', 'Segoe UI', sans-serif",
@@ -525,7 +502,7 @@ function Portfolio({
               '40px',
 
             marginBottom:
-              '20px',
+              '22px',
 
             padding:
               '0 15px',
@@ -558,40 +535,6 @@ function Portfolio({
       )}
 
 
-      {/* CARREGAMENTO */}
-
-      {carregando && (
-
-        <div
-          style={{
-            padding:
-              '35px',
-
-            background:
-              '#FFFFFF',
-
-            border:
-              '1px solid #EBE5E0',
-
-            borderRadius:
-              '13px',
-
-            color:
-              '#91858E',
-
-            fontSize:
-              '11px',
-
-            textAlign:
-              'center'
-          }}
-        >
-          Carregando informações da costureira...
-        </div>
-
-      )}
-
-
       {/* ERRO */}
 
       {erro && (
@@ -599,7 +542,7 @@ function Portfolio({
         <div
           style={{
             marginBottom:
-              '18px',
+              '20px',
 
             padding:
               '11px 14px',
@@ -636,12 +579,12 @@ function Portfolio({
         <>
 
 
-          {/* PERFIL */}
+          {/* DADOS DA COSTUREIRA */}
 
           <section
             style={{
               marginBottom:
-                '22px',
+                '28px',
 
               overflow:
                 'hidden',
@@ -669,7 +612,7 @@ function Portfolio({
                   'center',
 
                 gap:
-                  '24px',
+                  '28px',
 
                 padding:
                   '30px',
@@ -768,10 +711,7 @@ function Portfolio({
                         '42px',
 
                       fontWeight:
-                        '700',
-
-                      userSelect:
-                        'none'
+                        '700'
                     }}
                   >
                     {primeiraLetra}
@@ -786,8 +726,7 @@ function Portfolio({
 
               <div
                 style={{
-                  flex:
-                    1,
+                  flex: 1,
 
                   minWidth:
                     '240px'
@@ -800,7 +739,7 @@ function Portfolio({
                       'inline-block',
 
                     marginBottom:
-                      '7px',
+                      '8px',
 
                     padding:
                       '4px 9px',
@@ -834,7 +773,7 @@ function Portfolio({
                 <h1
                   style={{
                     margin:
-                      '0 0 8px',
+                      '0 0 10px',
 
                     color:
                       '#3E2445',
@@ -858,7 +797,7 @@ function Portfolio({
                   <p
                     style={{
                       margin:
-                        '0 0 9px',
+                        '0 0 10px',
 
                       color:
                         '#625962',
@@ -873,6 +812,7 @@ function Portfolio({
                     <strong>
                       Especialidades:
                     </strong>{' '}
+
                     {
                       costureiraInfo.especialidades
                     }
@@ -890,7 +830,7 @@ function Portfolio({
                       'column',
 
                     gap:
-                      '5px',
+                      '6px',
 
                     color:
                       '#70666D',
@@ -907,6 +847,7 @@ function Portfolio({
                     <strong>
                       Telefone / WhatsApp:
                     </strong>{' '}
+
                     {
                       costureiraInfo?.telefone ||
                       'Não informado'
@@ -918,6 +859,7 @@ function Portfolio({
                     <strong>
                       Local de atendimento:
                     </strong>{' '}
+
                     Compartilhado no chat ao agendar prova da peça
                   </span>
 
@@ -933,7 +875,7 @@ function Portfolio({
               <div
                 style={{
                   padding:
-                    '20px 30px',
+                    '22px 30px',
 
                   borderTop:
                     '1px solid #EEE7E3'
@@ -946,7 +888,7 @@ function Portfolio({
                       'block',
 
                     marginBottom:
-                      '5px',
+                      '6px',
 
                     color:
                       '#917687',
@@ -1002,13 +944,10 @@ function Portfolio({
             <section
               style={{
                 marginBottom:
-                  '22px',
+                  '28px',
 
                 padding:
-                  '22px',
-
-                overflow:
-                  'hidden',
+                  '24px',
 
                 background:
                   '#FFFFFF',
@@ -1017,7 +956,7 @@ function Portfolio({
                   '1px solid #EBE5E0',
 
                 borderRadius:
-                  '13px',
+                  '14px',
 
                 boxShadow:
                   '0 7px 20px rgba(62,36,69,0.05)'
@@ -1064,7 +1003,7 @@ function Portfolio({
                     "'Playfair Display', Georgia, serif",
 
                   fontSize:
-                    '19px'
+                    '20px'
                 }}
               >
                 Tabela de preços referenciais
@@ -1074,7 +1013,7 @@ function Portfolio({
               <p
                 style={{
                   margin:
-                    '5px 0 18px',
+                    '6px 0 20px',
 
                   color:
                     '#91858E',
@@ -1125,7 +1064,7 @@ function Portfolio({
                       <th
                         style={{
                           padding:
-                            '10px 12px'
+                            '11px 12px'
                         }}
                       >
                         Serviço
@@ -1134,7 +1073,7 @@ function Portfolio({
                       <th
                         style={{
                           padding:
-                            '10px 12px'
+                            '11px 12px'
                         }}
                       >
                         Categoria
@@ -1143,7 +1082,7 @@ function Portfolio({
                       <th
                         style={{
                           padding:
-                            '10px 12px'
+                            '11px 12px'
                         }}
                       >
                         Valor base
@@ -1180,7 +1119,7 @@ function Portfolio({
                           <td
                             style={{
                               padding:
-                                '10px 12px',
+                                '11px 12px',
 
                               color:
                                 '#5F565C'
@@ -1195,7 +1134,7 @@ function Portfolio({
                           <td
                             style={{
                               padding:
-                                '10px 12px',
+                                '11px 12px',
 
                               color:
                                 '#7B7077'
@@ -1210,7 +1149,7 @@ function Portfolio({
                           <td
                             style={{
                               padding:
-                                '10px 12px',
+                                '11px 12px',
 
                               color:
                                 '#6E5568',
@@ -1248,10 +1187,10 @@ function Portfolio({
           <section
             style={{
               marginBottom:
-                '22px',
+                '28px',
 
               padding:
-                '22px',
+                '24px',
 
               background:
                 '#FFFFFF',
@@ -1260,7 +1199,7 @@ function Portfolio({
                 '1px solid #EBE5E0',
 
               borderRadius:
-                '13px',
+                '14px',
 
               boxShadow:
                 '0 7px 20px rgba(62,36,69,0.05)'
@@ -1279,10 +1218,10 @@ function Portfolio({
                   'center',
 
                 gap:
-                  '16px',
+                  '20px',
 
                 marginBottom:
-                  '16px',
+                  '20px',
 
                 flexWrap:
                   'wrap'
@@ -1331,7 +1270,7 @@ function Portfolio({
                       "'Playfair Display', Georgia, serif",
 
                     fontSize:
-                      '19px'
+                      '20px'
                   }}
                 >
                   Avaliações de clientes
@@ -1352,7 +1291,7 @@ function Portfolio({
                     '9px',
 
                   padding:
-                    '7px 11px',
+                    '8px 12px',
 
                   background:
                     '#FAF7F9',
@@ -1431,7 +1370,7 @@ function Portfolio({
               <div
                 style={{
                   padding:
-                    '20px',
+                    '22px',
 
                   background:
                     '#FAF8F7',
@@ -1471,7 +1410,7 @@ function Portfolio({
 
                       style={{
                         padding:
-                          '12px 0',
+                          '14px 0',
 
                         borderBottom:
                           index <
@@ -1538,7 +1477,7 @@ function Portfolio({
                         <p
                           style={{
                             margin:
-                              '6px 0 4px',
+                              '7px 0 4px',
 
                             color:
                               '#6F646B',
@@ -1599,32 +1538,31 @@ function Portfolio({
 
       {/* =====================================
           PORTFÓLIO
+          SEMPRE APARECE NO PERFIL
       ====================================== */}
 
       <section
         style={{
+          width:
+            '100%',
+
           padding:
-            exibirPerfilCompleto
-              ? '22px'
-              : '0',
+            '30px',
+
+          boxSizing:
+            'border-box',
 
           background:
             '#FFFFFF',
 
           border:
-            exibirPerfilCompleto
-              ? '1px solid #EBE5E0'
-              : 'none',
+            '1px solid #EBE5E0',
 
           borderRadius:
-            exibirPerfilCompleto
-              ? '13px'
-              : '0',
+            '15px',
 
           boxShadow:
-            exibirPerfilCompleto
-              ? '0 7px 20px rgba(62,36,69,0.05)'
-              : 'none'
+            '0 8px 24px rgba(62,36,69,0.05)'
         }}
       >
 
@@ -1640,20 +1578,31 @@ function Portfolio({
               'space-between',
 
             alignItems:
-              'flex-end',
+              'center',
 
             gap:
-              '18px',
+              '30px',
 
             marginBottom:
-              '18px',
+              '28px',
+
+            paddingBottom:
+              '22px',
+
+            borderBottom:
+              '1px solid #EEE7E3',
 
             flexWrap:
               'wrap'
           }}
         >
 
-          <div>
+          <div
+            style={{
+              flex:
+                '1 1 420px'
+            }}
+          >
 
             <span
               style={{
@@ -1661,7 +1610,7 @@ function Portfolio({
                   'block',
 
                 marginBottom:
-                  '4px',
+                  '6px',
 
                 color:
                   '#917687',
@@ -1673,7 +1622,7 @@ function Portfolio({
                   '700',
 
                 letterSpacing:
-                  '1px',
+                  '1.2px',
 
                 textTransform:
                   'uppercase'
@@ -1695,7 +1644,10 @@ function Portfolio({
                   "'Playfair Display', Georgia, serif",
 
                 fontSize:
-                  '24px'
+                  '26px',
+
+                lineHeight:
+                  '1.2'
               }}
             >
               Portfólio
@@ -1704,14 +1656,20 @@ function Portfolio({
 
             <p
               style={{
+                maxWidth:
+                  '650px',
+
                 margin:
-                  '5px 0 0',
+                  '8px 0 0',
 
                 color:
                   '#91858E',
 
                 fontSize:
-                  '10px'
+                  '11px',
+
+                lineHeight:
+                  '1.65'
               }}
             >
               {modoEdicao
@@ -1732,8 +1690,14 @@ function Portfolio({
               }
 
               style={{
+                flexShrink:
+                  0,
+
+                minHeight:
+                  '42px',
+
                 padding:
-                  '10px 16px',
+                  '0 18px',
 
                 background:
                   '#7A5B72',
@@ -1754,7 +1718,10 @@ function Portfolio({
                   '700',
 
                 cursor:
-                  'pointer'
+                  'pointer',
+
+                boxShadow:
+                  '0 4px 12px rgba(122,91,114,0.16)'
               }}
             >
               + Adicionar foto
@@ -1765,15 +1732,23 @@ function Portfolio({
         </div>
 
 
-        {/* VAZIO */}
+        {/* CARREGANDO */}
 
-        {!carregando &&
-         itens.length === 0 ? (
+        {carregando ? (
 
           <div
             style={{
-              padding:
-                '42px 25px',
+              minHeight:
+                '180px',
+
+              display:
+                'flex',
+
+              alignItems:
+                'center',
+
+              justifyContent:
+                'center',
 
               background:
                 '#FAF8F7',
@@ -1782,7 +1757,53 @@ function Portfolio({
                 '1px dashed #D9CCD5',
 
               borderRadius:
-                '11px',
+                '12px',
+
+              color:
+                '#91858E',
+
+              fontSize:
+                '11px'
+            }}
+          >
+            Carregando portfólio...
+          </div>
+
+        ) : itens.length === 0 ? (
+
+          /* VAZIO */
+
+          <div
+            style={{
+              minHeight:
+                '230px',
+
+              padding:
+                '40px 28px',
+
+              boxSizing:
+                'border-box',
+
+              display:
+                'flex',
+
+              flexDirection:
+                'column',
+
+              alignItems:
+                'center',
+
+              justifyContent:
+                'center',
+
+              background:
+                '#FAF8F7',
+
+              border:
+                '1px dashed #D9CCD5',
+
+              borderRadius:
+                '12px',
 
               textAlign:
                 'center'
@@ -1792,13 +1813,13 @@ function Portfolio({
             <div
               style={{
                 width:
-                  '43px',
+                  '48px',
 
                 height:
-                  '43px',
+                  '48px',
 
-                margin:
-                  '0 auto 11px',
+                marginBottom:
+                  '13px',
 
                 display:
                   'flex',
@@ -1819,7 +1840,7 @@ function Portfolio({
                   '50%',
 
                 fontSize:
-                  '18px'
+                  '19px'
               }}
             >
               ✂
@@ -1829,7 +1850,7 @@ function Portfolio({
             <h3
               style={{
                 margin:
-                  '0 0 5px',
+                  '0 0 7px',
 
                 color:
                   '#3E2445',
@@ -1838,7 +1859,7 @@ function Portfolio({
                   "'Playfair Display', Georgia, serif",
 
                 fontSize:
-                  '17px'
+                  '18px'
               }}
             >
               Nenhum trabalho publicado
@@ -1847,6 +1868,9 @@ function Portfolio({
 
             <p
               style={{
+                maxWidth:
+                  '420px',
+
                 margin:
                   0,
 
@@ -1854,17 +1878,22 @@ function Portfolio({
                   '#91858E',
 
                 fontSize:
-                  '10px'
+                  '10px',
+
+                lineHeight:
+                  '1.6'
               }}
             >
-              Os trabalhos cadastrados aparecerão aqui.
+              {modoEdicao
+                ? 'Adicione fotos dos seus trabalhos para que as clientes conheçam melhor seu estilo e seus serviços.'
+                : 'Os trabalhos cadastrados aparecerão aqui.'}
             </p>
 
           </div>
 
         ) : (
 
-          /* GRID */
+          /* FOTOS */
 
           <div
             style={{
@@ -1872,10 +1901,13 @@ function Portfolio({
                 'grid',
 
               gridTemplateColumns:
-                'repeat(auto-fit, minmax(210px, 1fr))',
+                'repeat(auto-fit, minmax(250px, 1fr))',
 
               gap:
-                '16px'
+                '24px',
+
+              alignItems:
+                'start'
             }}
           >
 
@@ -1904,6 +1936,9 @@ function Portfolio({
                       position:
                         'relative',
 
+                      minWidth:
+                        0,
+
                       overflow:
                         'hidden',
 
@@ -1911,58 +1946,89 @@ function Portfolio({
                         '#FFFFFF',
 
                       border:
-                        '1px solid #EBE5E0',
+                        '1px solid #E8E0DC',
 
                       borderRadius:
-                        '13px',
+                        '14px',
 
                       boxShadow:
-                        '0 6px 18px rgba(62,36,69,0.04)'
+                        '0 7px 20px rgba(62,36,69,0.055)'
                     }}
                   >
 
 
-                    <img
-                      src={
-                        item.urlImagem ||
-                        item.url_imagem
-                      }
+                    {/* FOTO */}
 
-                      alt={
-                        item.tituloTrabalho ||
-                        item.titulo_trabalho ||
-                        'Trabalho de costura'
-                      }
-
+                    <div
                       style={{
                         width:
                           '100%',
 
                         height:
-                          '200px',
+                          '235px',
 
-                        display:
-                          'block',
-
-                        objectFit:
-                          'cover',
+                        overflow:
+                          'hidden',
 
                         background:
                           '#FAF8F7'
                       }}
-                    />
+                    >
 
+                      <img
+                        src={
+                          item.urlImagem ||
+                          item.url_imagem
+                        }
+
+                        alt={
+                          item.tituloTrabalho ||
+                          item.titulo_trabalho ||
+                          'Trabalho de costura'
+                        }
+
+                        style={{
+                          width:
+                            '100%',
+
+                          height:
+                            '100%',
+
+                          display:
+                            'block',
+
+                          objectFit:
+                            'cover'
+                        }}
+                      />
+
+                    </div>
+
+
+                    {/* TÍTULO */}
 
                     {(item.tituloTrabalho ||
                       item.titulo_trabalho) && (
 
                       <div
                         style={{
-                          padding:
-                            '14px 15px',
+                          minHeight:
+                            '58px',
 
-                          background:
-                            '#FFFFFF'
+                          display:
+                            'flex',
+
+                          alignItems:
+                            'center',
+
+                          padding:
+                            '16px 17px',
+
+                          boxSizing:
+                            'border-box',
+
+                          borderTop:
+                            '1px solid #F0EAE7'
                         }}
                       >
 
@@ -1981,7 +2047,10 @@ function Portfolio({
                               '15px',
 
                             fontWeight:
-                              '600'
+                              '600',
+
+                            lineHeight:
+                              '1.35'
                           }}
                         >
                           {
@@ -2016,16 +2085,16 @@ function Portfolio({
                             'absolute',
 
                           top:
-                            '9px',
+                            '11px',
 
                           right:
-                            '9px',
+                            '11px',
 
                           width:
-                            '29px',
+                            '32px',
 
                           height:
-                            '29px',
+                            '32px',
 
                           display:
                             'flex',
@@ -2040,7 +2109,7 @@ function Portfolio({
                             0,
 
                           background:
-                            'rgba(255,255,255,0.94)',
+                            'rgba(255,255,255,0.95)',
 
                           color:
                             '#9C5D66',
@@ -2052,7 +2121,7 @@ function Portfolio({
                             '50%',
 
                           boxShadow:
-                            '0 3px 10px rgba(62,36,69,0.12)',
+                            '0 4px 12px rgba(62,36,69,0.13)',
 
                           fontSize:
                             '13px',
@@ -2096,16 +2165,16 @@ function Portfolio({
                             'center',
 
                           gap:
-                            '11px',
+                            '14px',
 
                           padding:
-                            '18px',
+                            '24px',
 
                           boxSizing:
                             'border-box',
 
                           background:
-                            'rgba(62,36,69,0.90)',
+                            'rgba(62,36,69,0.92)',
 
                           color:
                             '#FFFFFF',
@@ -2121,7 +2190,7 @@ function Portfolio({
                               "'Playfair Display', Georgia, serif",
 
                             fontSize:
-                              '16px'
+                              '17px'
                           }}
                         >
                           Remover esta foto?
@@ -2133,8 +2202,14 @@ function Portfolio({
                             display:
                               'flex',
 
+                            justifyContent:
+                              'center',
+
                             gap:
-                              '8px'
+                              '9px',
+
+                            flexWrap:
+                              'wrap'
                           }}
                         >
 
@@ -2149,7 +2224,7 @@ function Portfolio({
 
                             style={{
                               padding:
-                                '8px 11px',
+                                '9px 13px',
 
                               background:
                                 '#FFFFFF',
@@ -2188,7 +2263,7 @@ function Portfolio({
 
                             style={{
                               padding:
-                                '8px 11px',
+                                '9px 13px',
 
                               background:
                                 'transparent',
@@ -2250,7 +2325,7 @@ function Portfolio({
               0,
 
             zIndex:
-              1200,
+              99999,
 
             display:
               'flex',
@@ -2263,6 +2338,9 @@ function Portfolio({
 
             padding:
               '20px',
+
+            boxSizing:
+              'border-box',
 
             background:
               'rgba(42,29,40,0.48)',
@@ -2284,7 +2362,10 @@ function Portfolio({
                 'auto',
 
               padding:
-                '24px',
+                '26px',
+
+              boxSizing:
+                'border-box',
 
               background:
                 '#FFFFFF',
@@ -2301,6 +2382,8 @@ function Portfolio({
           >
 
 
+            {/* CABEÇALHO MODAL */}
+
             <div
               style={{
                 display:
@@ -2316,7 +2399,7 @@ function Portfolio({
                   '15px',
 
                 marginBottom:
-                  '22px'
+                  '24px'
               }}
             >
 
@@ -2328,7 +2411,7 @@ function Portfolio({
                       'block',
 
                     marginBottom:
-                      '4px',
+                      '5px',
 
                     color:
                       '#917687',
@@ -2431,7 +2514,7 @@ function Portfolio({
               <div
                 style={{
                   marginBottom:
-                    '15px',
+                    '16px',
 
                   padding:
                     '10px 12px',
@@ -2470,7 +2553,7 @@ function Portfolio({
               <div
                 style={{
                   marginBottom:
-                    '17px'
+                    '18px'
                 }}
               >
 
@@ -2480,7 +2563,7 @@ function Portfolio({
                       'block',
 
                     marginBottom:
-                      '6px',
+                      '7px',
 
                     color:
                       '#5F525C',
@@ -2547,12 +2630,12 @@ function Portfolio({
               </div>
 
 
-              {/* UPLOAD */}
+              {/* FOTO */}
 
               <div
                 style={{
                   marginBottom:
-                    '17px'
+                    '18px'
                 }}
               >
 
@@ -2562,7 +2645,7 @@ function Portfolio({
                       'block',
 
                     marginBottom:
-                      '6px',
+                      '7px',
 
                     color:
                       '#5F525C',
@@ -2581,7 +2664,7 @@ function Portfolio({
                 <label
                   style={{
                     minHeight:
-                      '120px',
+                      '135px',
 
                     display:
                       'flex',
@@ -2596,7 +2679,7 @@ function Portfolio({
                       'center',
 
                     padding:
-                      '20px',
+                      '22px',
 
                     boxSizing:
                       'border-box',
@@ -2621,13 +2704,13 @@ function Portfolio({
                   <span
                     style={{
                       width:
-                        '32px',
+                        '34px',
 
                       height:
-                        '32px',
+                        '34px',
 
                       marginBottom:
-                        '8px',
+                        '9px',
 
                       display:
                         'flex',
@@ -2648,10 +2731,7 @@ function Portfolio({
                         '50%',
 
                       fontSize:
-                        '18px',
-
-                      fontWeight:
-                        '600'
+                        '18px'
                     }}
                   >
                     +
@@ -2674,7 +2754,7 @@ function Portfolio({
                   <span
                     style={{
                       marginTop:
-                        '4px',
+                        '5px',
 
                       color:
                         '#9A8E96',
@@ -2716,7 +2796,7 @@ function Portfolio({
                 <div
                   style={{
                     marginBottom:
-                      '18px'
+                      '20px'
                   }}
                 >
 
@@ -2726,7 +2806,7 @@ function Portfolio({
                         'block',
 
                       marginBottom:
-                        '6px',
+                        '7px',
 
                       color:
                         '#5F525C',
@@ -2745,7 +2825,7 @@ function Portfolio({
                   <div
                     style={{
                       height:
-                        '180px',
+                        '200px',
 
                       overflow:
                         'hidden',
@@ -2804,10 +2884,10 @@ function Portfolio({
                     '9px',
 
                   marginTop:
-                    '22px',
+                    '24px',
 
                   paddingTop:
-                    '18px',
+                    '20px',
 
                   borderTop:
                     '1px solid #EEE7E3'

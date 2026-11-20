@@ -1,29 +1,64 @@
 import React, { useState, useRef, useEffect } from 'react';
 
+
 const obterEstiloStatus = (status) => {
   const s = (status || '').toLowerCase();
 
   if (s === 'aberto' || s === 'disponível') {
-    return { background: '#E8F5E9', border: '1px solid #A5D6A7', color: '#2E7D32' };
-  }
-  if (s === 'aguardando prova') {
-    return { background: '#FFF3E0', border: '1px solid #FFCC80', color: '#E65100' };
-  }
-  if (s === 'em produção' || s === 'a fazer') {
-    return { background: '#E3F2FD', border: '1px solid #90CAF9', color: '#1565C0' };
-  }
-  if (s === 'concluído') {
-    return { background: '#E0F2F1', border: '1px solid #80CBC4', color: '#00695C' };
-  }
-  if (s === 'entregue') {
-    return { background: '#F3E5F5', border: '1px solid #CE93D8', color: '#6A1B9A' };
-  }
-  if (s === 'cancelado') {
-    return { background: '#FFEBEE', border: '1px solid #EF9A9A', color: '#C62828' };
+    return {
+      background: '#EEF5EE',
+      border: '1px solid #D7E6D7',
+      color: '#557255'
+    };
   }
 
-  return { background: '#F5F5F5', border: '1px solid #E0E0E0', color: '#616161' };
+  if (s === 'aguardando prova') {
+    return {
+      background: '#FFF7EA',
+      border: '1px solid #F0DFC0',
+      color: '#9A7040'
+    };
+  }
+
+  if (s === 'em produção' || s === 'a fazer') {
+    return {
+      background: '#EEF2F7',
+      border: '1px solid #D8E0EA',
+      color: '#5C6F85'
+    };
+  }
+
+  if (s === 'concluído') {
+    return {
+      background: '#EDF6F3',
+      border: '1px solid #D4E8E2',
+      color: '#52766B'
+    };
+  }
+
+  if (s === 'entregue') {
+    return {
+      background: '#F3ECEF',
+      border: '1px solid #E1D4DC',
+      color: '#7A5B72'
+    };
+  }
+
+  if (s === 'cancelado') {
+    return {
+      background: '#FFF0F0',
+      border: '1px solid #F0D6D6',
+      color: '#9B5D5D'
+    };
+  }
+
+  return {
+    background: '#F5F2F3',
+    border: '1px solid #E2DBDE',
+    color: '#746A70'
+  };
 };
+
 
 function ChatMessageList({
   mensagens,
@@ -38,252 +73,1350 @@ function ChatMessageList({
   onAceitarProva,
   onRecusarProva
 }) {
-  const [novaMensagem, setNovaMensagem] = useState('');
-  const chatBottomRef = useRef(null);
+
+  const [novaMensagem, setNovaMensagem] =
+    useState('');
+
+  const chatBottomRef =
+    useRef(null);
+
 
   useEffect(() => {
-    chatBottomRef.current?.scrollIntoView({ behavior: 'smooth' });
+
+    chatBottomRef.current?.scrollIntoView({
+      behavior: 'smooth'
+    });
+
   }, [mensagens]);
 
+
   const handleSubmit = (e) => {
+
     e.preventDefault();
+
     if (!novaMensagem.trim()) return;
-    onEnviarMensagem(novaMensagem.trim());
+
+    onEnviarMensagem(
+      novaMensagem.trim()
+    );
+
     setNovaMensagem('');
+
   };
+
 
   const formatarDataHeader = (dataStr) => {
-    if (!dataStr) return '';
-    const d = new Date(dataStr);
-    const hoje = new Date();
-    const ontem = new Date(hoje);
-    ontem.setDate(hoje.getDate() - 1);
 
-    if (d.toDateString() === hoje.toDateString()) return 'Hoje';
-    if (d.toDateString() === ontem.toDateString()) return 'Ontem';
-    return d.toLocaleDateString('pt-BR');
+    if (!dataStr) return '';
+
+    const d = new Date(dataStr);
+
+    const hoje = new Date();
+
+    const ontem = new Date(hoje);
+
+    ontem.setDate(
+      hoje.getDate() - 1
+    );
+
+
+    if (
+      d.toDateString() ===
+      hoje.toDateString()
+    ) {
+      return 'Hoje';
+    }
+
+
+    if (
+      d.toDateString() ===
+      ontem.toDateString()
+    ) {
+      return 'Ontem';
+    }
+
+
+    return d.toLocaleDateString(
+      'pt-BR'
+    );
+
   };
+
 
   const formatarHoraMsg = (dataStr) => {
+
     if (!dataStr) return '';
-    const d = new Date(dataStr);
-    return isNaN(d.getTime()) ? '' : d.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+
+    const d =
+      new Date(dataStr);
+
+
+    return isNaN(d.getTime())
+      ? ''
+      : d.toLocaleTimeString(
+          'pt-BR',
+          {
+            hour: '2-digit',
+            minute: '2-digit'
+          }
+        );
+
   };
 
+
   let ultimaDataHeader = null;
-  const contratoAtivo = ['Em Produção', 'Aguardando Prova', 'Concluído', 'Entregue'].includes(statusPedido);
-  const pedidoCancelado = statusPedido === 'Cancelado';
-  const pedidoEncerrado = ['Cancelado', 'Entregue'].includes(statusPedido);
-  const estiloStatus = obterEstiloStatus(statusPedido);
+
+
+  const contratoAtivo =
+    [
+      'Em Produção',
+      'Aguardando Prova',
+      'Concluído',
+      'Entregue'
+    ].includes(statusPedido);
+
+
+  const pedidoCancelado =
+    statusPedido === 'Cancelado';
+
+
+  const pedidoEncerrado =
+    [
+      'Cancelado',
+      'Entregue'
+    ].includes(statusPedido);
+
+
+  const estiloStatus =
+    obterEstiloStatus(
+      statusPedido
+    );
+
 
   const temPropostaPendente =
     !contratoAtivo &&
     !pedidoCancelado &&
     mensagens.some((m) => {
-      const ehProp = m.tipo_mensagem === 'proposta' || (m.conteudo && m.conteudo.includes('Proposta de Orçamento:'));
+
+      const ehProp =
+        m.tipo_mensagem === 'proposta' ||
+        (
+          m.conteudo &&
+          m.conteudo.includes(
+            'Proposta de Orçamento:'
+          )
+        );
+
+
       if (!ehProp) return false;
-      let dados = m.dados_proposta || {};
-      if (typeof dados === 'string') {
-        try { dados = JSON.parse(dados); } catch { dados = {}; }
+
+
+      let dados =
+        m.dados_proposta ||
+        {};
+
+
+      if (
+        typeof dados === 'string'
+      ) {
+
+        try {
+
+          dados =
+            JSON.parse(dados);
+
+        } catch {
+
+          dados = {};
+
+        }
+
       }
-      return (dados.status || 'pendente') !== 'recusada';
+
+
+      return (
+        dados.status ||
+        'pendente'
+      ) !== 'recusada';
+
     });
+
 
   const temProvaPendente =
     !pedidoEncerrado &&
     mensagens.some((m) => {
-      const ehProva = m.tipo_mensagem === 'proposta_prova' || (m.conteudo && m.conteudo.includes('Proposta de Agendamento de Prova:'));
+
+      const ehProva =
+        m.tipo_mensagem ===
+          'proposta_prova' ||
+        (
+          m.conteudo &&
+          m.conteudo.includes(
+            'Proposta de Agendamento de Prova:'
+          )
+        );
+
+
       if (!ehProva) return false;
-      let dados = m.dados_proposta || {};
-      if (typeof dados === 'string') {
-        try { dados = JSON.parse(dados); } catch { dados = {}; }
+
+
+      let dados =
+        m.dados_proposta ||
+        {};
+
+
+      if (
+        typeof dados === 'string'
+      ) {
+
+        try {
+
+          dados =
+            JSON.parse(dados);
+
+        } catch {
+
+          dados = {};
+
+        }
+
       }
-      return (dados.status || 'pendente') === 'pendente';
+
+
+      return (
+        dados.status ||
+        'pendente'
+      ) === 'pendente';
+
     });
 
+
   return (
-    <div style={{ background: '#fff', borderRadius: '12px', boxShadow: '0 4px 16px rgba(62, 36, 69, 0.12)', display: 'flex', flexDirection: 'column', height: '620px', overflow: 'hidden' }}>
-      
-      <div style={{ background: '#3E2445', color: '#fff', padding: '15px 20px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '12px' }}>
-        <h3 style={{ margin: 0, fontSize: '15px', fontWeight: 'bold', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', flex: 1 }}>
-          {tituloChat || `Pedido #${idPedido}`}
-        </h3>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flexShrink: 0 }}>
+
+    <section
+      style={{
+        height: '620px',
+
+        display: 'flex',
+
+        flexDirection: 'column',
+
+        overflow: 'hidden',
+
+        background: '#FFFFFF',
+
+        border: '1px solid #EBE5E0',
+
+        borderRadius: '14px',
+
+        boxShadow:
+          '0 8px 22px rgba(62,36,69,0.05)'
+      }}
+    >
+
+
+      {/* =====================================
+          CABEÇALHO
+      ====================================== */}
+
+      <div
+        style={{
+          minHeight: '62px',
+
+          padding: '13px 18px',
+
+          boxSizing: 'border-box',
+
+          display: 'flex',
+
+          justifyContent: 'space-between',
+
+          alignItems: 'center',
+
+          gap: '14px',
+
+          background: '#7A5B72',
+
+          color: '#FFFFFF',
+
+          borderBottom:
+            '1px solid rgba(255,255,255,0.10)'
+        }}
+      >
+
+        <div
+          style={{
+            minWidth: 0,
+            flex: 1
+          }}
+        >
+
+          <span
+            style={{
+              display: 'block',
+
+              marginBottom: '2px',
+
+              color: '#EEDFE8',
+
+              fontSize: '8px',
+
+              fontWeight: '600',
+
+              letterSpacing: '0.8px',
+
+              textTransform: 'uppercase'
+            }}
+          >
+            Conversa do pedido
+          </span>
+
+
+          <h3
+            style={{
+              margin: 0,
+
+              overflow: 'hidden',
+
+              color: '#FFFFFF',
+
+              fontFamily:
+                "'Playfair Display SC', 'Playfair Display', Georgia, serif",
+
+              fontSize: '15px',
+
+              fontWeight: '700',
+
+              textOverflow: 'ellipsis',
+
+              whiteSpace: 'nowrap'
+            }}
+          >
+            {tituloChat ||
+             `Pedido #${idPedido}`}
+          </h3>
+
+        </div>
+
+
+        <div
+          style={{
+            display: 'flex',
+
+            alignItems: 'center',
+
+            justifyContent: 'flex-end',
+
+            gap: '8px',
+
+            flexShrink: 0,
+
+            flexWrap: 'wrap'
+          }}
+        >
+
           {statusPedido && (
+
             <span
               style={{
-                background: estiloStatus.background,
-                border: estiloStatus.border,
-                color: estiloStatus.color,
-                padding: '4px 12px',
-                borderRadius: '20px',
-                fontSize: '12px',
-                fontWeight: 'bold'
+                padding: '5px 9px',
+
+                background:
+                  estiloStatus.background,
+
+                color:
+                  estiloStatus.color,
+
+                border:
+                  estiloStatus.border,
+
+                borderRadius: '999px',
+
+                fontSize: '8px',
+
+                fontWeight: '700',
+
+                letterSpacing: '0.2px',
+
+                textTransform: 'uppercase'
               }}
             >
               Status: {statusPedido}
             </span>
+
           )}
-          <span style={{ fontSize: '12px', opacity: 0.85 }}>Pedido #{idPedido}</span>
+
+
+          <span
+            style={{
+              color: '#EADCEB',
+
+              fontSize: '9px',
+
+              whiteSpace: 'nowrap'
+            }}
+          >
+            Pedido #{idPedido}
+          </span>
+
         </div>
+
       </div>
 
-      <div style={{ flex: 1, padding: '20px', overflowY: 'auto', background: '#FAF7FA', display: 'flex', flexDirection: 'column', gap: '12px' }}>
-        {mensagens.map((msg, index) => {
-          const rawData = msg.data_hora_envio || msg.dataHoraEnvio;
-          const dataHeader = formatarDataHeader(rawData);
-          const exibirDivisor = dataHeader && dataHeader !== ultimaDataHeader;
-          if (exibirDivisor) ultimaDataHeader = dataHeader;
 
-          const ehMinha = Number(msg.id_remetente || msg.idRemetente) === Number(idUsuario);
-          const ehProposta = msg.tipo_mensagem === 'proposta' || (msg.conteudo && msg.conteudo.includes('Proposta de Orçamento:'));
-          const ehPropostaProva = msg.tipo_mensagem === 'proposta_prova' || (msg.conteudo && msg.conteudo.includes('Proposta de Agendamento de Prova:'));
+      {/* =====================================
+          MENSAGENS
+      ====================================== */}
 
-          let dadosProposta = msg.dados_proposta || {};
-          if (typeof dadosProposta === 'string') {
-            try { dadosProposta = JSON.parse(dadosProposta); } catch { dadosProposta = {}; }
+      <div
+        style={{
+          flex: 1,
+
+          padding: '20px 18px',
+
+          overflowY: 'auto',
+
+          background: '#FAF8F7',
+
+          display: 'flex',
+
+          flexDirection: 'column',
+
+          gap: '10px'
+        }}
+      >
+
+        {mensagens.map(
+          (msg, index) => {
+
+            const rawData =
+              msg.data_hora_envio ||
+              msg.dataHoraEnvio;
+
+
+            const dataHeader =
+              formatarDataHeader(
+                rawData
+              );
+
+
+            const exibirDivisor =
+              dataHeader &&
+              dataHeader !==
+                ultimaDataHeader;
+
+
+            if (exibirDivisor) {
+              ultimaDataHeader =
+                dataHeader;
+            }
+
+
+            const ehMinha =
+              Number(
+                msg.id_remetente ||
+                msg.idRemetente
+              ) ===
+              Number(idUsuario);
+
+
+            const ehProposta =
+              msg.tipo_mensagem ===
+                'proposta' ||
+              (
+                msg.conteudo &&
+                msg.conteudo.includes(
+                  'Proposta de Orçamento:'
+                )
+              );
+
+
+            const ehPropostaProva =
+              msg.tipo_mensagem ===
+                'proposta_prova' ||
+              (
+                msg.conteudo &&
+                msg.conteudo.includes(
+                  'Proposta de Agendamento de Prova:'
+                )
+              );
+
+
+            let dadosProposta =
+              msg.dados_proposta ||
+              {};
+
+
+            if (
+              typeof dadosProposta ===
+              'string'
+            ) {
+
+              try {
+
+                dadosProposta =
+                  JSON.parse(
+                    dadosProposta
+                  );
+
+              } catch {
+
+                dadosProposta = {};
+
+              }
+
+            }
+
+
+            const statusCard =
+              dadosProposta.status ||
+              'pendente';
+
+
+            return (
+
+              <React.Fragment
+                key={
+                  msg.id_mensagem ||
+                  msg.id ||
+                  index
+                }
+              >
+
+
+                {/* DIVISOR DE DATA */}
+
+                {exibirDivisor && (
+
+                  <div
+                    style={{
+                      margin: '12px 0',
+
+                      textAlign: 'center'
+                    }}
+                  >
+
+                    <span
+                      style={{
+                        display: 'inline-block',
+
+                        padding: '4px 11px',
+
+                        background: '#F0E7EC',
+
+                        color: '#7A5B72',
+
+                        border:
+                          '1px solid #E2D5DD',
+
+                        borderRadius: '999px',
+
+                        fontSize: '8px',
+
+                        fontWeight: '600'
+                      }}
+                    >
+                      {dataHeader}
+                    </span>
+
+                  </div>
+
+                )}
+
+
+                {/* BOLHA */}
+
+                <div
+                  style={{
+                    display: 'flex',
+
+                    justifyContent:
+                      ehMinha
+                        ? 'flex-end'
+                        : 'flex-start'
+                  }}
+                >
+
+                  <div
+                    style={{
+                      width: 'fit-content',
+
+                      maxWidth: '78%',
+
+                      padding: '11px 13px',
+
+                      background:
+                        ehMinha
+                          ? '#7A5B72'
+                          : '#FFFFFF',
+
+                      color:
+                        ehMinha
+                          ? '#FFFFFF'
+                          : '#4F474D',
+
+                      border:
+                        ehMinha
+                          ? '1px solid #7A5B72'
+                          : '1px solid #E7DFE3',
+
+                      borderRadius:
+                        ehMinha
+                          ? '13px 13px 3px 13px'
+                          : '13px 13px 13px 3px',
+
+                      boxShadow:
+                        ehMinha
+                          ? '0 4px 12px rgba(62,36,69,0.08)'
+                          : '0 4px 12px rgba(62,36,69,0.035)'
+                    }}
+                  >
+
+
+                    {/* NOME */}
+
+                    <div
+                      style={{
+                        marginBottom: '4px',
+
+                        color:
+                          ehMinha
+                            ? '#EEDFE8'
+                            : '#8B7A86',
+
+                        fontSize: '8px',
+
+                        fontWeight: '700'
+                      }}
+                    >
+                      {msg.remetente_nome ||
+                       msg.nomeRemetente ||
+                       (
+                         ehMinha
+                           ? 'Você'
+                           : 'Interlocutor'
+                       )}
+                    </div>
+
+
+                    {/* TEXTO */}
+
+                    <div
+                      style={{
+                        paddingBottom: '5px',
+
+                        color:
+                          ehMinha
+                            ? '#FFFFFF'
+                            : '#4F474D',
+
+                        fontSize: '11px',
+
+                        lineHeight: '1.65',
+
+                        whiteSpace: 'pre-line'
+                      }}
+                    >
+                      {msg.conteudo}
+                    </div>
+
+
+                    {/* =================================
+                        PROPOSTA DE ORÇAMENTO
+                    ================================== */}
+
+                    {ehProposta && (
+
+                      <div
+                        style={{
+                          marginTop: '9px',
+
+                          padding: '10px',
+
+                          background:
+                            ehMinha
+                              ? 'rgba(255,255,255,0.09)'
+                              : '#FAF8F7',
+
+                          border:
+                            ehMinha
+                              ? '1px solid rgba(255,255,255,0.16)'
+                              : '1px solid #E6DDE2',
+
+                          borderRadius: '8px'
+                        }}
+                      >
+
+
+                        {statusCard ===
+                        'recusada' ? (
+
+                          <div
+                            style={{
+                              padding: '8px',
+
+                              background: '#FFF0F0',
+
+                              color: '#9B5D5D',
+
+                              border:
+                                '1px solid #F0D6D6',
+
+                              borderRadius: '6px',
+
+                              fontSize: '9px',
+
+                              fontWeight: '700',
+
+                              textAlign: 'center'
+                            }}
+                          >
+                            ✕ Orçamento Recusado
+                          </div>
+
+                        ) : contratoAtivo ? (
+
+                          <div
+                            style={{
+                              padding: '8px',
+
+                              background: '#EEF5EE',
+
+                              color: '#557255',
+
+                              border:
+                                '1px solid #D7E6D7',
+
+                              borderRadius: '6px',
+
+                              fontSize: '9px',
+
+                              fontWeight: '700',
+
+                              textAlign: 'center'
+                            }}
+                          >
+                            ✓ Orçamento Aprovado (Contrato Ativo)
+                          </div>
+
+                        ) : pedidoCancelado ? (
+
+                          <div
+                            style={{
+                              padding: '8px',
+
+                              background: '#F4F1F2',
+
+                              color: '#746A70',
+
+                              border:
+                                '1px solid #E2DBDE',
+
+                              borderRadius: '6px',
+
+                              fontSize: '9px',
+
+                              fontWeight: '700',
+
+                              textAlign: 'center'
+                            }}
+                          >
+                            Pedido Cancelado (Proposta Encerrada)
+                          </div>
+
+                        ) : !isCostureira ? (
+
+                          <div
+                            style={{
+                              display: 'flex',
+
+                              gap: '7px',
+
+                              marginTop: '5px',
+
+                              flexWrap: 'wrap'
+                            }}
+                          >
+
+                            <button
+                              type="button"
+
+                              onClick={() =>
+                                onAceitarProposta(
+                                  dadosProposta,
+                                  msg.id_remetente ||
+                                  msg.idRemetente
+                                )
+                              }
+
+                              style={{
+                                flex: 1,
+
+                                minWidth: '120px',
+
+                                padding: '8px 10px',
+
+                                background: '#6F8A6B',
+
+                                color: '#FFFFFF',
+
+                                border: 'none',
+
+                                borderRadius: '7px',
+
+                                fontSize: '9px',
+
+                                fontWeight: '700',
+
+                                cursor: 'pointer'
+                              }}
+                            >
+                              ✓ Aceitar Orçamento
+                            </button>
+
+
+                            <button
+                              type="button"
+
+                              onClick={() =>
+                                onRecusarProposta(
+                                  msg.id_mensagem ||
+                                  msg.id,
+
+                                  msg.id_remetente ||
+                                  msg.idRemetente
+                                )
+                              }
+
+                              style={{
+                                flex: 1,
+
+                                minWidth: '100px',
+
+                                padding: '8px 10px',
+
+                                background: '#FFF7F7',
+
+                                color: '#9B5D5D',
+
+                                border:
+                                  '1px solid #E9CFCF',
+
+                                borderRadius: '7px',
+
+                                fontSize: '9px',
+
+                                fontWeight: '700',
+
+                                cursor: 'pointer'
+                              }}
+                            >
+                              ✕ Recusar
+                            </button>
+
+                          </div>
+
+                        ) : (
+
+                          <div
+                            style={{
+                              color:
+                                ehMinha
+                                  ? '#EEDFE8'
+                                  : '#847780',
+
+                              fontSize: '9px',
+
+                              fontStyle: 'italic',
+
+                              textAlign: 'center'
+                            }}
+                          >
+                            Aguardando aprovação da cliente...
+                          </div>
+
+                        )}
+
+                      </div>
+
+                    )}
+
+
+                    {/* =================================
+                        PROPOSTA DE PROVA
+                    ================================== */}
+
+                    {ehPropostaProva && (
+
+                      <div
+                        style={{
+                          marginTop: '9px',
+
+                          padding: '10px',
+
+                          background:
+                            ehMinha
+                              ? 'rgba(255,255,255,0.09)'
+                              : '#FAF8F7',
+
+                          border:
+                            ehMinha
+                              ? '1px solid rgba(255,255,255,0.16)'
+                              : '1px solid #E6DDE2',
+
+                          borderRadius: '8px'
+                        }}
+                      >
+
+
+                        {statusCard ===
+                        'recusada' ? (
+
+                          <div
+                            style={{
+                              padding: '8px',
+
+                              background: '#FFF0F0',
+
+                              color: '#9B5D5D',
+
+                              border:
+                                '1px solid #F0D6D6',
+
+                              borderRadius: '6px',
+
+                              fontSize: '9px',
+
+                              fontWeight: '700',
+
+                              textAlign: 'center'
+                            }}
+                          >
+                            ✕ Data de Prova Recusada
+                          </div>
+
+                        ) : statusCard ===
+                          'aceita' ? (
+
+                          <div
+                            style={{
+                              padding: '8px',
+
+                              background: '#EEF5EE',
+
+                              color: '#557255',
+
+                              border:
+                                '1px solid #D7E6D7',
+
+                              borderRadius: '6px',
+
+                              fontSize: '9px',
+
+                              fontWeight: '700',
+
+                              textAlign: 'center'
+                            }}
+                          >
+                            ✓ Prova Confirmada (Adicionada à Agenda)
+                          </div>
+
+                        ) : pedidoEncerrado ? (
+
+                          <div
+                            style={{
+                              padding: '8px',
+
+                              background: '#F4F1F2',
+
+                              color: '#746A70',
+
+                              border:
+                                '1px solid #E2DBDE',
+
+                              borderRadius: '6px',
+
+                              fontSize: '9px',
+
+                              fontWeight: '700',
+
+                              textAlign: 'center'
+                            }}
+                          >
+                            Pedido Encerrado (Sugestão Inválida)
+                          </div>
+
+                        ) : !isCostureira ? (
+
+                          <div
+                            style={{
+                              display: 'flex',
+
+                              gap: '7px',
+
+                              marginTop: '5px',
+
+                              flexWrap: 'wrap'
+                            }}
+                          >
+
+                            <button
+                              type="button"
+
+                              onClick={() =>
+                                onAceitarProva &&
+                                onAceitarProva(
+                                  msg.id_mensagem ||
+                                  msg.id,
+
+                                  dadosProposta,
+
+                                  msg.id_remetente ||
+                                  msg.idRemetente
+                                )
+                              }
+
+                              style={{
+                                flex: 1,
+
+                                minWidth: '110px',
+
+                                padding: '8px 10px',
+
+                                background: '#6F8A6B',
+
+                                color: '#FFFFFF',
+
+                                border: 'none',
+
+                                borderRadius: '7px',
+
+                                fontSize: '9px',
+
+                                fontWeight: '700',
+
+                                cursor: 'pointer'
+                              }}
+                            >
+                              ✓ Aceitar Prova
+                            </button>
+
+
+                            <button
+                              type="button"
+
+                              onClick={() =>
+                                onRecusarProva &&
+                                onRecusarProva(
+                                  msg.id_mensagem ||
+                                  msg.id,
+
+                                  msg.id_remetente ||
+                                  msg.idRemetente
+                                )
+                              }
+
+                              style={{
+                                flex: 1,
+
+                                minWidth: '100px',
+
+                                padding: '8px 10px',
+
+                                background: '#FFF7F7',
+
+                                color: '#9B5D5D',
+
+                                border:
+                                  '1px solid #E9CFCF',
+
+                                borderRadius: '7px',
+
+                                fontSize: '9px',
+
+                                fontWeight: '700',
+
+                                cursor: 'pointer'
+                              }}
+                            >
+                              ✕ Recusar
+                            </button>
+
+                          </div>
+
+                        ) : (
+
+                          <div
+                            style={{
+                              color:
+                                ehMinha
+                                  ? '#EEDFE8'
+                                  : '#847780',
+
+                              fontSize: '9px',
+
+                              fontStyle: 'italic',
+
+                              textAlign: 'center'
+                            }}
+                          >
+                            Aguardando confirmação da cliente...
+                          </div>
+
+                        )}
+
+                      </div>
+
+                    )}
+
+
+                    {/* HORA */}
+
+                    <div
+                      style={{
+                        marginTop: '4px',
+
+                        color:
+                          ehMinha
+                            ? '#EEDFE8'
+                            : '#AAA0A7',
+
+                        fontSize: '8px',
+
+                        textAlign: 'right'
+                      }}
+                    >
+                      {formatarHoraMsg(
+                        rawData
+                      )}
+                    </div>
+
+                  </div>
+
+                </div>
+
+              </React.Fragment>
+
+            );
+
           }
-          const statusCard = dadosProposta.status || 'pendente';
+        )}
 
-          return (
-            <React.Fragment key={msg.id_mensagem || msg.id || index}>
-              {exibirDivisor && (
-                <div style={{ textAlign: 'center', margin: '15px 0' }}>
-                  <span style={{ background: '#E0D0E0', color: '#3E2445', padding: '4px 14px', borderRadius: '12px', fontSize: '11px', fontWeight: 'bold' }}>
-                    {dataHeader}
-                  </span>
-                </div>
-              )}
 
-              <div style={{ display: 'flex', justifyContent: ehMinha ? 'flex-end' : 'flex-start' }}>
-                <div style={{ maxWidth: '80%', background: ehMinha ? '#3E2445' : '#fff', color: ehMinha ? '#fff' : '#333', border: ehMinha ? 'none' : '1px solid #E0D0E0', padding: '12px 16px', borderRadius: '10px' }}>
-                  <div style={{ fontSize: '11px', color: ehMinha ? '#EADCEB' : '#777', marginBottom: '4px', fontWeight: 'bold' }}>
-                    {msg.remetente_nome || msg.nomeRemetente || (ehMinha ? 'Você' : 'Interlocutor')}
-                  </div>
+        <div
+          ref={
+            chatBottomRef
+          }
+        />
 
-                  <div style={{ fontSize: '14px', whiteSpace: 'pre-line', paddingBottom: '12px' }}>
-                    {msg.conteudo}
-                  </div>
-
-                  {/* Card de Proposta de Orçamento */}
-                  {ehProposta && (
-                    <div style={{ marginTop: '8px', background: ehMinha ? 'rgba(255,255,255,0.1)' : '#FAF7FA', padding: '10px', borderRadius: '8px', border: '1px solid rgba(62, 36, 69, 0.2)' }}>
-                      {statusCard === 'recusada' ? (
-                        <div style={{ background: '#FFEBEE', color: '#C62828', padding: '8px', borderRadius: '6px', fontSize: '12px', fontWeight: 'bold', textAlign: 'center' }}>
-                          ✕ Orçamento Recusado
-                        </div>
-                      ) : contratoAtivo ? (
-                        <div style={{ background: '#E8F5E9', color: '#2E7D32', padding: '8px', borderRadius: '6px', fontSize: '12px', fontWeight: 'bold', textAlign: 'center' }}>
-                          ✓ Orçamento Aprovado (Contrato Ativo)
-                        </div>
-                      ) : pedidoCancelado ? (
-                        <div style={{ background: '#F5F5F5', color: '#616161', padding: '8px', borderRadius: '6px', fontSize: '12px', fontWeight: 'bold', textAlign: 'center' }}>
-                          Pedido Cancelado (Proposta Encerrada)
-                        </div>
-                      ) : !isCostureira ? (
-                        <div style={{ display: 'flex', gap: '8px', marginTop: '6px' }}>
-                          <button
-                            onClick={() => onAceitarProposta(dadosProposta, msg.id_remetente || msg.idRemetente)}
-                            style={{ flex: 1, padding: '8px', background: '#2E7D32', color: '#fff', border: 'none', borderRadius: '6px', cursor: 'pointer', fontWeight: 'bold', fontSize: '12px' }}
-                          >
-                            ✓ Aceitar Orçamento
-                          </button>
-                          <button
-                            onClick={() => onRecusarProposta(msg.id_mensagem || msg.id, msg.id_remetente || msg.idRemetente)}
-                            style={{ flex: 1, padding: '8px', background: '#C62828', color: '#fff', border: 'none', borderRadius: '6px', cursor: 'pointer', fontWeight: 'bold', fontSize: '12px' }}
-                          >
-                            ✕ Recusar
-                          </button>
-                        </div>
-                      ) : (
-                        <div style={{ fontSize: '12px', color: ehMinha ? '#EADCEB' : '#666', fontStyle: 'italic', textAlign: 'center' }}>
-                          Aguardando aprovação da cliente...
-                        </div>
-                      )}
-                    </div>
-                  )}
-
-                  {/* Card de Proposta de Prova */}
-                  {ehPropostaProva && (
-                    <div style={{ marginTop: '8px', background: ehMinha ? 'rgba(255,255,255,0.1)' : '#FAF7FA', padding: '10px', borderRadius: '8px', border: '1px solid rgba(62, 36, 69, 0.2)' }}>
-                      {statusCard === 'recusada' ? (
-                        <div style={{ background: '#FFEBEE', color: '#C62828', padding: '8px', borderRadius: '6px', fontSize: '12px', fontWeight: 'bold', textAlign: 'center' }}>
-                          ✕ Data de Prova Recusada
-                        </div>
-                      ) : statusCard === 'aceita' ? (
-                        <div style={{ background: '#E8F5E9', color: '#2E7D32', padding: '8px', borderRadius: '6px', fontSize: '12px', fontWeight: 'bold', textAlign: 'center' }}>
-                          ✓ Prova Confirmada (Adicionada à Agenda)
-                        </div>
-                      ) : pedidoEncerrado ? (
-                        <div style={{ background: '#F5F5F5', color: '#616161', padding: '8px', borderRadius: '6px', fontSize: '12px', fontWeight: 'bold', textAlign: 'center' }}>
-                          Pedido Encerrado (Sugestão Inválida)
-                        </div>
-                      ) : !isCostureira ? (
-                        <div style={{ display: 'flex', gap: '8px', marginTop: '6px' }}>
-                          <button
-                            onClick={() => onAceitarProva && onAceitarProva(msg.id_mensagem || msg.id, dadosProposta, msg.id_remetente || msg.idRemetente)}
-                            style={{ flex: 1, padding: '8px', background: '#2E7D32', color: '#fff', border: 'none', borderRadius: '6px', cursor: 'pointer', fontWeight: 'bold', fontSize: '12px' }}
-                          >
-                            ✓ Aceitar Prova
-                          </button>
-                          <button
-                            onClick={() => onRecusarProva && onRecusarProva(msg.id_mensagem || msg.id, msg.id_remetente || msg.idRemetente)}
-                            style={{ flex: 1, padding: '8px', background: '#C62828', color: '#fff', border: 'none', borderRadius: '6px', cursor: 'pointer', fontWeight: 'bold', fontSize: '12px' }}
-                          >
-                            ✕ Recusar
-                          </button>
-                        </div>
-                      ) : (
-                        <div style={{ fontSize: '12px', color: ehMinha ? '#EADCEB' : '#666', fontStyle: 'italic', textAlign: 'center' }}>
-                          Aguardando confirmação da cliente...
-                        </div>
-                      )}
-                    </div>
-                  )}
-
-                  <div style={{ fontSize: '10px', color: ehMinha ? '#EADCEB' : '#999', textAlign: 'right', marginTop: '4px' }}>
-                    {formatarHoraMsg(rawData)}
-                  </div>
-                </div>
-              </div>
-            </React.Fragment>
-          );
-        })}
-        <div ref={chatBottomRef} />
       </div>
+
+
+      {/* =====================================
+          AVISOS
+      ====================================== */}
 
       {pedidoCancelado && (
-        <div style={{ background: '#FFF8E1', borderTop: '1px solid #FFE082', color: '#6D4C41', padding: '8px 16px', fontSize: '12px', textAlign: 'center' }}>
-          <strong>Pedido cancelado:</strong> o chat permanece aberto para vocês combinarem a retirada de peças ou pendências.
+
+        <div
+          style={{
+            padding: '8px 14px',
+
+            background: '#FFF8EC',
+
+            color: '#806A59',
+
+            borderTop:
+              '1px solid #F1E0C7',
+
+            fontSize: '9px',
+
+            lineHeight: '1.5',
+
+            textAlign: 'center'
+          }}
+        >
+          <strong>
+            Pedido cancelado:
+          </strong>{' '}
+          o chat permanece aberto para vocês combinarem a retirada de peças ou pendências.
         </div>
+
       )}
 
-      {!isCostureira && temPropostaPendente && (
-        <div style={{ background: '#FFF8E1', borderTop: '1px solid #FFE082', color: '#6D4C41', padding: '8px 16px', fontSize: '12px', textAlign: 'center', lineHeight: '1.4' }}>
-          <strong>Orçamento recebido:</strong> confira o perfil e as avaliações da costureira antes de aceitar. O Ateliê Entre Linhas apenas facilita o contato e não se responsabiliza pelos serviços combinados.
+
+      {!isCostureira &&
+       temPropostaPendente && (
+
+        <div
+          style={{
+            padding: '8px 14px',
+
+            background: '#FFF8EC',
+
+            color: '#806A59',
+
+            borderTop:
+              '1px solid #F1E0C7',
+
+            fontSize: '9px',
+
+            lineHeight: '1.5',
+
+            textAlign: 'center'
+          }}
+        >
+          <strong>
+            Orçamento recebido:
+          </strong>{' '}
+          confira o perfil e as avaliações da costureira antes de aceitar. O Ateliê Entre Linhas apenas facilita o contato e não se responsabiliza pelos serviços combinados.
         </div>
+
       )}
 
-      {!isCostureira && !temPropostaPendente && temProvaPendente && (
-        <div style={{ background: '#FFF8E1', borderTop: '1px solid #FFE082', color: '#6D4C41', padding: '8px 16px', fontSize: '12px', textAlign: 'center', lineHeight: '1.4' }}>
-          <strong>Sugestão de prova recebida:</strong> confira a data, o horário e o endereço da costureira acima antes de aceitar.
+
+      {!isCostureira &&
+       !temPropostaPendente &&
+       temProvaPendente && (
+
+        <div
+          style={{
+            padding: '8px 14px',
+
+            background: '#FFF8EC',
+
+            color: '#806A59',
+
+            borderTop:
+              '1px solid #F1E0C7',
+
+            fontSize: '9px',
+
+            lineHeight: '1.5',
+
+            textAlign: 'center'
+          }}
+        >
+          <strong>
+            Sugestão de prova recebida:
+          </strong>{' '}
+          confira a data, o horário e o endereço da costureira acima antes de aceitar.
         </div>
+
       )}
 
-      <form onSubmit={handleSubmit} style={{ padding: '15px', background: '#fff', borderTop: '1px solid #eee', display: 'flex', gap: '10px' }}>
+
+      {/* =====================================
+          ENVIO DE MENSAGEM
+      ====================================== */}
+
+      <form
+        onSubmit={
+          handleSubmit
+        }
+
+        style={{
+          padding: '12px 13px',
+
+          display: 'flex',
+
+          alignItems: 'center',
+
+          gap: '8px',
+
+          background: '#FFFFFF',
+
+          borderTop:
+            '1px solid #EEE7E3'
+        }}
+      >
+
         <input
           type="text"
-          value={novaMensagem}
-          onChange={(e) => setNovaMensagem(e.target.value)}
-          placeholder={pedidoCancelado ? 'Envie uma mensagem para combinar a retirada ou pendências...' : 'Digite sua mensagem...'}
-          style={{ flex: 1, padding: '11px 14px', borderRadius: '6px', border: '1px solid #ccc', outline: 'none' }}
+
+          value={
+            novaMensagem
+          }
+
+          onChange={(e) =>
+            setNovaMensagem(
+              e.target.value
+            )
+          }
+
+          placeholder={
+            pedidoCancelado
+              ? 'Envie uma mensagem para combinar a retirada ou pendências...'
+              : 'Digite sua mensagem...'
+          }
+
+          style={{
+            flex: 1,
+
+            minWidth: 0,
+
+            height: '40px',
+
+            padding: '0 13px',
+
+            boxSizing: 'border-box',
+
+            background: '#FAF8F7',
+
+            color: '#514950',
+
+            border:
+              '1px solid #DDD4D9',
+
+            borderRadius: '9px',
+
+            outline: 'none',
+
+            fontFamily:
+              "'Poppins', 'Segoe UI', sans-serif",
+
+            fontSize: '10px'
+          }}
         />
-        <button type="submit" style={{ padding: '11px 20px', background: '#3E2445', color: '#fff', border: 'none', borderRadius: '6px', fontWeight: 'bold', cursor: 'pointer' }}>
+
+
+        <button
+          type="submit"
+
+          style={{
+            height: '40px',
+
+            padding: '0 17px',
+
+            background: '#7A5B72',
+
+            color: '#FFFFFF',
+
+            border: 'none',
+
+            borderRadius: '8px',
+
+            fontFamily:
+              "'Poppins', 'Segoe UI', sans-serif",
+
+            fontSize: '9px',
+
+            fontWeight: '700',
+
+            cursor: 'pointer'
+          }}
+        >
           Enviar
         </button>
+
       </form>
-    </div>
+
+
+    </section>
+
   );
+
 }
+
 
 export default ChatMessageList;

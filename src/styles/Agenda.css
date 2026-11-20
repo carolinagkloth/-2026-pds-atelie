@@ -1,0 +1,542 @@
+.agenda {
+  margin-top: 30px;
+  padding-top: 22px;
+
+  border-top: 1px solid #eee7e3;
+
+  font-family:
+    "Poppins",
+    "Segoe UI",
+    sans-serif;
+}
+
+
+/* ==========================================
+   CABEÇALHO
+========================================== */
+
+.agenda-header {
+  display: flex;
+
+  justify-content: space-between;
+  align-items: flex-end;
+
+  gap: 18px;
+
+  margin-bottom: 16px;
+
+  flex-wrap: wrap;
+}
+
+
+.agenda-eyebrow {
+  display: block;
+
+  margin-bottom: 3px;
+
+  color: #bb91ad;
+
+  font-size: 8px;
+  font-weight: 700;
+
+  letter-spacing: 1px;
+
+  text-transform: uppercase;
+}
+
+
+.agenda-header h3 {
+  margin: 0;
+
+  color: #3e2445;
+
+  font-family:
+    "Playfair Display SC",
+    "Playfair Display",
+    Georgia,
+    serif;
+
+  font-size: 18px;
+}
+
+
+.agenda-legenda {
+  display: flex;
+
+  align-items: center;
+
+  gap: 13px;
+
+  color: #81757d;
+
+  font-size: 9px;
+}
+
+
+.agenda-legenda span {
+  display: flex;
+
+  align-items: center;
+
+  gap: 5px;
+}
+
+
+.agenda-legenda i {
+  width: 7px;
+  height: 7px;
+
+  display: inline-block;
+
+  border-radius: 50%;
+}
+
+
+.agenda-legenda-prova {
+  background: #c39a66;
+}
+
+
+.agenda-legenda-entrega {
+  background: #71866f;
+}
+
+
+/* ==========================================
+   LAYOUT
+========================================== */
+
+.agenda-conteudo {
+  display: grid;
+
+  grid-template-columns:
+    minmax(280px, 330px)
+    minmax(0, 1fr);
+
+  gap: 16px;
+
+  align-items: start;
+}
+
+
+/* ==========================================
+   CALENDÁRIO
+========================================== */
+
+.agenda-calendario-card {
+  padding: 12px;
+
+  background: #ffffff;
+
+  border: 1px solid #ebe5e0;
+
+  border-radius: 13px;
+
+  box-shadow:
+    0 6px 18px
+    rgba(62, 36, 69, 0.04);
+}
+
+
+.agenda .react-calendar {
+  width: 100%;
+
+  background: transparent;
+
+  border: none;
+
+  font-family:
+    "Poppins",
+    "Segoe UI",
+    sans-serif;
+}
+
+
+.agenda .react-calendar__navigation {
+  height: 38px;
+
+  margin-bottom: 7px;
+}
+
+
+.agenda .react-calendar__navigation button {
+  min-width: 36px;
+
+  background: transparent;
+
+  color: #5f4b5b;
+
+  border-radius: 7px;
+
+  font-size: 10px;
+  font-weight: 600;
+}
+
+
+.agenda .react-calendar__navigation button:hover,
+.agenda .react-calendar__navigation button:focus {
+  background: #f7f1f5;
+}
+
+
+.agenda .react-calendar__month-view__weekdays {
+  color: #a0949c;
+
+  font-size: 7px;
+
+  text-transform: uppercase;
+}
+
+
+.agenda .react-calendar__month-view__weekdays abbr {
+  text-decoration: none;
+}
+
+
+.agenda .react-calendar__tile {
+  min-height: 42px;
+
+  padding: 6px 3px;
+
+  background: transparent;
+
+  color: #60575e;
+
+  border-radius: 7px;
+
+  font-size: 9px;
+}
+
+
+.agenda .react-calendar__tile:hover,
+.agenda .react-calendar__tile:focus {
+  background: #f8f3f6;
+}
+
+
+.agenda .react-calendar__tile--now {
+  background: #f3ecef;
+
+  color: #7a5b72;
+
+  font-weight: 700;
+}
+
+
+.agenda .react-calendar__tile--active {
+  background: #7a5b72 !important;
+
+  color: #ffffff !important;
+}
+
+
+.agenda .react-calendar__month-view__days__day--neighboringMonth {
+  color: #c8bec4;
+}
+
+
+.agenda-marcadores {
+  display: flex;
+
+  justify-content: center;
+
+  gap: 3px;
+
+  margin-top: 3px;
+}
+
+
+.agenda-marcador {
+  width: 5px;
+  height: 5px;
+
+  display: inline-block;
+
+  border-radius: 50%;
+}
+
+
+.agenda-marcador-prova {
+  background: #c39a66;
+}
+
+
+.agenda-marcador-entrega {
+  background: #71866f;
+}
+
+
+/* ==========================================
+   COMPROMISSOS
+========================================== */
+
+.agenda-eventos {
+  min-height: 360px;
+
+  padding: 17px;
+
+  background: #faf8f7;
+
+  border: 1px solid #ebe5e0;
+
+  border-radius: 13px;
+}
+
+
+.agenda-eventos-header {
+  margin-bottom: 13px;
+
+  padding-bottom: 11px;
+
+  border-bottom: 1px solid #eee7e3;
+}
+
+
+.agenda-eventos-header span {
+  display: block;
+
+  margin-bottom: 2px;
+
+  color: #a0949c;
+
+  font-size: 8px;
+  font-weight: 700;
+
+  letter-spacing: 0.7px;
+
+  text-transform: uppercase;
+}
+
+
+.agenda-eventos-header h4 {
+  margin: 0;
+
+  color: #5f4b5b;
+
+  font-family:
+    "Playfair Display SC",
+    "Playfair Display",
+    Georgia,
+    serif;
+
+  font-size: 15px;
+}
+
+
+/* ==========================================
+   SEM EVENTOS
+========================================== */
+
+.agenda-vazia {
+  min-height: 265px;
+
+  display: flex;
+
+  flex-direction: column;
+
+  align-items: center;
+  justify-content: center;
+
+  padding: 20px;
+
+  text-align: center;
+}
+
+
+.agenda-vazia-icone {
+  width: 38px;
+  height: 38px;
+
+  display: flex;
+
+  align-items: center;
+  justify-content: center;
+
+  margin-bottom: 8px;
+
+  background: #f3ecef;
+
+  color: #917687;
+
+  border-radius: 50%;
+
+  font-size: 17px;
+}
+
+
+.agenda-vazia strong {
+  color: #5f525c;
+
+  font-family:
+    "Playfair Display SC",
+    "Playfair Display",
+    Georgia,
+    serif;
+
+  font-size: 13px;
+}
+
+
+.agenda-vazia p {
+  max-width: 280px;
+
+  margin: 4px 0 0;
+
+  color: #91858e;
+
+  font-size: 9px;
+
+  line-height: 1.55;
+}
+
+
+/* ==========================================
+   CARDS
+========================================== */
+
+.agenda-lista {
+  display: flex;
+
+  flex-direction: column;
+
+  gap: 9px;
+}
+
+
+.agenda-evento-card {
+  width: 100%;
+
+  padding: 12px 13px;
+
+  box-sizing: border-box;
+
+  background: #ffffff;
+
+  border: 1px solid #e8e1dd;
+  border-left: 3px solid #917687;
+
+  border-radius: 9px;
+}
+
+
+.agenda-evento-topo {
+  display: flex;
+
+  justify-content: space-between;
+  align-items: center;
+
+  gap: 8px;
+
+  margin-bottom: 6px;
+
+  flex-wrap: wrap;
+}
+
+
+.agenda-evento-tipo {
+  font-size: 8px;
+  font-weight: 700;
+
+  letter-spacing: 0.3px;
+
+  text-transform: uppercase;
+}
+
+
+.agenda-status {
+  padding: 3px 7px;
+
+  border-radius: 999px;
+
+  font-size: 7px;
+  font-weight: 700;
+
+  text-transform: uppercase;
+}
+
+
+.agenda-pedido-id {
+  margin-bottom: 7px;
+
+  color: #5f4b5b;
+
+  font-family:
+    "Playfair Display SC",
+    "Playfair Display",
+    Georgia,
+    serif;
+
+  font-size: 12px;
+  font-weight: 700;
+}
+
+
+.agenda-detalhes {
+  display: flex;
+
+  flex-direction: column;
+
+  gap: 4px;
+
+  color: #746a70;
+
+  font-size: 9px;
+
+  line-height: 1.5;
+}
+
+
+.agenda-detalhes strong {
+  color: #5f525c;
+}
+
+
+.agenda-descricao {
+  white-space: pre-line;
+}
+
+
+/* ==========================================
+   RESPONSIVO
+========================================== */
+
+@media (max-width: 780px) {
+
+  .agenda-conteudo {
+    grid-template-columns: 1fr;
+  }
+
+
+  .agenda-calendario-card {
+    max-width: 100%;
+  }
+
+}
+
+
+@media (max-width: 480px) {
+
+  .agenda-header {
+    align-items: flex-start;
+
+    flex-direction: column;
+  }
+
+
+  .agenda-eventos {
+    padding: 13px;
+  }
+
+
+  .agenda-calendario-card {
+    padding: 8px;
+  }
+
+
+  .agenda .react-calendar__tile {
+    min-height: 38px;
+
+    font-size: 8px;
+  }
+
+}

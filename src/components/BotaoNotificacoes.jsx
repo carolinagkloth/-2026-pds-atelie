@@ -63,7 +63,15 @@ function BotaoNotificacoes({ usuario, onNavigate }) {
   const naoLidasCount = notificacoes.filter((n) => !n.lida).length;
 
   return (
-    <div ref={dropdownRef} style={{ position: 'relative', display: 'inline-block' }}>
+    <div
+      ref={dropdownRef}
+      style={{
+        position: 'relative',
+        display: 'inline-block',
+        zIndex: 9999,
+        overflow: 'visible'
+    }}
+>
       <button
         onClick={() => setMenuAberto(!menuAberto)}
         style={{

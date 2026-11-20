@@ -1,121 +1,530 @@
+html,
+body,
+#root {
+  margin: 0;
+  padding: 0;
+  width: 100%;
+  min-height: 100%;
+}
+
+body {
+  overflow-x: hidden;
+}
+
+
+.cadastro-page {
+  width: 100%;
+  min-height: 100vh;
+
+  margin: 0;
+  padding: 0;
+
+  background: #F3F2ED;
+
+  color: #917687;
+
+  font-family: "Poppins", sans-serif;
+}
+
+
+/* ==========================================
+   BANNER
+========================================== */
+
+.cadastro-banner {
+  width: 100%;
+
+  margin: 0;
+  padding: 0;
+
+  display: block;
+
+  overflow: hidden;
+
+  background: #F3F2ED;
+}
+
+
+.cadastro-banner img {
+  width: 100%;
+  max-width: none;
+  height: auto;
+
+  margin: 0;
+  padding: 0;
+
+  display: block;
+
+  border-radius: 0;
+}
+
+
+/* ==========================================
+   ÁREA
+========================================== */
+
+.cadastro-area {
+  display: flex;
+
+  justify-content: center;
+  align-items: flex-start;
+
+  padding: 45px 20px 70px;
+
+  box-sizing: border-box;
+}
+
+
+/* ==========================================
+   CARD
+========================================== */
+
 .cadastro-card {
   width: 100%;
-  max-width: 520px;
-  margin: 40px auto;
-  padding: 36px;
-  background: #ffffff;
-  border-radius: 18px;
-  box-shadow: 0 8px 28px rgba(62, 36, 69, 0.12);
+  max-width: 540px;
+
+  padding: 34px 36px;
+
+  box-sizing: border-box;
+
+  background:
+    rgba(255, 255, 255, 0.72);
+
+  border:
+    1px solid
+    rgba(145, 118, 135, 0.24);
+
+  border-radius: 14px;
+
+  box-shadow:
+    0 10px 30px
+    rgba(145, 118, 135, 0.09);
 }
 
-.cadastro-card h2 {
-  margin: 0 0 8px;
+
+/* ==========================================
+   CABEÇALHO
+========================================== */
+
+.cadastro-cabecalho {
+  margin-bottom: 25px;
+
   text-align: center;
-  color: #3e2445;
-  font-size: 28px;
 }
+
+
+.cadastro-etiqueta {
+  display: block;
+
+  margin-bottom: 7px;
+
+  color: #BB91AD;
+
+  font-size: 9px;
+  font-weight: 600;
+
+  letter-spacing: 1.5px;
+
+  text-transform: uppercase;
+}
+
+
+.cadastro-card h1 {
+  margin: 0;
+
+  color: #917687;
+
+  font-family:
+    "Playfair Display SC",
+    serif;
+
+  font-size: 25px;
+
+  line-height: 1.25;
+}
+
 
 .cadastro-subtitle {
-  margin-bottom: 26px;
-  text-align: center;
-  color: #777;
-  font-size: 14px;
+  max-width: 390px;
+
+  margin: 11px auto 0;
+
+  color: #917687;
+
+  opacity: 0.82;
+
+  font-size: 11px;
+
+  line-height: 1.7;
 }
+
+
+/* ==========================================
+   MENSAGENS
+========================================== */
 
 .cadastro-erro {
-  margin-bottom: 16px;
+  margin-bottom: 17px;
+
   padding: 10px 12px;
-  background: #fff1f1;
-  color: #b3261e;
+
+  background: #FFF1F1;
+
+  color: #A43B3B;
+
+  border: 1px solid #F1D5D5;
+
   border-radius: 8px;
-  font-size: 13px;
+
+  font-size: 11px;
 }
 
-.cadastro-form-group {
-  margin-bottom: 16px;
+
+.cadastro-sucesso {
+  margin-bottom: 17px;
+
+  padding: 10px 12px;
+
+  background: #EEF6EC;
+
+  color: #5C7657;
+
+  border: 1px solid #D9E8D5;
+
+  border-radius: 8px;
+
+  font-size: 11px;
 }
+
+
+/* ==========================================
+   CAMPOS
+========================================== */
+
+.cadastro-form-group {
+  margin-bottom: 15px;
+}
+
 
 .cadastro-form-group label {
   display: block;
+
   margin-bottom: 6px;
-  color: #3e2445;
-  font-size: 14px;
+
+  color: #7A5B72;
+
+  font-size: 10px;
+
   font-weight: 600;
 }
+
 
 .cadastro-form-group input,
 .cadastro-form-group select {
   width: 100%;
-  padding: 12px 14px;
+  height: 42px;
+
+  padding: 0 12px;
+
   box-sizing: border-box;
-  border: 1px solid #d8cfd5;
-  border-radius: 8px;
-  background: #fff;
-  font-size: 14px;
+
+  color: #7A5B72;
+
+  background:
+    rgba(255, 255, 255, 0.38);
+
+  border:
+    1px solid
+    rgba(145, 118, 135, 0.32);
+
+  border-radius: 7px;
+
   outline: none;
-}
 
-.cadastro-form-group input:focus,
-.cadastro-form-group select:focus {
-  border-color: #917687;
-  box-shadow: 0 0 0 3px rgba(145, 118, 135, 0.12);
-}
+  font-family:
+    "Poppins",
+    sans-serif;
 
-.cadastro-duas-colunas {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 14px;
-}
+  font-size: 11px;
 
-.cadastro-ajuda {
-  display: block;
-  margin-top: 5px;
-  color: #777;
-  font-size: 12px;
-}
-
-.cadastro-button {
-  width: 100%;
-  padding: 12px;
-  margin-top: 4px;
-  border: none;
-  border-radius: 8px;
-  background: #917687;
-  color: #fff;
-  font-size: 15px;
-  font-weight: 600;
-  cursor: pointer;
   transition: 0.2s;
 }
 
-.cadastro-button:hover {
-  background: #7a5b72;
+
+.cadastro-form-group input::placeholder {
+  color:
+    rgba(145, 118, 135, 0.46);
 }
 
-.cadastro-button:disabled {
-  opacity: 0.7;
-  cursor: not-allowed;
+
+.cadastro-form-group input:focus,
+.cadastro-form-group select:focus {
+  border-color: #BB91AD;
+
+  box-shadow:
+    0 0 0 3px
+    rgba(187, 145, 173, 0.11);
 }
 
-.cadastro-login {
-  margin-top: 18px;
-  text-align: center;
-  color: #666;
-  font-size: 14px;
+
+/* ==========================================
+   DUAS COLUNAS
+========================================== */
+
+.cadastro-duas-colunas {
+  display: grid;
+
+  grid-template-columns:
+    1fr 1fr;
+
+  gap: 12px;
 }
 
-.cadastro-login span {
-  color: #3e2445;
-  font-weight: 600;
+
+/* ==========================================
+   AJUDA
+========================================== */
+
+.cadastro-ajuda {
+  display: block;
+
+  margin-top: 5px;
+
+  color:
+    rgba(122, 91, 114, 0.72);
+
+  font-size: 9px;
+
+  line-height: 1.5;
+}
+
+
+/* ==========================================
+   SENHA
+========================================== */
+
+.cadastro-senha-box {
+  position: relative;
+}
+
+
+.cadastro-senha-box input {
+  padding-right: 43px;
+}
+
+
+.cadastro-olho {
+  position: absolute;
+
+  top: 50%;
+  right: 10px;
+
+  transform:
+    translateY(-50%);
+
+  width: auto !important;
+  height: auto !important;
+
+  display: flex;
+
+  align-items: center;
+  justify-content: center;
+
+  padding: 3px !important;
+
+  background:
+    transparent !important;
+
+  border:
+    none !important;
+
   cursor: pointer;
 }
 
+
+/* ==========================================
+   PRIVACIDADE
+========================================== */
+
+.cadastro-privacidade {
+  margin:
+    3px 0 20px;
+
+  padding:
+    12px 14px;
+
+  display: flex;
+
+  flex-direction: column;
+
+  gap: 4px;
+
+  background:
+    rgba(187, 145, 173, 0.08);
+
+  color: #6A5664;
+
+  border:
+    1px solid
+    rgba(145, 118, 135, 0.20);
+
+  border-left:
+    3px solid #917687;
+
+  border-radius: 8px;
+
+  font-size: 9px;
+
+  line-height: 1.6;
+}
+
+
+.cadastro-privacidade strong {
+  color: #6E5568;
+
+  font-size: 10px;
+}
+
+
+/* ==========================================
+   BOTÃO PRINCIPAL
+========================================== */
+
+.cadastro-button {
+  width: 100%;
+  height: 44px;
+
+  margin-top: 4px;
+
+  background: #917687;
+
+  color: #FFFFFF;
+
+  border: none;
+
+  border-radius: 7px;
+
+  font-family:
+    "Poppins",
+    sans-serif;
+
+  font-size: 11px;
+
+  font-weight: 600;
+
+  letter-spacing: 0.2px;
+
+  cursor: pointer;
+
+  transition: 0.2s;
+}
+
+
+.cadastro-button:hover {
+  background: #7A5B72;
+}
+
+
+.cadastro-button:disabled {
+  opacity: 0.65;
+
+  cursor: not-allowed;
+}
+
+
+/* ==========================================
+   LOGIN
+========================================== */
+
+.cadastro-login {
+  display: flex;
+
+  justify-content: center;
+  align-items: center;
+
+  gap: 5px;
+
+  margin-top: 18px;
+
+  color: #917687;
+
+  font-size: 10px;
+}
+
+
+.cadastro-login button {
+  width: auto !important;
+  height: auto !important;
+
+  padding: 0 !important;
+
+  background:
+    transparent !important;
+
+  color:
+    #7A5B72 !important;
+
+  border:
+    none !important;
+
+  font-family:
+    "Poppins",
+    sans-serif;
+
+  font-size: 10px;
+
+  font-weight: 600;
+
+  text-decoration: underline;
+
+  cursor: pointer;
+}
+
+
+/* ==========================================
+   RESPONSIVO
+========================================== */
+
 @media (max-width: 600px) {
-  .cadastro-card {
-    padding: 26px 20px;
+
+  .cadastro-banner {
+    width: 100%;
+
+    margin: 0;
+
+    padding: 0;
   }
 
-  .cadastro-duas-colunas {
-    grid-template-columns: 1fr;
+
+  .cadastro-banner img {
+    width: 100%;
+
+    max-width: none;
+
+    margin: 0;
   }
+
+
+  .cadastro-area {
+    padding:
+      30px 15px 55px;
+  }
+
+
+  .cadastro-card {
+    padding:
+      28px 21px;
+  }
+
+
+  .cadastro-card h1 {
+    font-size: 22px;
+  }
+
+
+  .cadastro-duas-colunas {
+    grid-template-columns:
+      1fr;
+  }
+
 }

@@ -1,30 +1,106 @@
 import React from 'react';
-import { exportarPDF, exportarTXT, formatarDataBR } from './utils/chatExport';
+import {
+  exportarPDF,
+  exportarTXT,
+  formatarDataBR
+} from './utils/chatExport';
+
 
 const obterEstiloStatus = (status) => {
-  const s = (status || '').toLowerCase();
 
-  if (s === 'aberto' || s === 'disponível') {
-    return { background: '#E8F5E9', border: '1px solid #A5D6A7', color: '#2E7D32' };
-  }
-  if (s === 'aguardando prova') {
-    return { background: '#FFF3E0', border: '1px solid #FFCC80', color: '#E65100' };
-  }
-  if (s === 'em produção' || s === 'a fazer') {
-    return { background: '#E3F2FD', border: '1px solid #90CAF9', color: '#1565C0' };
-  }
-  if (s === 'concluído') {
-    return { background: '#E0F2F1', border: '1px solid #80CBC4', color: '#00695C' };
-  }
-  if (s === 'entregue') {
-    return { background: '#F3E5F5', border: '1px solid #CE93D8', color: '#6A1B9A' };
-  }
-  if (s === 'cancelado') {
-    return { background: '#FFEBEE', border: '1px solid #EF9A9A', color: '#C62828' };
+  const s =
+    (status || '')
+      .toLowerCase();
+
+
+  if (
+    s === 'aberto' ||
+    s === 'disponível'
+  ) {
+
+    return {
+      background: '#EEF5EE',
+      border: '1px solid #D7E6D7',
+      color: '#557255'
+    };
+
   }
 
-  return { background: '#F5F5F5', border: '1px solid #E0E0E0', color: '#616161' };
+
+  if (
+    s === 'aguardando prova'
+  ) {
+
+    return {
+      background: '#FFF7EA',
+      border: '1px solid #F0DFC0',
+      color: '#9A7040'
+    };
+
+  }
+
+
+  if (
+    s === 'em produção' ||
+    s === 'a fazer'
+  ) {
+
+    return {
+      background: '#EEF2F7',
+      border: '1px solid #D8E0EA',
+      color: '#5C6F85'
+    };
+
+  }
+
+
+  if (
+    s === 'concluído'
+  ) {
+
+    return {
+      background: '#EDF6F3',
+      border: '1px solid #D4E8E2',
+      color: '#52766B'
+    };
+
+  }
+
+
+  if (
+    s === 'entregue'
+  ) {
+
+    return {
+      background: '#F3ECEF',
+      border: '1px solid #E1D4DC',
+      color: '#7A5B72'
+    };
+
+  }
+
+
+  if (
+    s === 'cancelado'
+  ) {
+
+    return {
+      background: '#FFF0F0',
+      border: '1px solid #F0D6D6',
+      color: '#9B5D5D'
+    };
+
+  }
+
+
+  return {
+    background: '#F5F2F3',
+    border: '1px solid #E2DBDE',
+    color: '#746A70'
+  };
+
 };
+
 
 function ChatSidebar({
   orcamentoAtual,
@@ -48,211 +124,1075 @@ function ChatSidebar({
   onOpenMedidas,
   onNavigate
 }) {
-  const emAndamento = ['Em Produção', 'Aguardando Prova', 'Concluído'].includes(orcamentoAtual.status);
-  const pedidoFinalizado = ['Cancelado', 'Entregue'].includes(orcamentoAtual.status);
-  const podeEnviarProposta = isCostureira && !emAndamento && !pedidoFinalizado;
-  const temProvaAgendada = orcamentoAtual.status === 'Aguardando Prova';
 
-  const nomeCostureiraExibir = costureiraNome || pedido?.costureiraNome || 'Não informada';
-  const nomeClienteExibir = clienteNome || pedido?.clienteNome || pedido?.nomeCliente || 'Cliente';
-  const estiloStatus = obterEstiloStatus(orcamentoAtual.status);
+  const emAndamento =
+    [
+      'Em Produção',
+      'Aguardando Prova',
+      'Concluído'
+    ].includes(
+      orcamentoAtual.status
+    );
 
-  const dataProvaFormatada = provaAgendada?.dataProva ? formatarDataBR(provaAgendada.dataProva) : '';
-  const horarioProvaTexto = provaAgendada?.semPreferenciaHorario
-    ? 'horário a combinar'
-    : (provaAgendada?.horarioProva ? `às ${provaAgendada.horarioProva}` : '');
+
+  const pedidoFinalizado =
+    [
+      'Cancelado',
+      'Entregue'
+    ].includes(
+      orcamentoAtual.status
+    );
+
+
+  const podeEnviarProposta =
+    isCostureira &&
+    !emAndamento &&
+    !pedidoFinalizado;
+
+
+  const temProvaAgendada =
+    orcamentoAtual.status ===
+    'Aguardando Prova';
+
+
+  const nomeCostureiraExibir =
+    costureiraNome ||
+    pedido?.costureiraNome ||
+    'Não informada';
+
+
+  const nomeClienteExibir =
+    clienteNome ||
+    pedido?.clienteNome ||
+    pedido?.nomeCliente ||
+    'Cliente';
+
+
+  const estiloStatus =
+    obterEstiloStatus(
+      orcamentoAtual.status
+    );
+
+
+  const dataProvaFormatada =
+    provaAgendada?.dataProva
+      ? formatarDataBR(
+          provaAgendada.dataProva
+        )
+      : '';
+
+
+  const horarioProvaTexto =
+    provaAgendada?.semPreferenciaHorario
+
+      ? 'horário a combinar'
+
+      : (
+          provaAgendada?.horarioProva
+            ? `às ${provaAgendada.horarioProva}`
+            : ''
+        );
+
+
+  const botaoPrincipal = {
+    width: '100%',
+    minHeight: '38px',
+    padding: '9px 12px',
+    border: 'none',
+    borderRadius: '8px',
+    fontFamily: "'Poppins', 'Segoe UI', sans-serif",
+    fontSize: '9px',
+    fontWeight: '700',
+    cursor: 'pointer'
+  };
+
+
+  const botaoSecundario = {
+    width: '100%',
+    minHeight: '36px',
+    padding: '8px 11px',
+    background: '#FFFFFF',
+    color: '#7A5B72',
+    border: '1px solid #D8CFD5',
+    borderRadius: '8px',
+    fontFamily: "'Poppins', 'Segoe UI', sans-serif",
+    fontSize: '9px',
+    fontWeight: '600',
+    cursor: 'pointer'
+  };
+
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
-      
-      {/* Status & Detalhes do Pedido */}
-      <div style={{ background: '#fff', borderRadius: '12px', padding: '20px', boxShadow: '0 4px 16px rgba(62, 36, 69, 0.12)' }}>
-        <h3 style={{ margin: '0 0 15px 0', color: '#3E2445', fontSize: '17px' }}>Status do Pedido</h3>
-        
-        <div style={{ background: estiloStatus.background, border: estiloStatus.border, borderRadius: '8px', padding: '12px', marginBottom: '12px' }}>
-          <span style={{ fontSize: '12px', color: '#666', display: 'block', marginBottom: '2px' }}>Status Atual:</span>
-          <strong style={{ color: estiloStatus.color, fontSize: '14px' }}>{orcamentoAtual.status}</strong>
-        </div>
 
-        {/* EXIBIÇÃO CONDICIONAL: NOME DO CLIENTE (para costureira) OU COSTUREIRA (para cliente) */}
-        {isCostureira ? (
-          <div style={{ background: '#FAF6FA', border: '1px solid #EADCEB', borderRadius: '8px', padding: '12px', marginBottom: '15px' }}>
-            <span style={{ fontSize: '11px', color: '#666', textTransform: 'uppercase', letterSpacing: '0.5px', fontWeight: 'bold', display: 'block' }}>
-              Cliente:
-            </span>
-            <strong style={{ color: '#3E2445', fontSize: '14px', display: 'block', marginTop: '2px' }}>
-              {nomeClienteExibir}
-            </strong>
-          </div>
-        ) : (
-          <div style={{ background: '#FAF6FA', border: '1px solid #EADCEB', borderRadius: '8px', padding: '12px', marginBottom: '15px' }}>
-            <span style={{ fontSize: '11px', color: '#666', textTransform: 'uppercase', letterSpacing: '0.5px', fontWeight: 'bold', display: 'block' }}>
-              Costureira Responsável:
-            </span>
-            <strong style={{ color: '#3E2445', fontSize: '14px', display: 'block', marginTop: '2px' }}>
-              {nomeCostureiraExibir}
-            </strong>
-          </div>
-        )}
+    <aside
+      style={{
+        display: 'flex',
+        flexDirection: 'column',
+        gap: '14px'
+      }}
+    >
 
-        {/* Botão de Perfil Público da Costureira (Visível apenas para a Cliente) */}
-        {!isCostureira && idCostureiraPedido && (
-          <button
-            onClick={() => onNavigate && onNavigate('portfolio', idCostureiraPedido)}
-            style={{ width: '100%', padding: '9px', background: '#F4EFF5', color: '#3E2445', border: '1px solid #3E2445', borderRadius: '6px', fontWeight: 'bold', fontSize: '12px', marginBottom: '10px', cursor: 'pointer' }}
-          >
-            👤 Ver Perfil da Costureira
-          </button>
-        )}
 
-        {/* Previsão de Entrega */}
-        {orcamentoAtual.prazo && (
-          <div style={{ marginBottom: '15px', fontSize: '12px', color: '#555' }}>
-            <strong>Prazo de Entrega:</strong> {formatarDataBR(orcamentoAtual.prazo)} {orcamentoAtual.horarioEntrega ? `às ${orcamentoAtual.horarioEntrega}` : ''}
-          </div>
-        )}
+      {/* =====================================
+          STATUS E AÇÕES
+      ====================================== */}
 
-        {/* Cartão de Prova Agendada + Botão Cancelar Prova (Visível para Costureira e Cliente) */}
-        {emAndamento && temProvaAgendada && (
-          <div
+      <section
+        style={{
+          padding: '18px',
+
+          background: '#FFFFFF',
+
+          border: '1px solid #EBE5E0',
+
+          borderRadius: '14px',
+
+          boxShadow:
+            '0 7px 20px rgba(62,36,69,0.045)'
+        }}
+      >
+
+
+        <div
+          style={{
+            marginBottom: '15px'
+          }}
+        >
+
+          <span
             style={{
-              background: '#FFF8E1',
-              border: '1px solid #FFCC80',
-              borderLeft: '4px solid #E65100',
-              borderRadius: '8px',
-              padding: '12px',
-              marginBottom: '12px',
-              fontSize: '12.5px',
-              color: '#4E342E'
+              display: 'block',
+
+              marginBottom: '3px',
+
+              color: '#BB91AD',
+
+              fontSize: '8px',
+
+              fontWeight: '700',
+
+              letterSpacing: '1px',
+
+              textTransform: 'uppercase'
             }}
           >
-            <strong style={{ display: 'block', color: '#E65100', marginBottom: '4px', fontSize: '13px' }}>
-              🗓️ Prova Agendada
-            </strong>
-            <div style={{ lineHeight: '1.4' }}>
-              {dataProvaFormatada ? (
-                <>
-                  Em <strong>{dataProvaFormatada}</strong> {horarioProvaTexto ? `(${horarioProvaTexto})` : ''} você tem uma prova agendada.
-                </>
-              ) : (
-                <>Você possui uma prova agendada para este pedido.</>
+            Acompanhamento
+          </span>
+
+
+          <h3
+            style={{
+              margin: 0,
+
+              color: '#3E2445',
+
+              fontFamily:
+                "'Playfair Display SC', 'Playfair Display', Georgia, serif",
+
+              fontSize: '17px'
+            }}
+          >
+            Status do pedido
+          </h3>
+
+        </div>
+
+
+        {/* STATUS */}
+
+        <div
+          style={{
+            marginBottom: '12px',
+
+            padding: '10px 11px',
+
+            background:
+              estiloStatus.background,
+
+            border:
+              estiloStatus.border,
+
+            borderRadius: '8px'
+          }}
+        >
+
+          <span
+            style={{
+              display: 'block',
+
+              marginBottom: '2px',
+
+              color: '#8B8087',
+
+              fontSize: '8px',
+
+              fontWeight: '600',
+
+              textTransform: 'uppercase'
+            }}
+          >
+            Status atual
+          </span>
+
+
+          <strong
+            style={{
+              color:
+                estiloStatus.color,
+
+              fontSize: '11px'
+            }}
+          >
+            {orcamentoAtual.status}
+          </strong>
+
+        </div>
+
+
+        {/* PARTICIPANTE */}
+
+        <div
+          style={{
+            marginBottom: '12px',
+
+            padding: '10px 11px',
+
+            background: '#FAF8F7',
+
+            border: '1px solid #EAE2E6',
+
+            borderRadius: '8px'
+          }}
+        >
+
+          <span
+            style={{
+              display: 'block',
+
+              marginBottom: '3px',
+
+              color: '#998C95',
+
+              fontSize: '8px',
+
+              fontWeight: '700',
+
+              letterSpacing: '0.6px',
+
+              textTransform: 'uppercase'
+            }}
+          >
+            {isCostureira
+              ? 'Cliente'
+              : 'Costureira responsável'
+            }
+          </span>
+
+
+          <strong
+            style={{
+              display: 'block',
+
+              color: '#5F4B5B',
+
+              fontSize: '10px'
+            }}
+          >
+            {isCostureira
+              ? nomeClienteExibir
+              : nomeCostureiraExibir
+            }
+          </strong>
+
+        </div>
+
+
+        {/* PERFIL DA COSTUREIRA */}
+
+        {!isCostureira &&
+         idCostureiraPedido && (
+
+          <button
+            type="button"
+
+            onClick={() =>
+              onNavigate &&
+              onNavigate(
+                'portfolio',
+                idCostureiraPedido
+              )
+            }
+
+            style={{
+              ...botaoSecundario,
+
+              marginBottom: '10px',
+
+              background: '#F8F3F6'
+            }}
+          >
+            Ver Perfil da Costureira
+          </button>
+
+        )}
+
+
+        {/* PRAZO */}
+
+        {orcamentoAtual.prazo && (
+
+          <div
+            style={{
+              marginBottom: '13px',
+
+              paddingBottom: '12px',
+
+              borderBottom:
+                '1px solid #EEE7E3',
+
+              color: '#6E646B',
+
+              fontSize: '9px',
+
+              lineHeight: '1.6'
+            }}
+          >
+
+            <span
+              style={{
+                display: 'block',
+
+                marginBottom: '2px',
+
+                color: '#998C95',
+
+                fontSize: '8px',
+
+                fontWeight: '700',
+
+                textTransform: 'uppercase'
+              }}
+            >
+              Prazo de entrega
+            </span>
+
+
+            <strong
+              style={{
+                color: '#5F525C'
+              }}
+            >
+              {formatarDataBR(
+                orcamentoAtual.prazo
               )}
+            </strong>
+
+            {orcamentoAtual.horarioEntrega
+              ? ` às ${orcamentoAtual.horarioEntrega}`
+              : ''
+            }
+
+          </div>
+
+        )}
+
+
+        {/* =================================
+            PROVA AGENDADA
+        ================================== */}
+
+        {emAndamento &&
+         temProvaAgendada && (
+
+          <div
+            style={{
+              marginBottom: '12px',
+
+              padding: '11px',
+
+              background: '#FFF8EC',
+
+              color: '#806A59',
+
+              border: '1px solid #F1DFC4',
+
+              borderLeft:
+                '3px solid #C39A66',
+
+              borderRadius: '8px',
+
+              fontSize: '9px',
+
+              lineHeight: '1.55'
+            }}
+          >
+
+            <strong
+              style={{
+                display: 'block',
+
+                marginBottom: '4px',
+
+                color: '#9A7040',
+
+                fontSize: '10px'
+              }}
+            >
+              Prova Agendada
+            </strong>
+
+
+            <div>
+
+              {dataProvaFormatada ? (
+
+                <>
+                  Em{' '}
+                  <strong>
+                    {dataProvaFormatada}
+                  </strong>{' '}
+
+                  {horarioProvaTexto
+                    ? `(${horarioProvaTexto})`
+                    : ''
+                  }
+
+                  {' '}você tem uma prova agendada.
+                </>
+
+              ) : (
+
+                <>
+                  Você possui uma prova agendada para este pedido.
+                </>
+
+              )}
+
             </div>
+
+
             {provaAgendada?.local && (
-              <div style={{ marginTop: '4px', fontSize: '12px', color: '#5D4037' }}>
-                <strong>📍 Local:</strong> {provaAgendada.local}
+
+              <div
+                style={{
+                  marginTop: '5px',
+
+                  color: '#6F5E51'
+                }}
+              >
+                <strong>
+                  Local:
+                </strong>{' '}
+
+                {provaAgendada.local}
               </div>
+
             )}
+
+
             <button
               type="button"
-              onClick={onCancelarProva}
+
+              onClick={
+                onCancelarProva
+              }
+
               style={{
-                width: '100%',
-                marginTop: '10px',
-                padding: '8px',
-                background: '#fff',
-                color: '#C62828',
-                border: '1px solid #C62828',
-                borderRadius: '6px',
-                fontWeight: 'bold',
-                fontSize: '12px',
-                cursor: 'pointer'
+                ...botaoSecundario,
+
+                marginTop: '9px',
+
+                color: '#9B5D5D',
+
+                border:
+                  '1px solid #E9CFCF'
               }}
             >
               Cancelar Prova
             </button>
+
           </div>
+
         )}
+
+
+        {/* =================================
+            ENVIAR PROPOSTA
+        ================================== */}
 
         {podeEnviarProposta && (
-          <button onClick={onOpenProposta} style={{ width: '100%', padding: '10px', background: '#3E2445', color: '#fff', border: 'none', borderRadius: '6px', fontWeight: 'bold', fontSize: '13px', marginBottom: '10px', cursor: 'pointer' }}>
+
+          <button
+            type="button"
+
+            onClick={
+              onOpenProposta
+            }
+
+            style={{
+              ...botaoPrincipal,
+
+              marginBottom: '9px',
+
+              background: '#7A5B72',
+
+              color: '#FFFFFF'
+            }}
+          >
             + Enviar Orçamento
           </button>
+
         )}
 
-        {/* Botões da Costureira (visíveis apenas após proposta aceita / contrato em andamento) */}
-        {isCostureira && emAndamento && (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-            {!temProvaAgendada && !temProvaPendente && (
-              <button onClick={onOpenProva} style={{ width: '100%', padding: '9px', background: '#2E7D32', color: '#fff', border: 'none', borderRadius: '6px', fontWeight: 'bold', fontSize: '13px', cursor: 'pointer' }}>
+
+        {/* =================================
+            AÇÕES DA COSTUREIRA
+        ================================== */}
+
+        {isCostureira &&
+         emAndamento && (
+
+          <div
+            style={{
+              display: 'flex',
+
+              flexDirection: 'column',
+
+              gap: '7px'
+            }}
+          >
+
+
+            {!temProvaAgendada &&
+             !temProvaPendente && (
+
+              <button
+                type="button"
+
+                onClick={
+                  onOpenProva
+                }
+
+                style={{
+                  ...botaoPrincipal,
+
+                  background: '#71866F',
+
+                  color: '#FFFFFF'
+                }}
+              >
                 Agendar Prova da Peça
               </button>
+
             )}
 
-            {!temProvaAgendada && temProvaPendente && (
+
+            {!temProvaAgendada &&
+             temProvaPendente && (
+
               <div
                 style={{
-                  background: '#FAF6FA',
-                  border: '1px solid #EADCEB',
-                  borderRadius: '6px',
-                  padding: '8px 10px',
-                  fontSize: '12px',
-                  color: '#5A3E63',
+                  padding: '9px 10px',
+
+                  background: '#F7F1F5',
+
+                  color: '#765F70',
+
+                  border: '1px solid #E5D8E0',
+
+                  borderRadius: '7px',
+
+                  fontSize: '8px',
+
+                  lineHeight: '1.5',
+
                   textAlign: 'center'
                 }}
               >
-                ⏳ Sugestão de prova enviada — aguardando resposta da cliente.
+                Sugestão de prova enviada — aguardando resposta da cliente.
               </div>
+
             )}
 
-            {orcamentoAtual.status === 'Em Produção' && (
-              <button onClick={onConcluirServico} style={{ width: '100%', padding: '9px', background: '#1565C0', color: '#fff', border: 'none', borderRadius: '6px', fontWeight: 'bold', fontSize: '13px', cursor: 'pointer' }}>
-                ✅ Concluir Peça (Pronto p/ Entrega)
+
+            {orcamentoAtual.status ===
+             'Em Produção' && (
+
+              <button
+                type="button"
+
+                onClick={
+                  onConcluirServico
+                }
+
+                style={{
+                  ...botaoPrincipal,
+
+                  background: '#637A8E',
+
+                  color: '#FFFFFF'
+                }}
+              >
+                Concluir Peça
               </button>
+
             )}
+
           </div>
+
         )}
 
-        {/* Confirmação de Recebimento pela Cliente */}
-        {!isCostureira && orcamentoAtual.status === 'Concluído' && (
-          <button onClick={onConfirmarEntrega} style={{ width: '100%', padding: '10px', background: '#2E7D32', color: '#fff', border: 'none', borderRadius: '6px', fontWeight: 'bold', fontSize: '13px', marginTop: '10px', cursor: 'pointer' }}>
-            🎉 Confirmar Recebimento da Peça
-          </button>
-        )}
 
-        {/* Botão de Avaliação Posterior (Visível para a Cliente se Entregue e ainda não avaliado) */}
-        {!isCostureira && orcamentoAtual.status === 'Entregue' && !jaAvaliado && (
+        {/* =================================
+            ENTREGA
+        ================================== */}
+
+        {!isCostureira &&
+         orcamentoAtual.status ===
+          'Concluído' && (
+
           <button
-            onClick={onOpenAvaliacao}
-            style={{ width: '100%', padding: '10px', background: '#FFB400', color: '#3E2445', border: 'none', borderRadius: '6px', fontWeight: 'bold', fontSize: '13px', marginTop: '10px', cursor: 'pointer' }}
+            type="button"
+
+            onClick={
+              onConfirmarEntrega
+            }
+
+            style={{
+              ...botaoPrincipal,
+
+              marginTop: '9px',
+
+              background: '#71866F',
+
+              color: '#FFFFFF'
+            }}
           >
-            ⭐ Avaliar Serviço da Costureira
+            Confirmar Recebimento da Peça
           </button>
+
         )}
 
-        {/* Cancelamento disponível apenas enquanto o contrato estiver em andamento */}
+
+        {/* =================================
+            AVALIAÇÃO
+        ================================== */}
+
+        {!isCostureira &&
+         orcamentoAtual.status ===
+          'Entregue' &&
+         !jaAvaliado && (
+
+          <button
+            type="button"
+
+            onClick={
+              onOpenAvaliacao
+            }
+
+            style={{
+              ...botaoPrincipal,
+
+              marginTop: '9px',
+
+              background: '#E8C77D',
+
+              color: '#5B4633'
+            }}
+          >
+            Avaliar Serviço da Costureira
+          </button>
+
+        )}
+
+
+        {/* =================================
+            CANCELAR PEDIDO
+        ================================== */}
+
         {emAndamento && (
-          <button onClick={onCancelarPedido} style={{ width: '100%', padding: '9px', background: '#C62828', color: '#fff', border: 'none', borderRadius: '6px', fontWeight: 'bold', fontSize: '13px', marginTop: '10px', cursor: 'pointer' }}>
-            ❌ {isCostureira ? 'Cancelar / Desistir do Pedido' : 'Cancelar Pedido'}
+
+          <button
+            type="button"
+
+            onClick={
+              onCancelarPedido
+            }
+
+            style={{
+              ...botaoPrincipal,
+
+              marginTop: '9px',
+
+              background: '#FFF7F7',
+
+              color: '#9B5D5D',
+
+              border:
+                '1px solid #E9CFCF'
+            }}
+          >
+            {isCostureira
+              ? 'Cancelar / Desistir do Pedido'
+              : 'Cancelar Pedido'
+            }
           </button>
+
         )}
 
-        {/* Exportações */}
-        <div style={{ marginTop: '15px', borderTop: '1px solid #eee', paddingTop: '15px', display: 'flex', flexDirection: 'column', gap: '8px' }}>
-          <button onClick={() => exportarPDF({ idPedido, orcamentoAtual, medidas, pedido, costureiraNome: nomeCostureiraExibir })} style={{ width: '100%', padding: '8px', background: '#F4EFF5', color: '#3E2445', border: '1px solid #3E2445', borderRadius: '6px', fontWeight: 'bold', fontSize: '12px', cursor: 'pointer' }}>
-            📄 Exportar PDF (Contrato/Comprovante)
-          </button>
-          <button onClick={() => exportarTXT({ idPedido, orcamentoAtual, medidas, pedido, costureiraNome: nomeCostureiraExibir })} style={{ width: '100%', padding: '8px', background: '#fff', color: '#555', border: '1px solid #ccc', borderRadius: '6px', fontWeight: 'bold', fontSize: '12px', cursor: 'pointer' }}>
-            📝 Baixar Ficha e Orçamento (TXT)
-          </button>
-        </div>
-      </div>
 
-      {/* Ficha de Medidas */}
-      <div style={{ background: '#fff', borderRadius: '12px', padding: '20px', boxShadow: '0 4px 16px rgba(62, 36, 69, 0.12)' }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px' }}>
-          <h3 style={{ margin: 0, color: '#3E2445', fontSize: '16px' }}>Ficha de Medidas</h3>
-          <button onClick={onOpenMedidas} style={{ background: 'none', border: 'none', color: '#3E2445', textDecoration: 'underline', cursor: 'pointer', fontSize: '12px', fontWeight: 'bold' }}>Editar</button>
-        </div>
-        <ul style={{ listStyle: 'disc', paddingLeft: '20px', margin: 0, fontSize: '13px', color: '#555' }}>
-          <li>Busto: {medidas.busto || '-'} cm</li>
-          <li>Cintura: {medidas.cintura || '-'} cm</li>
-          <li>Quadril: {medidas.quadril || '-'} cm</li>
-        </ul>
-      </div>
+        {/* =================================
+            EXPORTAÇÃO
+        ================================== */}
 
-    </div>
+        <div
+          style={{
+            marginTop: '15px',
+
+            paddingTop: '14px',
+
+            display: 'flex',
+
+            flexDirection: 'column',
+
+            gap: '7px',
+
+            borderTop:
+              '1px solid #EEE7E3'
+          }}
+        >
+
+          <span
+            style={{
+              marginBottom: '1px',
+
+              color: '#998C95',
+
+              fontSize: '8px',
+
+              fontWeight: '700',
+
+              letterSpacing: '0.6px',
+
+              textTransform: 'uppercase'
+            }}
+          >
+            Documentos
+          </span>
+
+
+          <button
+            type="button"
+
+            onClick={() =>
+              exportarPDF({
+                idPedido,
+                orcamentoAtual,
+                medidas,
+                pedido,
+                costureiraNome:
+                  nomeCostureiraExibir
+              })
+            }
+
+            style={{
+              ...botaoSecundario,
+
+              background: '#F8F3F6'
+            }}
+          >
+            Exportar PDF (Contrato/Comprovante)
+          </button>
+
+
+          <button
+            type="button"
+
+            onClick={() =>
+              exportarTXT({
+                idPedido,
+                orcamentoAtual,
+                medidas,
+                pedido,
+                costureiraNome:
+                  nomeCostureiraExibir
+              })
+            }
+
+            style={{
+              ...botaoSecundario,
+
+              color: '#6E646B'
+            }}
+          >
+            Baixar Ficha e Orçamento (TXT)
+          </button>
+
+        </div>
+
+
+      </section>
+
+
+      {/* =====================================
+          FICHA DE MEDIDAS
+      ====================================== */}
+
+      <section
+        style={{
+          padding: '17px 18px',
+
+          background: '#FFFFFF',
+
+          border: '1px solid #EBE5E0',
+
+          borderRadius: '14px',
+
+          boxShadow:
+            '0 7px 20px rgba(62,36,69,0.04)'
+        }}
+      >
+
+        <div
+          style={{
+            display: 'flex',
+
+            justifyContent: 'space-between',
+
+            alignItems: 'center',
+
+            gap: '10px',
+
+            marginBottom: '12px'
+          }}
+        >
+
+          <div>
+
+            <span
+              style={{
+                display: 'block',
+
+                marginBottom: '2px',
+
+                color: '#BB91AD',
+
+                fontSize: '8px',
+
+                fontWeight: '700',
+
+                letterSpacing: '0.8px',
+
+                textTransform: 'uppercase'
+              }}
+            >
+              Informações
+            </span>
+
+
+            <h3
+              style={{
+                margin: 0,
+
+                color: '#3E2445',
+
+                fontFamily:
+                  "'Playfair Display SC', 'Playfair Display', Georgia, serif",
+
+                fontSize: '15px'
+              }}
+            >
+              Ficha de Medidas
+            </h3>
+
+          </div>
+
+
+          <button
+            type="button"
+
+            onClick={
+              onOpenMedidas
+            }
+
+            style={{
+              padding: 0,
+
+              background: 'transparent',
+
+              color: '#7A5B72',
+
+              border: 'none',
+
+              fontFamily:
+                "'Poppins', sans-serif",
+
+              fontSize: '9px',
+
+              fontWeight: '600',
+
+              textDecoration: 'underline',
+
+              cursor: 'pointer'
+            }}
+          >
+            Editar
+          </button>
+
+        </div>
+
+
+        <div
+          style={{
+            display: 'grid',
+
+            gridTemplateColumns:
+              'repeat(3, 1fr)',
+
+            gap: '7px'
+          }}
+        >
+
+
+          <div
+            style={{
+              padding: '9px 7px',
+
+              background: '#FAF8F7',
+
+              borderRadius: '7px',
+
+              textAlign: 'center'
+            }}
+          >
+
+            <span
+              style={{
+                display: 'block',
+
+                marginBottom: '2px',
+
+                color: '#998C95',
+
+                fontSize: '7px',
+
+                fontWeight: '700',
+
+                textTransform: 'uppercase'
+              }}
+            >
+              Busto
+            </span>
+
+            <strong
+              style={{
+                color: '#5F525C',
+
+                fontSize: '10px'
+              }}
+            >
+              {medidas.busto || '-'} cm
+            </strong>
+
+          </div>
+
+
+          <div
+            style={{
+              padding: '9px 7px',
+
+              background: '#FAF8F7',
+
+              borderRadius: '7px',
+
+              textAlign: 'center'
+            }}
+          >
+
+            <span
+              style={{
+                display: 'block',
+
+                marginBottom: '2px',
+
+                color: '#998C95',
+
+                fontSize: '7px',
+
+                fontWeight: '700',
+
+                textTransform: 'uppercase'
+              }}
+            >
+              Cintura
+            </span>
+
+            <strong
+              style={{
+                color: '#5F525C',
+
+                fontSize: '10px'
+              }}
+            >
+              {medidas.cintura || '-'} cm
+            </strong>
+
+          </div>
+
+
+          <div
+            style={{
+              padding: '9px 7px',
+
+              background: '#FAF8F7',
+
+              borderRadius: '7px',
+
+              textAlign: 'center'
+            }}
+          >
+
+            <span
+              style={{
+                display: 'block',
+
+                marginBottom: '2px',
+
+                color: '#998C95',
+
+                fontSize: '7px',
+
+                fontWeight: '700',
+
+                textTransform: 'uppercase'
+              }}
+            >
+              Quadril
+            </span>
+
+            <strong
+              style={{
+                color: '#5F525C',
+
+                fontSize: '10px'
+              }}
+            >
+              {medidas.quadril || '-'} cm
+            </strong>
+
+          </div>
+
+
+        </div>
+
+      </section>
+
+
+    </aside>
+
   );
+
 }
+
 
 export default ChatSidebar;

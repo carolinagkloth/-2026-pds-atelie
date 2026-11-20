@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
+import '../../styles/Chat.css';
 import ModalCancelarPedido from './modals/ModalCancelarPedido';
 import ModalAceitarProposta from './modals/ModalAceitarProposta';
 import ModalConfirmarEntrega from './modals/ModalConfirmarEntrega';
@@ -591,7 +592,7 @@ function ChatContainer({ pedido, usuario, idCostureiraProp, onNavigate }) {
     : null;
 
   return (
-    <div style={{ maxWidth: '1100px', margin: '20px auto', fontFamily: "'Segoe UI', Tahoma, sans-serif" }}>
+  <div className="chat-page">
       <ChatHeader
         nomeUsuario={user?.nome}
         fotoPerfil={user?.foto_perfil}
@@ -599,7 +600,7 @@ function ChatContainer({ pedido, usuario, idCostureiraProp, onNavigate }) {
         onNavigate={onNavigate}
       />
 
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 340px', gap: '20px' }}>
+      <div className="chat-layout">
         <ChatMessageList
           mensagens={mensagens}
           idUsuario={idUsuario}

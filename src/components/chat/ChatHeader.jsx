@@ -1,115 +1,327 @@
 import React, { useState, useEffect } from 'react';
 
-function ChatHeader({ nomeUsuario, fotoPerfil, isCostureira, onNavigate }) {
-  const [erroImagem, setErroImagem] = useState(false);
+
+function ChatHeader({
+  nomeUsuario,
+  fotoPerfil,
+  isCostureira,
+  onNavigate
+}) {
+
+  const [erroImagem, setErroImagem] =
+    useState(false);
+
 
   const usuarioSalvo = (() => {
+
     try {
-      const item = localStorage.getItem('usuarioAtelie');
-      return item && item !== 'undefined' ? JSON.parse(item) : {};
+
+      const item =
+        localStorage.getItem(
+          'usuarioAtelie'
+        );
+
+
+      return (
+        item &&
+        item !== 'undefined'
+          ? JSON.parse(item)
+          : {}
+      );
+
     } catch {
+
       return {};
+
     }
+
   })();
 
-  const nomeExibir = nomeUsuario || usuarioSalvo?.nome || 'Usuário';
-  const fotoExibir = fotoPerfil !== undefined ? fotoPerfil : (usuarioSalvo?.foto_perfil || '');
-  const primeiraLetra = nomeExibir.trim().charAt(0).toUpperCase();
+
+  const nomeExibir =
+    nomeUsuario ||
+    usuarioSalvo?.nome ||
+    'Usuário';
+
+
+  const fotoExibir =
+    fotoPerfil !== undefined
+      ? fotoPerfil
+      : (
+          usuarioSalvo?.foto_perfil ||
+          ''
+        );
+
+
+  const primeiraLetra =
+    nomeExibir
+      .trim()
+      .charAt(0)
+      .toUpperCase();
+
 
   useEffect(() => {
+
     setErroImagem(false);
+
   }, [fotoExibir]);
 
+
   return (
-    <div
+
+    <header
       style={{
-        background: '#fff',
-        borderRadius: '12px',
-        padding: '14px 20px',
-        marginBottom: '20px',
-        boxShadow: '0 4px 16px rgba(62, 36, 69, 0.12)',
         display: 'flex',
         justifyContent: 'space-between',
         alignItems: 'center',
-        flexWrap: 'wrap',
-        gap: '12px'
+
+        gap: '16px',
+
+        marginBottom: '18px',
+
+        padding: '14px 18px',
+
+        background: '#FFFFFF',
+
+        border: '1px solid #EBE5E0',
+
+        borderRadius: '13px',
+
+        boxShadow:
+          '0 6px 18px rgba(62,36,69,0.045)',
+
+        flexWrap: 'wrap'
       }}
     >
-      {/* Botão Voltar para Conversas */}
+
+
+      {/* VOLTAR */}
+
       <button
         type="button"
-        onClick={() => onNavigate && onNavigate('meusChats')}
+
+        onClick={() =>
+          onNavigate &&
+          onNavigate(
+            'meusChats'
+          )
+        }
+
         style={{
-          padding: '8px 14px',
-          background: '#F4EFF5',
-          color: '#3E2445',
-          border: '1px solid #3E2445',
-          borderRadius: '6px',
-          fontWeight: 'bold',
-          fontSize: '13px',
+          height: '38px',
+
+          padding: '0 14px',
+
+          display: 'flex',
+
+          alignItems: 'center',
+
+          gap: '6px',
+
+          background: '#FFFFFF',
+
+          color: '#7A5B72',
+
+          border:
+            '1px solid #D8CFD5',
+
+          borderRadius: '8px',
+
+          fontFamily:
+            "'Poppins', 'Segoe UI', sans-serif",
+
+          fontSize: '10px',
+
+          fontWeight: '600',
+
           cursor: 'pointer'
         }}
       >
-        ← Voltar para Conversas
+        <span
+          style={{
+            fontSize: '14px',
+            lineHeight: 1
+          }}
+        >
+          ←
+        </span>
+
+        Voltar para conversas
+
       </button>
 
-      {/* Botão de Acesso Rápido ao Perfil / Agenda */}
+
+      {/* PERFIL */}
+
       <button
         type="button"
-        onClick={() => onNavigate && onNavigate('perfil')}
+
+        onClick={() =>
+          onNavigate &&
+          onNavigate(
+            'perfil'
+          )
+        }
+
         title="Abrir Meu Perfil e Agenda"
+
         style={{
           display: 'flex',
+
           alignItems: 'center',
+
           gap: '10px',
-          background: '#FAF6FA',
-          border: '1px solid #EADCEB',
+
+          padding: '5px 12px 5px 5px',
+
+          background: '#FAF8F7',
+
+          border:
+            '1px solid #E6DDE2',
+
           borderRadius: '999px',
-          padding: '5px 14px 5px 6px',
+
           cursor: 'pointer',
+
           textAlign: 'left'
         }}
       >
+
+
+        {/* AVATAR */}
+
         <div
           style={{
-            width: '36px',
-            height: '36px',
-            borderRadius: '50%',
-            overflow: 'hidden',
-            background: '#3E2445',
-            border: '2px solid #3E2445',
+            width: '37px',
+            height: '37px',
+
+            flexShrink: 0,
+
             display: 'flex',
+
             alignItems: 'center',
             justifyContent: 'center',
-            flexShrink: 0
+
+            overflow: 'hidden',
+
+            background: '#F3ECEF',
+
+            border:
+              '1px solid #E2D5DD',
+
+            borderRadius: '50%',
+
+            boxShadow:
+              '0 2px 8px rgba(62,36,69,0.07)'
           }}
         >
-          {fotoExibir && !erroImagem ? (
+
+          {fotoExibir &&
+           !erroImagem ? (
+
             <img
               src={fotoExibir}
+
               alt={nomeExibir}
+
               referrerPolicy="no-referrer"
-              onError={() => setErroImagem(true)}
-              style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+
+              onError={() =>
+                setErroImagem(
+                  true
+                )
+              }
+
+              style={{
+                width: '100%',
+                height: '100%',
+
+                display: 'block',
+
+                objectFit: 'cover'
+              }}
             />
+
           ) : (
-            <span style={{ color: '#fff', fontSize: '15px', fontWeight: 'bold', userSelect: 'none' }}>
+
+            <span
+              style={{
+                color: '#7A5B72',
+
+                fontFamily:
+                  "'Playfair Display SC', 'Playfair Display', Georgia, serif",
+
+                fontSize: '15px',
+
+                fontWeight: '700',
+
+                userSelect: 'none'
+              }}
+            >
               {primeiraLetra}
             </span>
+
           )}
+
         </div>
 
-        <div style={{ display: 'flex', flexDirection: 'column', lineHeight: '1.2' }}>
-          <span style={{ fontSize: '13px', fontWeight: 'bold', color: '#3E2445' }}>
+
+        {/* NOME */}
+
+        <div
+          style={{
+            display: 'flex',
+
+            flexDirection: 'column',
+
+            gap: '1px',
+
+            lineHeight: '1.3'
+          }}
+        >
+
+          <span
+            style={{
+              color: '#5F4B5B',
+
+              fontFamily:
+                "'Poppins', 'Segoe UI', sans-serif",
+
+              fontSize: '10px',
+
+              fontWeight: '600'
+            }}
+          >
             {nomeExibir}
           </span>
-          <span style={{ fontSize: '11px', color: '#666' }}>
-            {isCostureira ? 'Meu Perfil • Agenda' : 'Meu Perfil'}
+
+
+          <span
+            style={{
+              color: '#998C95',
+
+              fontFamily:
+                "'Poppins', 'Segoe UI', sans-serif",
+
+              fontSize: '8px'
+            }}
+          >
+            {isCostureira
+              ? 'Meu Perfil • Agenda'
+              : 'Meu Perfil'
+            }
           </span>
+
         </div>
+
       </button>
-    </div>
+
+
+    </header>
+
   );
+
 }
+
 
 export default ChatHeader;

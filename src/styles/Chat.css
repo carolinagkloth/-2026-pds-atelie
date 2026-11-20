@@ -1,0 +1,73 @@
+.chat-page {
+  width: min(1180px, 94%);
+
+  margin: 32px auto 70px;
+
+  box-sizing: border-box;
+
+  color: #4A424A;
+
+  font-family:
+    "Poppins",
+    "Segoe UI",
+    sans-serif;
+}
+
+
+/* ==========================================
+   ÁREA PRINCIPAL
+========================================== */
+
+.chat-layout {
+  width: 100%;
+
+  display: grid;
+
+  grid-template-columns:
+    minmax(0, 1fr)
+    minmax(285px, 320px);
+
+  align-items: start;
+
+  gap: 16px;
+}
+
+
+.chat-layout > * {
+  min-width: 0;
+}
+
+
+/* ==========================================
+   RESPONSIVO
+========================================== */
+
+@media (max-width: 900px) {
+
+  .chat-page {
+    width: min(94%, 760px);
+
+    margin:
+      25px auto 55px;
+  }
+
+
+  .chat-layout {
+    grid-template-columns: 1fr;
+
+    gap: 14px;
+  }
+
+}
+
+
+@media (max-width: 600px) {
+
+  .chat-page {
+    width: 94%;
+
+    margin:
+      18px auto 45px;
+  }
+
+}

@@ -1,51 +1,142 @@
 import React, { useState, useEffect } from 'react';
 
-function ModalProva({ isOpen, onClose, onEnviar, enderecoCostureira, onIrParaPerfil }) {
-  const [dataProva, setDataProva] = useState('');
-  const [horarioProva, setHorarioProva] = useState('14:00');
-  const [observacao, setObservacao] = useState('');
-  const [erro, setErro] = useState('');
 
-  const agora = new Date();
-  const hoje = `${agora.getFullYear()}-${String(agora.getMonth() + 1).padStart(2, '0')}-${String(agora.getDate()).padStart(2, '0')}`;
-  const horaAtual = `${String(agora.getHours()).padStart(2, '0')}:${String(agora.getMinutes()).padStart(2, '0')}`;
+function ModalProva({
+  isOpen,
+  onClose,
+  onEnviar,
+  enderecoCostureira,
+  onIrParaPerfil
+}) {
+
+  const [
+    dataProva,
+    setDataProva
+  ] = useState('');
+
+
+  const [
+    horarioProva,
+    setHorarioProva
+  ] = useState('14:00');
+
+
+  const [
+    observacao,
+    setObservacao
+  ] = useState('');
+
+
+  const [
+    erro,
+    setErro
+  ] = useState('');
+
+
+  const agora =
+    new Date();
+
+
+  const hoje =
+    `${agora.getFullYear()}-${String(
+      agora.getMonth() + 1
+    ).padStart(2, '0')}-${String(
+      agora.getDate()
+    ).padStart(2, '0')}`;
+
+
+  const horaAtual =
+    `${String(
+      agora.getHours()
+    ).padStart(2, '0')}:${String(
+      agora.getMinutes()
+    ).padStart(2, '0')}`;
+
 
   useEffect(() => {
+
     if (isOpen) {
+
       setDataProva('');
-      setHorarioProva('14:00');
+
+      setHorarioProva(
+        '14:00'
+      );
+
       setObservacao('');
+
       setErro('');
+
     }
+
   }, [isOpen]);
 
-  if (!isOpen) return null;
 
-  const enderecoLimpo = (enderecoCostureira || '').trim();
+  if (!isOpen) {
+    return null;
+  }
+
+
+  const enderecoLimpo =
+    (
+      enderecoCostureira ||
+      ''
+    ).trim();
+
 
   const handleSubmit = (e) => {
+
     e.preventDefault();
+
     setErro('');
 
+
     if (!enderecoLimpo) {
-      setErro('Cadastre seu endereço de atendimento no Perfil antes de propor uma prova.');
+
+      setErro(
+        'Cadastre seu endereço de atendimento no Perfil antes de propor uma prova.'
+      );
+
       return;
+
     }
+
 
     if (!dataProva) {
-      setErro('Selecione a data sugerida para a prova.');
+
+      setErro(
+        'Selecione a data sugerida para a prova.'
+      );
+
       return;
+
     }
+
 
     if (!horarioProva) {
-      setErro('Informe o horário obrigatório para a prova.');
+
+      setErro(
+        'Informe o horário obrigatório para a prova.'
+      );
+
       return;
+
     }
 
-    if (dataProva === hoje && horarioProva <= horaAtual) {
-      setErro(`Para hoje, escolha um horário posterior ao horário atual (${horaAtual}).`);
+
+    if (
+      dataProva === hoje &&
+      horarioProva <= horaAtual
+    ) {
+
+      setErro(
+        `Para hoje, escolha um horário posterior ao horário atual (${horaAtual}).`
+      );
+
       return;
+
     }
+
 
     onEnviar({
       dataProva,
@@ -53,129 +144,772 @@ function ModalProva({ isOpen, onClose, onEnviar, enderecoCostureira, onIrParaPer
       observacao,
       local: enderecoLimpo
     });
+
   };
 
+
   return (
-    <div style={{ position: 'fixed', inset: 0, background: 'rgba(30, 18, 34, 0.55)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1100, padding: '15px' }}>
-      <div style={{ background: '#fff', padding: '25px', borderRadius: '12px', width: '430px', maxWidth: '100%', boxShadow: '0 8px 30px rgba(62, 36, 69, 0.25)', fontFamily: "'Segoe UI', Tahoma, sans-serif" }}>
-        <h3 style={{ marginTop: 0, marginBottom: '6px', color: '#3E2445' }}>Propor Data para Prova da Peça</h3>
-        <p style={{ marginTop: 0, marginBottom: '14px', fontSize: '12.5px', color: '#666' }}>
-          A cliente receberá esta sugestão no chat para confirmar se pode comparecer no dia e horário.
-        </p>
 
-        <form onSubmit={handleSubmit}>
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px', marginBottom: '14px' }}>
-            <div>
-              <label style={{ display: 'block', fontSize: '13px', fontWeight: 'bold', marginBottom: '4px' }}>Data Sugerida *</label>
-              <input
-                type="date"
-                min={hoje}
-                value={dataProva}
-                onChange={(e) => setDataProva(e.target.value)}
-                style={{ width: '100%', padding: '9px', borderRadius: '6px', border: '1px solid #ccc', boxSizing: 'border-box' }}
-                required
-              />
-            </div>
+    <div
+      style={{
+        position: 'fixed',
 
-            <div>
-              <label style={{ display: 'block', fontSize: '13px', fontWeight: 'bold', marginBottom: '4px' }}>Horário da Prova *</label>
-              <input
-                type="time"
-                min={dataProva === hoje ? horaAtual : undefined}
-                value={horarioProva}
-                onChange={(e) => setHorarioProva(e.target.value)}
-                style={{ width: '100%', padding: '9px', borderRadius: '6px', border: '1px solid #ccc', boxSizing: 'border-box' }}
-                required
-              />
-            </div>
-          </div>
+        inset: 0,
 
-          {/* Local automático puxado do endereço da costureira */}
-          <div
+        zIndex: 1100,
+
+        display: 'flex',
+
+        alignItems: 'center',
+        justifyContent: 'center',
+
+        padding: '18px',
+
+        background:
+          'rgba(43, 29, 40, 0.50)',
+
+        backdropFilter:
+          'blur(4px)'
+      }}
+    >
+
+      <div
+        style={{
+          width:
+            'min(470px, 100%)',
+
+          maxHeight:
+            '92vh',
+
+          overflowY:
+            'auto',
+
+          padding:
+            '25px',
+
+          boxSizing:
+            'border-box',
+
+          background:
+            '#FFFFFF',
+
+          border:
+            '1px solid #E8E0E4',
+
+          borderRadius:
+            '16px',
+
+          boxShadow:
+            '0 22px 60px rgba(43,29,40,0.22)',
+
+          fontFamily:
+            "'Poppins', 'Segoe UI', sans-serif"
+        }}
+      >
+
+
+        {/* CABEÇALHO */}
+
+        <div
+          style={{
+            marginBottom:
+              '18px',
+
+            paddingBottom:
+              '15px',
+
+            borderBottom:
+              '1px solid #EEE7E3'
+          }}
+        >
+
+          <span
             style={{
-              background: enderecoLimpo ? '#FAF6FA' : '#FFF8E1',
-              border: enderecoLimpo ? '1px solid #EADCEB' : '1px solid #FFE082',
-              borderLeft: `4px solid ${enderecoLimpo ? '#3E2445' : '#F57C00'}`,
-              borderRadius: '6px',
-              padding: '10px 12px',
-              marginBottom: '14px',
-              fontSize: '13px'
+              display: 'block',
+
+              marginBottom:
+                '4px',
+
+              color:
+                '#BB91AD',
+
+              fontSize:
+                '8px',
+
+              fontWeight:
+                '700',
+
+              letterSpacing:
+                '1.1px',
+
+              textTransform:
+                'uppercase'
             }}
           >
-            <strong style={{ display: 'block', color: enderecoLimpo ? '#3E2445' : '#E65100', marginBottom: '3px' }}>
-              📍 Local da Prova (seu endereço cadastrado):
-            </strong>
+            Agendamento
+          </span>
+
+
+          <h3
+            style={{
+              margin: 0,
+
+              color:
+                '#3E2445',
+
+              fontFamily:
+                "'Playfair Display SC', 'Playfair Display', Georgia, serif",
+
+              fontSize:
+                '21px'
+            }}
+          >
+            Propor Data para Prova da Peça
+          </h3>
+
+
+          <p
+            style={{
+              margin:
+                '6px 0 0',
+
+              color:
+                '#91858E',
+
+              fontSize:
+                '9px',
+
+              lineHeight:
+                '1.6'
+            }}
+          >
+            A cliente receberá esta sugestão no chat para confirmar se pode comparecer no dia e horário.
+          </p>
+
+        </div>
+
+
+        <form
+          onSubmit={
+            handleSubmit
+          }
+        >
+
+
+          {/* DATA + HORÁRIO */}
+
+          <div
+            style={{
+              display:
+                'grid',
+
+              gridTemplateColumns:
+                '1fr 1fr',
+
+              gap:
+                '10px',
+
+              marginBottom:
+                '14px'
+            }}
+          >
+
+
+            <div>
+
+              <label
+                style={{
+                  display:
+                    'block',
+
+                  marginBottom:
+                    '6px',
+
+                  color:
+                    '#5F525C',
+
+                  fontSize:
+                    '9px',
+
+                  fontWeight:
+                    '600'
+                }}
+              >
+                Data Sugerida *
+              </label>
+
+
+              <input
+                type="date"
+
+                min={
+                  hoje
+                }
+
+                value={
+                  dataProva
+                }
+
+                onChange={(e) =>
+                  setDataProva(
+                    e.target.value
+                  )
+                }
+
+                required
+
+                style={{
+                  width:
+                    '100%',
+
+                  height:
+                    '41px',
+
+                  padding:
+                    '0 10px',
+
+                  boxSizing:
+                    'border-box',
+
+                  background:
+                    '#FAF8F7',
+
+                  color:
+                    '#4F474D',
+
+                  border:
+                    '1px solid #DED6D1',
+
+                  borderRadius:
+                    '8px',
+
+                  outline:
+                    'none',
+
+                  fontFamily:
+                    "'Poppins', sans-serif",
+
+                  fontSize:
+                    '10px'
+                }}
+              />
+
+            </div>
+
+
+            <div>
+
+              <label
+                style={{
+                  display:
+                    'block',
+
+                  marginBottom:
+                    '6px',
+
+                  color:
+                    '#5F525C',
+
+                  fontSize:
+                    '9px',
+
+                  fontWeight:
+                    '600'
+                }}
+              >
+                Horário da Prova *
+              </label>
+
+
+              <input
+                type="time"
+
+                min={
+                  dataProva === hoje
+                    ? horaAtual
+                    : undefined
+                }
+
+                value={
+                  horarioProva
+                }
+
+                onChange={(e) =>
+                  setHorarioProva(
+                    e.target.value
+                  )
+                }
+
+                required
+
+                style={{
+                  width:
+                    '100%',
+
+                  height:
+                    '41px',
+
+                  padding:
+                    '0 10px',
+
+                  boxSizing:
+                    'border-box',
+
+                  background:
+                    '#FAF8F7',
+
+                  color:
+                    '#4F474D',
+
+                  border:
+                    '1px solid #DED6D1',
+
+                  borderRadius:
+                    '8px',
+
+                  outline:
+                    'none',
+
+                  fontFamily:
+                    "'Poppins', sans-serif",
+
+                  fontSize:
+                    '10px'
+                }}
+              />
+
+            </div>
+
+
+          </div>
+
+
+          {/* LOCAL */}
+
+          <div
+            style={{
+              marginBottom:
+                '14px',
+
+              padding:
+                '11px 12px',
+
+              background:
+                enderecoLimpo
+                  ? '#F8F3F6'
+                  : '#FFF8EC',
+
+              color:
+                enderecoLimpo
+                  ? '#675463'
+                  : '#806A59',
+
+              border:
+                enderecoLimpo
+                  ? '1px solid #E4D7DF'
+                  : '1px solid #F1DFC4',
+
+              borderLeft:
+                enderecoLimpo
+                  ? '3px solid #917687'
+                  : '3px solid #C39A66',
+
+              borderRadius:
+                '8px',
+
+              fontSize:
+                '9px',
+
+              lineHeight:
+                '1.55'
+            }}
+          >
+
+            <span
+              style={{
+                display:
+                  'block',
+
+                marginBottom:
+                  '3px',
+
+                color:
+                  enderecoLimpo
+                    ? '#6E5568'
+                    : '#9A7040',
+
+                fontSize:
+                  '9px',
+
+                fontWeight:
+                  '700',
+
+                textTransform:
+                  'uppercase',
+
+                letterSpacing:
+                  '0.4px'
+              }}
+            >
+              Local da Prova
+            </span>
+
+
             {enderecoLimpo ? (
-              <span style={{ color: '#333' }}>{enderecoLimpo}</span>
+
+              <>
+
+                <strong
+                  style={{
+                    display:
+                      'block',
+
+                    color:
+                      '#5F525C',
+
+                    fontSize:
+                      '10px'
+                  }}
+                >
+                  {enderecoLimpo}
+                </strong>
+
+
+                <span
+                  style={{
+                    display:
+                      'block',
+
+                    marginTop:
+                      '3px',
+
+                    color:
+                      '#91858E'
+                  }}
+                >
+                  Este é o endereço de atendimento cadastrado no seu perfil.
+                </span>
+
+              </>
+
             ) : (
-              <div style={{ color: '#5D4037', fontSize: '12.5px' }}>
+
+              <div
+                style={{
+                  color:
+                    '#806A59'
+                }}
+              >
+
                 Você ainda não cadastrou um endereço no seu perfil.
+
+
                 {onIrParaPerfil && (
+
                   <button
                     type="button"
-                    onClick={onIrParaPerfil}
+
+                    onClick={
+                      onIrParaPerfil
+                    }
+
                     style={{
-                      display: 'block',
-                      marginTop: '6px',
-                      padding: '5px 10px',
-                      background: '#3E2445',
-                      color: '#fff',
-                      border: 'none',
-                      borderRadius: '5px',
-                      fontSize: '12px',
-                      fontWeight: 'bold',
-                      cursor: 'pointer'
+                      display:
+                        'block',
+
+                      marginTop:
+                        '8px',
+
+                      padding:
+                        '8px 11px',
+
+                      background:
+                        '#7A5B72',
+
+                      color:
+                        '#FFFFFF',
+
+                      border:
+                        'none',
+
+                      borderRadius:
+                        '7px',
+
+                      fontFamily:
+                        "'Poppins', sans-serif",
+
+                      fontSize:
+                        '8px',
+
+                      fontWeight:
+                        '700',
+
+                      cursor:
+                        'pointer'
                     }}
                   >
                     Completar Endereço no Meu Perfil
                   </button>
+
                 )}
+
               </div>
+
             )}
+
           </div>
 
-          <div style={{ marginBottom: '14px' }}>
-            <label style={{ display: 'block', fontSize: '13px', fontWeight: 'bold', marginBottom: '4px' }}>Observações (opcional)</label>
+
+          {/* OBSERVAÇÕES */}
+
+          <div
+            style={{
+              marginBottom:
+                '14px'
+            }}
+          >
+
+            <label
+              style={{
+                display:
+                  'block',
+
+                marginBottom:
+                  '6px',
+
+                color:
+                  '#5F525C',
+
+                fontSize:
+                  '9px',
+
+                fontWeight:
+                  '600'
+              }}
+            >
+              Observações (opcional)
+            </label>
+
+
             <textarea
-              rows="2"
-              value={observacao}
-              onChange={(e) => setObservacao(e.target.value)}
-              placeholder="Ex: Traga o sapato que usará com a peça..."
-              style={{ width: '100%', padding: '9px', borderRadius: '6px', border: '1px solid #ccc', boxSizing: 'border-box' }}
+              rows="3"
+
+              value={
+                observacao
+              }
+
+              onChange={(e) =>
+                setObservacao(
+                  e.target.value
+                )
+              }
+
+              placeholder="Ex.: Traga o sapato que usará com a peça..."
+
+              style={{
+                width:
+                  '100%',
+
+                minHeight:
+                  '85px',
+
+                padding:
+                  '10px 12px',
+
+                boxSizing:
+                  'border-box',
+
+                resize:
+                  'vertical',
+
+                background:
+                  '#FAF8F7',
+
+                color:
+                  '#4F474D',
+
+                border:
+                  '1px solid #DED6D1',
+
+                borderRadius:
+                  '8px',
+
+                outline:
+                  'none',
+
+                fontFamily:
+                  "'Poppins', sans-serif",
+
+                fontSize:
+                  '10px',
+
+                lineHeight:
+                  '1.6'
+              }}
             />
+
           </div>
+
+
+          {/* ERRO */}
 
           {erro && (
-            <div style={{ background: '#FFEBEE', color: '#C62828', padding: '9px 12px', borderRadius: '6px', fontSize: '12.5px', marginBottom: '12px' }}>
+
+            <div
+              style={{
+                marginBottom:
+                  '14px',
+
+                padding:
+                  '9px 11px',
+
+                background:
+                  '#FFF1F1',
+
+                color:
+                  '#9B5D5D',
+
+                border:
+                  '1px solid #F0D6D6',
+
+                borderRadius:
+                  '7px',
+
+                fontSize:
+                  '9px',
+
+                lineHeight:
+                  '1.5'
+              }}
+            >
               {erro}
             </div>
+
           )}
 
-          <div style={{ display: 'flex', gap: '10px', justifyContent: 'flex-end' }}>
-            <button type="button" onClick={onClose} style={{ padding: '9px 16px', background: '#757575', color: '#fff', border: 'none', borderRadius: '6px', cursor: 'pointer' }}>
+
+          {/* BOTÕES */}
+
+          <div
+            style={{
+              display:
+                'flex',
+
+              justifyContent:
+                'flex-end',
+
+              gap:
+                '8px',
+
+              marginTop:
+                '18px',
+
+              paddingTop:
+                '16px',
+
+              borderTop:
+                '1px solid #EEE7E3'
+            }}
+          >
+
+            <button
+              type="button"
+
+              onClick={
+                onClose
+              }
+
+              style={{
+                padding:
+                  '10px 15px',
+
+                background:
+                  '#FFFFFF',
+
+                color:
+                  '#7A5B72',
+
+                border:
+                  '1px solid #D8CFD5',
+
+                borderRadius:
+                  '8px',
+
+                fontFamily:
+                  "'Poppins', sans-serif",
+
+                fontSize:
+                  '9px',
+
+                fontWeight:
+                  '600',
+
+                cursor:
+                  'pointer'
+              }}
+            >
               Cancelar
             </button>
+
+
             <button
               type="submit"
-              disabled={!enderecoLimpo}
+
+              disabled={
+                !enderecoLimpo
+              }
+
               style={{
-                padding: '9px 16px',
-                background: '#2E7D32',
-                color: '#fff',
-                border: 'none',
-                borderRadius: '6px',
-                fontWeight: 'bold',
-                cursor: enderecoLimpo ? 'pointer' : 'not-allowed',
-                opacity: enderecoLimpo ? 1 : 0.6
+                padding:
+                  '10px 16px',
+
+                background:
+                  '#7A5B72',
+
+                color:
+                  '#FFFFFF',
+
+                border:
+                  'none',
+
+                borderRadius:
+                  '8px',
+
+                fontFamily:
+                  "'Poppins', sans-serif",
+
+                fontSize:
+                  '9px',
+
+                fontWeight:
+                  '700',
+
+                cursor:
+                  enderecoLimpo
+                    ? 'pointer'
+                    : 'not-allowed',
+
+                opacity:
+                  enderecoLimpo
+                    ? 1
+                    : 0.55
               }}
             >
               Enviar Sugestão de Prova
             </button>
+
           </div>
+
+
         </form>
+
       </div>
+
     </div>
+
   );
+
 }
+
 
 export default ModalProva;

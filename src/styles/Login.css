@@ -1,39 +1,68 @@
+html,
+body,
+#root {
+  margin: 0;
+  padding: 0;
+  width: 100%;
+  min-height: 100%;
+}
+
+body {
+  overflow-x: hidden;
+}
+
+
 .login-page {
+  width: 100%;
   min-height: 100vh;
+
+  margin: 0;
+  padding: 0;
+
   background: #F3F2ED;
   color: #917687;
+
   font-family: "Poppins", sans-serif;
 }
 
 
-/* BANNER */
+/* ==========================================
+   BANNER
+========================================== */
 
 .login-banner {
   width: 100%;
 
-  display: flex;
-  justify-content: center;
-  align-items: center;
+  margin: 0;
+  padding: 0;
 
-  padding: 22px 6% 8px;
+  display: block;
 
   box-sizing: border-box;
+
+  overflow: hidden;
 
   background: #F3F2ED;
 }
 
 
 .login-banner img {
-  width: min(100%, 1180px);
+  width: 100%;
+  max-width: none;
   height: auto;
+
+  margin: 0;
+  padding: 0;
 
   display: block;
 
-  border-radius: 4px;
+  border-radius: 0;
 }
 
 
-/* ÁREA */
+/* ==========================================
+   ÁREA
+========================================== */
 
 .login-area {
   min-height: 500px;
@@ -49,7 +78,9 @@
 }
 
 
-/* CARD */
+/* ==========================================
+   CARD
+========================================== */
 
 .login-card {
   width: 100%;
@@ -71,10 +102,13 @@
 }
 
 
-/* CABEÇALHO */
+/* ==========================================
+   CABEÇALHO
+========================================== */
 
 .login-cabecalho {
   margin-bottom: 25px;
+
   text-align: center;
 }
 
@@ -105,6 +139,7 @@
     serif;
 
   font-size: 25px;
+
   line-height: 1.25;
 }
 
@@ -119,11 +154,14 @@
   opacity: 0.82;
 
   font-size: 11px;
+
   line-height: 1.7;
 }
 
 
-/* ERRO */
+/* ==========================================
+   ERRO
+========================================== */
 
 .login-erro {
   margin-bottom: 17px;
@@ -142,7 +180,9 @@
 }
 
 
-/* GOOGLE */
+/* ==========================================
+   GOOGLE
+========================================== */
 
 .login-google {
   display: flex;
@@ -153,7 +193,9 @@
 }
 
 
-/* SEPARADOR */
+/* ==========================================
+   SEPARADOR
+========================================== */
 
 .login-separador {
   display: flex;
@@ -186,7 +228,9 @@
 }
 
 
-/* CAMPOS */
+/* ==========================================
+   CAMPOS
+========================================== */
 
 .login-form-group {
   margin-bottom: 15px;
@@ -246,7 +290,9 @@
 }
 
 
-/* SENHA */
+/* ==========================================
+   SENHA
+========================================== */
 
 .login-senha-box {
   position: relative;
@@ -284,7 +330,9 @@
 }
 
 
-/* RECUPERAR SENHA */
+/* ==========================================
+   RECUPERAR SENHA
+========================================== */
 
 .login-esqueci-area {
   display: flex;
@@ -317,7 +365,9 @@
 }
 
 
-/* BOTÃO */
+/* ==========================================
+   BOTÃO
+========================================== */
 
 .login-button {
   width: 100%;
@@ -357,7 +407,9 @@
 }
 
 
-/* CRIAR CONTA */
+/* ==========================================
+   CRIAR CONTA
+========================================== */
 
 .login-criar-conta {
   display: flex;
@@ -399,12 +451,29 @@
 }
 
 
-/* RESPONSIVO */
+/* ==========================================
+   RESPONSIVO
+========================================== */
 
 @media (max-width: 600px) {
 
   .login-banner {
-    padding: 14px 14px 0;
+    width: 100%;
+
+    margin: 0;
+
+    padding: 0;
+  }
+
+
+  .login-banner img {
+    width: 100%;
+
+    max-width: none;
+
+    margin: 0;
+
+    border-radius: 0;
   }
 
 

@@ -1,35 +1,75 @@
 import React, { useState, useEffect } from 'react';
 import Calendar from 'react-calendar';
 import 'react-calendar/dist/Calendar.css';
+import '../styles/Agenda.css';
+
 
 const obterEstiloStatus = (status) => {
   const s = (status || '').toLowerCase();
 
   if (s === 'aberto' || s === 'disponível') {
-    return { background: '#E8F5E9', border: '1px solid #A5D6A7', color: '#2E7D32' };
-  }
-  if (s === 'aguardando prova') {
-    return { background: '#FFF3E0', border: '1px solid #FFCC80', color: '#E65100' };
-  }
-  if (s === 'em produção' || s === 'a fazer') {
-    return { background: '#E3F2FD', border: '1px solid #90CAF9', color: '#1565C0' };
-  }
-  if (s === 'concluído') {
-    return { background: '#E0F2F1', border: '1px solid #80CBC4', color: '#00695C' };
-  }
-  if (s === 'entregue') {
-    return { background: '#F3E5F5', border: '1px solid #CE93D8', color: '#6A1B9A' };
-  }
-  if (s === 'cancelado') {
-    return { background: '#FFEBEE', border: '1px solid #EF9A9A', color: '#C62828' };
+    return {
+      background: '#EEF5EE',
+      border: '1px solid #D7E6D7',
+      color: '#557255'
+    };
   }
 
-  return { background: '#F5F5F5', border: '1px solid #E0E0E0', color: '#616161' };
+  if (s === 'aguardando prova') {
+    return {
+      background: '#FFF7EA',
+      border: '1px solid #F0DFC0',
+      color: '#9A7040'
+    };
+  }
+
+  if (s === 'em produção' || s === 'a fazer') {
+    return {
+      background: '#EEF2F7',
+      border: '1px solid #D8E0EA',
+      color: '#5C6F85'
+    };
+  }
+
+  if (s === 'concluído') {
+    return {
+      background: '#EDF6F3',
+      border: '1px solid #D4E8E2',
+      color: '#52766B'
+    };
+  }
+
+  if (s === 'entregue') {
+    return {
+      background: '#F3ECEF',
+      border: '1px solid #E1D4DC',
+      color: '#7A5B72'
+    };
+  }
+
+  if (s === 'cancelado') {
+    return {
+      background: '#FFF0F0',
+      border: '1px solid #F0D6D6',
+      color: '#9B5D5D'
+    };
+  }
+
+  return {
+    background: '#F5F2F3',
+    border: '1px solid #E2DBDE',
+    color: '#746A70'
+  };
 };
+
 
 const extrairDetalhesPedido = (texto) => {
   if (!texto) {
-    return { servico: '', localizacao: '', descricao: '' };
+    return {
+      servico: '',
+      localizacao: '',
+      descricao: ''
+    };
   }
 
   let servico = '';
@@ -38,36 +78,71 @@ const extrairDetalhesPedido = (texto) => {
 
   if (texto.includes('Localização:')) {
     const partes = texto.split('Localização:');
-    servico = partes[0].replace(/[\[\]]/g, '').replace(/\s*-\s*$/, '').trim();
+
+    servico = partes[0]
+      .replace(/[\[\]]/g, '')
+      .replace(/\s*-\s*$/, '')
+      .trim();
 
     const resto = partes[1].trim();
     const quebraDupla = resto.indexOf('\n\n');
 
     if (quebraDupla !== -1) {
-      localizacao = resto.substring(0, quebraDupla).trim();
-      descricao = resto.substring(quebraDupla).trim();
+      localizacao = resto
+        .substring(0, quebraDupla)
+        .trim();
+
+      descricao = resto
+        .substring(quebraDupla)
+        .trim();
     } else {
       const primeiraLinha = resto.split('\n')[0];
+
       localizacao = primeiraLinha.trim();
-      descricao = resto.substring(primeiraLinha.length).trim();
+
+      descricao = resto
+        .substring(primeiraLinha.length)
+        .trim();
     }
   } else {
-    const matchColchetes = texto.match(/^\[([^\]]+)\]\s*(?:-?\s*)([\s\S]*)$/);
+    const matchColchetes = texto.match(
+      /^\[([^\]]+)\]\s*(?:-?\s*)([\s\S]*)$/
+    );
+
     if (matchColchetes) {
       servico = matchColchetes[1].trim();
       descricao = matchColchetes[2].trim();
     }
   }
 
-  return { servico, localizacao, descricao };
+  return {
+    servico,
+    localizacao,
+    descricao
+  };
 };
 
-function Agenda({ idUsuario, isCliente }) {
-  const [eventosAgenda, setEventosAgenda] = useState([]);
-  const [dataSelecionada, setDataSelecionada] = useState(new Date());
+
+function Agenda({
+  idUsuario,
+  isCliente
+}) {
+
+  const [
+    eventosAgenda,
+    setEventosAgenda
+  ] = useState([]);
+
+
+  const [
+    dataSelecionada,
+    setDataSelecionada
+  ] = useState(new Date());
+
 
   useEffect(() => {
     if (!idUsuario) return;
+
     fetch(`/api/usuarios/${idUsuario}/agenda`)
       .then((res) => res.json())
       .then((data) => {
@@ -78,176 +153,466 @@ function Agenda({ idUsuario, isCliente }) {
       .catch(() => {});
   }, [idUsuario]);
 
+
   const formatarDataIsoLocal = (dateObjOrStr) => {
     if (!dateObjOrStr) return '';
-    if (typeof dateObjOrStr === 'string' && /^\d{4}-\d{2}-\d{2}/.test(dateObjOrStr)) {
+
+    if (
+      typeof dateObjOrStr === 'string' &&
+      /^\d{4}-\d{2}-\d{2}/.test(dateObjOrStr)
+    ) {
       return dateObjOrStr.split('T')[0];
     }
+
     const d = new Date(dateObjOrStr);
-    if (isNaN(d.getTime())) return '';
+
+    if (isNaN(d.getTime())) {
+      return '';
+    }
+
     const ano = d.getFullYear();
-    const mes = String(d.getMonth() + 1).padStart(2, '0');
-    const dia = String(d.getDate()).padStart(2, '0');
+
+    const mes = String(
+      d.getMonth() + 1
+    ).padStart(2, '0');
+
+    const dia = String(
+      d.getDate()
+    ).padStart(2, '0');
+
     return `${ano}-${mes}-${dia}`;
   };
 
-  // Oculta cancelados e usa a data real de entrega quando o pedido já foi entregue
+
+  // Oculta cancelados e usa a data real de entrega
+  // quando o pedido já foi entregue
   const eventosAtivos = eventosAgenda
-    .filter((ev) => (ev.status_kanban || '').toLowerCase() !== 'cancelado')
+    .filter(
+      (ev) =>
+        (
+          ev.status_kanban ||
+          ''
+        ).toLowerCase() !== 'cancelado'
+    )
     .map((ev) => {
-      const isEntregue = (ev.status_kanban || '').toLowerCase() === 'entregue';
+      const isEntregue =
+        (
+          ev.status_kanban ||
+          ''
+        ).toLowerCase() === 'entregue';
+
       const dataEfetiva =
-        ev.tipo_evento === 'entrega' && isEntregue && ev.data_entrega
+        ev.tipo_evento === 'entrega' &&
+        isEntregue &&
+        ev.data_entrega
           ? ev.data_entrega
           : ev.data_evento;
 
-      return { ...ev, data_efetiva: dataEfetiva };
+      return {
+        ...ev,
+        data_efetiva: dataEfetiva
+      };
     });
 
-  const dataSelIso = formatarDataIsoLocal(dataSelecionada);
 
-  const eventosDoDia = eventosAtivos.filter((ev) => {
-    const dataEv = formatarDataIsoLocal(ev.data_efetiva);
-    return dataEv && dataEv === dataSelIso;
-  });
-
-  const renderMarcadoresCalendario = ({ date, view }) => {
-    if (view !== 'month') return null;
-    const diaIso = formatarDataIsoLocal(date);
-    const temProva = eventosAtivos.some(
-      (ev) => ev.tipo_evento === 'prova' && formatarDataIsoLocal(ev.data_efetiva) === diaIso
-    );
-    const temEntrega = eventosAtivos.some(
-      (ev) => ev.tipo_evento === 'entrega' && formatarDataIsoLocal(ev.data_efetiva) === diaIso
+  const dataSelIso =
+    formatarDataIsoLocal(
+      dataSelecionada
     );
 
-    if (!temProva && !temEntrega) return null;
+
+  const eventosDoDia =
+    eventosAtivos.filter((ev) => {
+      const dataEv =
+        formatarDataIsoLocal(
+          ev.data_efetiva
+        );
+
+      return (
+        dataEv &&
+        dataEv === dataSelIso
+      );
+    });
+
+
+  const renderMarcadoresCalendario = ({
+    date,
+    view
+  }) => {
+
+    if (view !== 'month') {
+      return null;
+    }
+
+
+    const diaIso =
+      formatarDataIsoLocal(date);
+
+
+    const temProva =
+      eventosAtivos.some(
+        (ev) =>
+          ev.tipo_evento === 'prova' &&
+          formatarDataIsoLocal(
+            ev.data_efetiva
+          ) === diaIso
+      );
+
+
+    const temEntrega =
+      eventosAtivos.some(
+        (ev) =>
+          ev.tipo_evento === 'entrega' &&
+          formatarDataIsoLocal(
+            ev.data_efetiva
+          ) === diaIso
+      );
+
+
+    if (
+      !temProva &&
+      !temEntrega
+    ) {
+      return null;
+    }
+
 
     return (
-      <div style={{ display: 'flex', justifyContent: 'center', gap: '3px', marginTop: '2px' }}>
+      <div className="agenda-marcadores">
+
         {temProva && (
           <span
             title="Prova"
-            style={{ width: '6px', height: '6px', borderRadius: '50%', background: '#E67E22', display: 'inline-block' }}
+            className="agenda-marcador agenda-marcador-prova"
           />
         )}
+
         {temEntrega && (
           <span
             title="Entrega"
-            style={{ width: '6px', height: '6px', borderRadius: '50%', background: '#2E7D32', display: 'inline-block' }}
+            className="agenda-marcador agenda-marcador-entrega"
           />
         )}
+
       </div>
     );
   };
 
+
   return (
-    <div style={{ marginTop: '30px', borderTop: '2px solid #F4EFF5', paddingTop: '20px' }}>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '10px' }}>
-        <h3 style={{ color: '#3E2445', margin: 0, fontSize: '18px' }}>
-          Agenda de Entregas e Provas
-        </h3>
-        <div style={{ display: 'flex', gap: '12px', fontSize: '12px', color: '#555' }}>
-          <span><strong style={{ color: '#E67E22' }}>●</strong> Prova</span>
-          <span><strong style={{ color: '#2E7D32' }}>●</strong> Entrega</span>
+
+    <section className="agenda">
+
+
+      {/* CABEÇALHO */}
+
+      <div className="agenda-header">
+
+        <div>
+
+          <span className="agenda-eyebrow">
+            Organização
+          </span>
+
+          <h3>
+            Agenda de Entregas e Provas
+          </h3>
+
         </div>
+
+
+        <div className="agenda-legenda">
+
+          <span>
+            <i className="agenda-legenda-prova" />
+            Prova
+          </span>
+
+          <span>
+            <i className="agenda-legenda-entrega" />
+            Entrega
+          </span>
+
+        </div>
+
       </div>
 
-      <div style={{ display: 'flex', gap: '20px', flexWrap: 'wrap', marginTop: '15px', alignItems: 'flex-start' }}>
-        <Calendar
-          onChange={setDataSelecionada}
-          value={dataSelecionada}
-          tileContent={renderMarcadoresCalendario}
-        />
 
-        <div style={{ flex: 1, minWidth: '280px', width: '100%' }}>
-          <h4 style={{ margin: '0 0 12px 0', color: '#3E2445', fontSize: '15px' }}>
-            Compromissos em {dataSelecionada.toLocaleDateString('pt-BR')}:
-          </h4>
+      {/* CONTEÚDO */}
+
+      <div className="agenda-conteudo">
+
+
+        {/* CALENDÁRIO */}
+
+        <div className="agenda-calendario-card">
+
+          <Calendar
+            onChange={
+              setDataSelecionada
+            }
+
+            value={
+              dataSelecionada
+            }
+
+            tileContent={
+              renderMarcadoresCalendario
+            }
+          />
+
+        </div>
+
+
+        {/* COMPROMISSOS */}
+
+        <div className="agenda-eventos">
+
+          <div className="agenda-eventos-header">
+
+            <span>
+              Compromissos
+            </span>
+
+            <h4>
+              {dataSelecionada
+                .toLocaleDateString(
+                  'pt-BR'
+                )}
+            </h4>
+
+          </div>
+
 
           {eventosDoDia.length === 0 ? (
-            <p style={{ color: '#888', fontSize: '13px', margin: 0 }}>
-              Sem entregas ou provas previstas para esta data.
-            </p>
+
+            <div className="agenda-vazia">
+
+              <div className="agenda-vazia-icone">
+                ○
+              </div>
+
+              <strong>
+                Nenhum compromisso
+              </strong>
+
+              <p>
+                Sem entregas ou provas previstas para esta data.
+              </p>
+
+            </div>
+
           ) : (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', width: '100%' }}>
-              {eventosDoDia.map((item) => {
-                const isProva = item.tipo_evento === 'prova';
-                const isEntregue = (item.status_kanban || '').toLowerCase() === 'entregue';
-                const detalhes = extrairDetalhesPedido(item.pedido_descricao);
-                const estiloStatus = obterEstiloStatus(item.status_kanban);
 
-                const corBorda = isEntregue ? '#6A1B9A' : isProva ? '#E67E22' : '#2E7D32';
-                const tituloEvento = isProva
-                  ? isEntregue
-                    ? `Prova Realizada ✓ ${item.horario_evento ? `(${item.horario_evento})` : ''}`
-                    : `Prova Agendada 📅 ${item.horario_evento ? `(${item.horario_evento})` : ''}`
-                  : isEntregue
-                  ? 'Peça Entregue ✓'
-                  : 'Previsão de Entrega 📦';
+            <div className="agenda-lista">
 
-                return (
-                  <div
-                    key={item.id_evento}
-                    style={{
-                      width: '100%',
-                      boxSizing: 'border-box',
-                      background: isEntregue ? '#FBF9FC' : '#F9F9F9',
-                      border: '1px solid #EAE4EC',
-                      borderLeft: `4px solid ${corBorda}`,
-                      padding: '14px',
-                      borderRadius: '8px'
-                    }}
-                  >
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '8px', marginBottom: '6px', flexWrap: 'wrap' }}>
-                      <span style={{ fontSize: '11px', fontWeight: 'bold', color: corBorda, textTransform: 'uppercase' }}>
-                        {tituloEvento}
-                      </span>
-                      {item.status_kanban && (
+              {eventosDoDia.map(
+                (item) => {
+
+                  const isProva =
+                    item.tipo_evento ===
+                    'prova';
+
+
+                  const isEntregue =
+                    (
+                      item.status_kanban ||
+                      ''
+                    ).toLowerCase() ===
+                    'entregue';
+
+
+                  const detalhes =
+                    extrairDetalhesPedido(
+                      item.pedido_descricao
+                    );
+
+
+                  const estiloStatus =
+                    obterEstiloStatus(
+                      item.status_kanban
+                    );
+
+
+                  const corBorda =
+                    isEntregue
+                      ? '#917687'
+                      : isProva
+                        ? '#C39A66'
+                        : '#71866F';
+
+
+                  const tituloEvento =
+                    isProva
+
+                      ? isEntregue
+
+                        ? `Prova Realizada ✓ ${
+                            item.horario_evento
+                              ? `(${item.horario_evento})`
+                              : ''
+                          }`
+
+                        : `Prova Agendada 📅 ${
+                            item.horario_evento
+                              ? `(${item.horario_evento})`
+                              : ''
+                          }`
+
+                      : isEntregue
+
+                        ? 'Peça Entregue ✓'
+
+                        : 'Previsão de Entrega 📦';
+
+
+                  return (
+
+                    <article
+                      key={
+                        item.id_evento
+                      }
+
+                      className="agenda-evento-card"
+
+                      style={{
+                        borderLeftColor:
+                          corBorda
+                      }}
+                    >
+
+
+                      <div className="agenda-evento-topo">
+
                         <span
+                          className="agenda-evento-tipo"
+
                           style={{
-                            background: estiloStatus.background,
-                            border: estiloStatus.border,
-                            color: estiloStatus.color,
-                            padding: '2px 9px',
-                            borderRadius: '12px',
-                            fontSize: '11px',
-                            fontWeight: 'bold'
+                            color:
+                              corBorda
                           }}
                         >
-                          {item.status_kanban}
+                          {tituloEvento}
                         </span>
-                      )}
-                    </div>
 
-                    <div style={{ fontSize: '14px', color: '#3E2445', fontWeight: 'bold', marginBottom: '8px' }}>
-                      Pedido #{item.id_pedido}
-                    </div>
 
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: '4px', fontSize: '13px', color: '#555' }}>
-                      {detalhes.servico && (
-                        <div><strong>Serviço:</strong> {detalhes.servico}</div>
-                      )}
-                      {detalhes.localizacao && (
-                        <div><strong>Localização:</strong> {detalhes.localizacao}</div>
-                      )}
-                      {detalhes.descricao && (
-                        <div style={{ whiteSpace: 'pre-line' }}><strong>Descrição:</strong> {detalhes.descricao}</div>
-                      )}
-                      <div>
-                        <strong>{isCliente ? 'Costureira:' : 'Cliente:'}</strong>{' '}
-                        {isCliente ? (item.costureira_nome || 'A definir') : (item.cliente_nome || 'Cliente')}
+                        {item.status_kanban && (
+
+                          <span
+                            className="agenda-status"
+
+                            style={{
+                              background:
+                                estiloStatus.background,
+
+                              border:
+                                estiloStatus.border,
+
+                              color:
+                                estiloStatus.color
+                            }}
+                          >
+                            {item.status_kanban}
+                          </span>
+
+                        )}
+
                       </div>
-                    </div>
-                  </div>
-                );
-              })}
+
+
+                      <div className="agenda-pedido-id">
+                        Pedido #{item.id_pedido}
+                      </div>
+
+
+                      <div className="agenda-detalhes">
+
+                        {detalhes.servico && (
+
+                          <div>
+                            <strong>
+                              Serviço:
+                            </strong>{' '}
+
+                            {detalhes.servico}
+                          </div>
+
+                        )}
+
+
+                        {detalhes.localizacao && (
+
+                          <div>
+                            <strong>
+                              Localização:
+                            </strong>{' '}
+
+                            {detalhes.localizacao}
+                          </div>
+
+                        )}
+
+
+                        {detalhes.descricao && (
+
+                          <div
+                            className="agenda-descricao"
+                          >
+                            <strong>
+                              Descrição:
+                            </strong>{' '}
+
+                            {detalhes.descricao}
+                          </div>
+
+                        )}
+
+
+                        <div>
+
+                          <strong>
+                            {isCliente
+                              ? 'Costureira:'
+                              : 'Cliente:'
+                            }
+                          </strong>{' '}
+
+                          {isCliente
+                            ? (
+                                item.costureira_nome ||
+                                'A definir'
+                              )
+                            : (
+                                item.cliente_nome ||
+                                'Cliente'
+                              )
+                          }
+
+                        </div>
+
+                      </div>
+
+                    </article>
+
+                  );
+
+                }
+              )}
+
             </div>
+
           )}
+
         </div>
+
+
       </div>
-    </div>
+
+    </section>
+
   );
+
 }
+
 
 export default Agenda;
