@@ -785,6 +785,52 @@ function MeusPedidos({
           }}
         >
 
+
+          {/* VOLTAR PARA HOME DO CLIENTE */}
+
+          <button
+            type="button"
+
+            onClick={() =>
+              onNavigate &&
+              onNavigate(
+                'areaCliente'
+              )
+            }
+
+            style={{
+              height:
+                '40px',
+
+              padding:
+                '0 15px',
+
+              background:
+                '#FFFFFF',
+
+              color:
+                '#7A5B72',
+
+              border:
+                '1px solid #D8CFD5',
+
+              borderRadius:
+                '8px',
+
+              fontSize:
+                '10px',
+
+              fontWeight:
+                '700',
+
+              cursor:
+                'pointer'
+            }}
+          >
+            ← Área do cliente
+          </button>
+
+
           <button
             type="button"
 
@@ -977,9 +1023,6 @@ function MeusPedidos({
 
       ) : pedidos.length === 0 ? (
 
-
-        /* VAZIO */
-
         <div
           style={{
             padding:
@@ -1117,9 +1160,6 @@ function MeusPedidos({
 
       ) : (
 
-
-        /* LISTA */
-
         <div
           style={{
             display:
@@ -1193,9 +1233,6 @@ function MeusPedidos({
                   }}
                 >
 
-
-                  {/* IMAGEM */}
-
                   {pedido.fotoReferencia && (
 
                     <div
@@ -1247,8 +1284,6 @@ function MeusPedidos({
                   )}
 
 
-                  {/* CONTEÚDO */}
-
                   <div
                     style={{
                       flex:
@@ -1261,9 +1296,6 @@ function MeusPedidos({
                         '20px 22px'
                     }}
                   >
-
-
-                    {/* TOPO */}
 
                     <div
                       style={{
@@ -1401,8 +1433,6 @@ function MeusPedidos({
                     </div>
 
 
-                    {/* DESCRIÇÃO */}
-
                     {info.descricao && (
 
                       <p
@@ -1428,8 +1458,6 @@ function MeusPedidos({
 
                     )}
 
-
-                    {/* INFORMAÇÕES */}
 
                     <div
                       style={{
@@ -1563,8 +1591,6 @@ function MeusPedidos({
 
                     </div>
 
-
-                    {/* AÇÕES */}
 
                     <div
                       style={{
@@ -1733,9 +1759,7 @@ function MeusPedidos({
       )}
 
 
-      {/* =====================================
-          MODAL DE EDIÇÃO
-      ====================================== */}
+      {/* MODAL DE EDIÇÃO */}
 
       {pedidoParaEditar && (
 
@@ -1795,7 +1819,6 @@ function MeusPedidos({
             }}
           >
 
-
             <span
               style={{
                 display:
@@ -1848,7 +1871,6 @@ function MeusPedidos({
                 handleSalvarEdicao
               }
             >
-
 
               <div
                 style={{

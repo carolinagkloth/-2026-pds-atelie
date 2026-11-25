@@ -1,0 +1,455 @@
+/* ==========================================
+   PORTFÓLIO
+========================================== */
+
+.portfolio-page {
+  box-sizing: border-box;
+
+  color: #4A424A;
+
+  font-family:
+    "Plus Jakarta Sans",
+    "Segoe UI",
+    sans-serif !important;
+}
+
+
+.portfolio-page * {
+  box-sizing: border-box;
+}
+
+
+/* ==========================================
+   PERFIL PÚBLICO
+========================================== */
+
+.portfolio-publico {
+  width:
+    min(1040px, 92%) !important;
+
+  margin:
+    0 auto !important;
+
+  padding:
+    42px 0 80px !important;
+}
+
+
+/* ==========================================
+   DENTRO DO PERFIL
+========================================== */
+
+.portfolio-embutido {
+  width:
+    100% !important;
+
+  margin:
+    38px 0 0 !important;
+}
+
+
+/* ==========================================
+   TIPOGRAFIA
+========================================== */
+
+.portfolio-page h1,
+.portfolio-page h2,
+.portfolio-page h3,
+.portfolio-page h4 {
+  color:
+    #3E2445 !important;
+
+  font-family:
+    "Playfair Display",
+    Georgia,
+    serif !important;
+
+  letter-spacing:
+    normal !important;
+}
+
+
+.portfolio-page h2 {
+  font-size:
+    25px !important;
+}
+
+
+.portfolio-page h3 {
+  font-size:
+    20px !important;
+}
+
+
+.portfolio-page p {
+  line-height:
+    1.65;
+}
+
+
+/* ==========================================
+   SEÇÕES PRINCIPAIS
+========================================== */
+
+.portfolio-page > section {
+  border-color:
+    #DFCBCD !important;
+
+  border-radius:
+    19px !important;
+
+  box-shadow:
+    0 10px 30px
+    rgba(
+      62,
+      36,
+      69,
+      0.06
+    ) !important;
+}
+
+
+/* ==========================================
+   BOTÕES
+========================================== */
+
+.portfolio-page button {
+  font-family:
+    "Plus Jakarta Sans",
+    "Segoe UI",
+    sans-serif !important;
+
+  border-radius:
+    10px !important;
+
+  transition:
+    background-color 160ms ease,
+    color 160ms ease,
+    border-color 160ms ease,
+    box-shadow 160ms ease,
+    transform 160ms ease;
+}
+
+
+.portfolio-page button:hover:not(:disabled) {
+  transform:
+    translateY(-1px);
+}
+
+
+.portfolio-page button:disabled {
+  cursor:
+    not-allowed;
+}
+
+
+/* ==========================================
+   CAMPOS
+========================================== */
+
+.portfolio-page input[type="text"],
+.portfolio-page input[type="number"],
+.portfolio-page input[type="date"],
+.portfolio-page textarea,
+.portfolio-page select {
+  min-height:
+    44px;
+
+  background:
+    #FAF3F2 !important;
+
+  color:
+    #4A424A !important;
+
+  border:
+    1px solid #DCCBD0 !important;
+
+  border-radius:
+    11px !important;
+
+  outline:
+    none !important;
+
+  font-family:
+    "Plus Jakarta Sans",
+    "Segoe UI",
+    sans-serif !important;
+
+  font-size:
+    11px !important;
+
+  transition:
+    background-color 160ms ease,
+    border-color 160ms ease,
+    box-shadow 160ms ease;
+}
+
+
+.portfolio-page textarea {
+  padding:
+    12px 13px !important;
+}
+
+
+.portfolio-page input[type="text"]:hover,
+.portfolio-page input[type="number"]:hover,
+.portfolio-page input[type="date"]:hover,
+.portfolio-page textarea:hover,
+.portfolio-page select:hover {
+  background:
+    #FFFFFF !important;
+
+  border-color:
+    #CEB9C2 !important;
+}
+
+
+.portfolio-page input[type="text"]:focus,
+.portfolio-page input[type="number"]:focus,
+.portfolio-page input[type="date"]:focus,
+.portfolio-page textarea:focus,
+.portfolio-page select:focus {
+  background:
+    #FFFFFF !important;
+
+  border-color:
+    #BB91AD !important;
+
+  box-shadow:
+    0 0 0 4px
+    rgba(
+      187,
+      145,
+      173,
+      0.10
+    ) !important;
+}
+
+
+.portfolio-page input::placeholder,
+.portfolio-page textarea::placeholder {
+  color:
+    #A99AA2 !important;
+}
+
+
+/* ==========================================
+   LABELS
+========================================== */
+
+.portfolio-page label {
+  color:
+    #5F525C;
+
+  font-family:
+    "Plus Jakarta Sans",
+    sans-serif !important;
+
+  font-weight:
+    700;
+}
+
+
+/* ==========================================
+   TABELA PÚBLICA DE PREÇOS
+========================================== */
+
+.portfolio-page table {
+  width:
+    100%;
+
+  font-family:
+    "Plus Jakarta Sans",
+    sans-serif !important;
+}
+
+
+.portfolio-page table thead tr {
+  background:
+    #F1DFE3 !important;
+
+  color:
+    #5E4557 !important;
+}
+
+
+.portfolio-page table th {
+  padding:
+    12px 14px !important;
+
+  color:
+    #5E4557 !important;
+
+  font-size:
+    9px !important;
+
+  font-weight:
+    700 !important;
+
+  letter-spacing:
+    0.4px;
+
+  text-transform:
+    uppercase;
+}
+
+
+.portfolio-page table td {
+  padding:
+    12px 14px !important;
+
+  font-size:
+    10px !important;
+
+  border-bottom-color:
+    #EDE0E3 !important;
+}
+
+
+.portfolio-page table tbody tr:nth-child(even) {
+  background:
+    #FAF3F2 !important;
+}
+
+
+/* ==========================================
+   CARDS DO PORTFÓLIO
+========================================== */
+
+.portfolio-page article {
+  border-radius:
+    15px !important;
+
+  box-shadow:
+    0 6px 20px
+    rgba(
+      62,
+      36,
+      69,
+      0.05
+    ) !important;
+
+  transition:
+    box-shadow 180ms ease,
+    transform 180ms ease;
+}
+
+
+.portfolio-page article:hover {
+  transform:
+    translateY(-2px);
+
+  box-shadow:
+    0 11px 28px
+    rgba(
+      62,
+      36,
+      69,
+      0.09
+    ) !important;
+}
+
+
+.portfolio-page article img {
+  transition:
+    transform 220ms ease;
+}
+
+
+.portfolio-page article:hover img {
+  transform:
+    scale(1.015);
+}
+
+
+/* ==========================================
+   IMAGENS
+========================================== */
+
+.portfolio-page img {
+  max-width:
+    100%;
+}
+
+
+/* ==========================================
+   MODAL
+========================================== */
+
+.portfolio-page form {
+  font-family:
+    "Plus Jakarta Sans",
+    sans-serif;
+}
+
+
+.portfolio-page form button[type="submit"] {
+  min-height:
+    42px;
+}
+
+
+/* ==========================================
+   SCROLL
+========================================== */
+
+.portfolio-page * {
+  scrollbar-width:
+    thin;
+
+  scrollbar-color:
+    #C9AEB9 transparent;
+}
+
+
+.portfolio-page *::-webkit-scrollbar {
+  width:
+    7px;
+
+  height:
+    7px;
+}
+
+
+.portfolio-page *::-webkit-scrollbar-thumb {
+  background:
+    #C9AEB9;
+
+  border-radius:
+    999px;
+}
+
+
+/* ==========================================
+   RESPONSIVO
+========================================== */
+
+@media (max-width: 700px) {
+
+  .portfolio-publico {
+    width:
+      92% !important;
+
+    padding:
+      30px 0 60px !important;
+  }
+
+
+  .portfolio-embutido {
+    margin-top:
+      30px !important;
+  }
+
+
+  .portfolio-page h2 {
+    font-size:
+      23px !important;
+  }
+
+
+  .portfolio-page h3 {
+    font-size:
+      18px !important;
+  }
+
+}

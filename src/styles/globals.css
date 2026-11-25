@@ -1,0 +1,416 @@
+@import url(
+  'https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap'
+);
+
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+
+html,
+body,
+#root {
+  width: 100%;
+  min-height: 100%;
+
+  margin: 0;
+  padding: 0;
+
+  background: #EDD8D5;
+}
+
+
+html {
+  scroll-behavior: smooth;
+}
+
+
+body {
+  min-height: 100vh;
+
+  overflow-x: hidden;
+
+  background: #EDD8D5;
+
+  color: #4A424A;
+
+  font-family:
+    "Plus Jakarta Sans",
+    "Segoe UI",
+    sans-serif;
+
+  font-size: 14px;
+
+  line-height: 1.55;
+
+  -webkit-font-smoothing: antialiased;
+
+  text-rendering: optimizeLegibility;
+}
+
+
+#root {
+  min-height: 100vh;
+
+  background: #EDD8D5;
+}
+
+
+button,
+input,
+textarea,
+select {
+  font: inherit;
+}
+
+
+button {
+  -webkit-tap-highlight-color: transparent;
+}
+
+
+button,
+a {
+  transition:
+    background-color 160ms ease,
+    color 160ms ease,
+    border-color 160ms ease,
+    box-shadow 160ms ease,
+    transform 160ms ease;
+}
+
+
+button:not(:disabled):active {
+  transform: translateY(1px);
+}
+
+
+input,
+textarea,
+select {
+  accent-color: #7A5B72;
+}
+
+
+input:focus,
+textarea:focus,
+select:focus {
+  border-color: #BB91AD !important;
+
+  box-shadow:
+    0 0 0 4px
+    rgba(187, 145, 173, 0.10);
+
+  outline: none;
+}
+
+
+::selection {
+  background: #E7D8E1;
+
+  color: #3E2445;
+}
+
+
+/* ==========================================
+   SCROLLBAR
+========================================== */
+
+* {
+  scrollbar-width: thin;
+
+  scrollbar-color:
+    #C6AEBB transparent;
+}
+
+
+*::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+
+*::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+
+*::-webkit-scrollbar-thumb {
+  background: #C6AEBB;
+
+  border:
+    2px solid transparent;
+
+  border-radius: 999px;
+
+  background-clip: padding-box;
+}
+
+
+/* ==========================================
+   PÁGINAS
+========================================== */
+
+.meus-pedidos-page,
+.feed-pedidos-page,
+.meus-chats-page,
+.perfil-page {
+  background: transparent;
+}
+
+
+/* ==========================================
+   FUNDOS SECUNDÁRIOS
+========================================== */
+
+.meus-chats-content {
+  background: #F5E8E6 !important;
+}
+
+
+.feed-pedidos-card-placeholder {
+  background:
+    linear-gradient(
+      135deg,
+      #FAF3F2,
+      #F1DFE3
+    ) !important;
+}
+
+
+.perfil-cover {
+  background:
+    linear-gradient(
+      135deg,
+      #FAF3F2 0%,
+      #F2E1E5 100%
+    ) !important;
+}
+
+
+/* ==========================================
+   SUPERFÍCIES INTERNAS
+========================================== */
+
+.meus-pedidos-detail,
+.feed-pedidos-detail,
+.feed-pedidos-field select,
+.feed-pedidos-field input,
+.meus-chats-filter select,
+.perfil-field input:disabled,
+.perfil-field textarea:disabled {
+  background: #FAF3F2;
+}
+
+
+/* ==========================================
+   CARDS
+========================================== */
+
+.meus-pedidos-card,
+.feed-pedidos-card,
+.meus-chats-shell,
+.meus-chats-item,
+.perfil-main-card,
+.perfil-rating-card,
+.perfil-testimonials,
+.feed-pedidos-filters {
+  background: #FFFFFF;
+}
+
+
+/* ==========================================
+   DESTAQUES ROSADOS
+========================================== */
+
+.meus-pedidos-count,
+.feed-pedidos-counter,
+.feed-pedidos-category,
+.meus-chats-user-avatar,
+.meus-chats-contact-avatar,
+.perfil-role,
+.perfil-photo-edit,
+.meus-pedidos-empty-icon,
+.feed-pedidos-empty-icon,
+.meus-chats-empty-icon,
+.perfil-testimonial-avatar {
+  background: #F1DFE3;
+}
+
+
+/* ==========================================
+   CLASSES GLOBAIS
+========================================== */
+
+.app-page {
+  width: min(1180px, 92%);
+
+  margin: 0 auto;
+
+  padding: 42px 0 72px;
+}
+
+
+.app-eyebrow {
+  display: block;
+
+  margin-bottom: 7px;
+
+  color: #917687;
+
+  font-size: 11px;
+
+  font-weight: 700;
+
+  letter-spacing: 1.2px;
+
+  text-transform: uppercase;
+}
+
+
+.app-title {
+  margin: 0;
+
+  color: #3E2445;
+
+  font-family:
+    "Playfair Display",
+    Georgia,
+    serif;
+
+  font-size:
+    clamp(30px, 4vw, 40px);
+
+  line-height: 1.12;
+}
+
+
+.app-subtitle {
+  max-width: 650px;
+
+  margin: 10px 0 0;
+
+  color: #857885;
+
+  font-size: 14px;
+
+  line-height: 1.7;
+}
+
+
+.app-card {
+  background: #FFFFFF;
+
+  border:
+    1px solid #E3D3D6;
+
+  border-radius: 18px;
+
+  box-shadow:
+    0 6px 20px
+    rgba(62, 36, 69, 0.05);
+}
+
+
+.app-button-primary {
+  min-height: 44px;
+
+  display: inline-flex;
+
+  align-items: center;
+
+  justify-content: center;
+
+  gap: 8px;
+
+  padding: 0 18px;
+
+  background: #7A5B72;
+
+  color: #FFFFFF;
+
+  border:
+    1px solid #7A5B72;
+
+  border-radius: 12px;
+
+  font-size: 13px;
+
+  font-weight: 700;
+
+  cursor: pointer;
+
+  box-shadow:
+    0 5px 14px
+    rgba(62, 36, 69, 0.12);
+}
+
+
+.app-button-primary:hover {
+  background: #6E5267;
+
+  border-color: #6E5267;
+
+  transform: translateY(-1px);
+
+  box-shadow:
+    0 8px 20px
+    rgba(62, 36, 69, 0.17);
+}
+
+
+.app-button-secondary {
+  min-height: 44px;
+
+  display: inline-flex;
+
+  align-items: center;
+
+  justify-content: center;
+
+  gap: 8px;
+
+  padding: 0 18px;
+
+  background: #FFFFFF;
+
+  color: #7A5B72;
+
+  border:
+    1px solid #D8CFD5;
+
+  border-radius: 12px;
+
+  font-size: 13px;
+
+  font-weight: 700;
+
+  cursor: pointer;
+}
+
+
+.app-button-secondary:hover {
+  background: #F1DFE3;
+
+  border-color: #CDBFC8;
+}
+
+
+@media (max-width: 700px) {
+
+  .app-page {
+    width: 92%;
+
+    padding:
+      28px 0 55px;
+  }
+
+
+  .app-title {
+    font-size: 30px;
+  }
+
+}

@@ -23,53 +23,100 @@ function MenuPrincipal({
     tipoUsuario === 'costureira';
 
 
-  const itens = isCostureira
-    ? [
-        {
-          tela: 'feedPedidos',
-          label: 'Mural de pedidos'
-        },
-        {
-          tela: 'meusChats',
-          label: 'Conversas'
-        },
-        {
-          tela: 'configuracoesNotificacoes',
-          label: 'Notificações'
-        },
-        {
-          tela: 'perfil',
-          label: 'Perfil e agenda'
-        }
-      ]
-    : [
-        {
-          tela: 'meusPedidos',
-          label: 'Meus pedidos'
-        },
-        {
-          tela: 'publicarPedido',
-          label: 'Novo pedido'
-        },
-        {
-          tela: 'meusChats',
-          label: 'Conversas'
-        },
-        {
-          tela: 'configuracoesNotificacoes',
-          label: 'Notificações'
-        },
-        {
-          tela: 'perfil',
-          label: 'Meu perfil'
-        }
-      ];
+  const itens =
+    isCostureira
+
+      ? [
+
+          {
+            tela:
+              'feedPedidos',
+
+            label:
+              'Mural de pedidos'
+          },
+
+          {
+            tela:
+              'meusChats',
+
+            label:
+              'Conversas'
+          },
+
+          {
+            tela:
+              'configuracoesNotificacoes',
+
+            label:
+              'Notificações'
+          },
+
+          {
+            tela:
+              'perfil',
+
+            label:
+              'Perfil e agenda'
+          }
+
+        ]
+
+      : [
+
+          {
+            tela:
+              'areaCliente',
+
+            label:
+              'Área do cliente'
+          },
+
+          {
+            tela:
+              'meusPedidos',
+
+            label:
+              'Meus pedidos'
+          },
+
+          {
+            tela:
+              'publicarPedido',
+
+            label:
+              'Novo pedido'
+          },
+
+          {
+            tela:
+              'meusChats',
+
+            label:
+              'Conversas'
+          },
+
+          {
+            tela:
+              'perfil',
+
+            label:
+              'Meu perfil'
+          }
+
+        ];
 
 
-  const navegar = (tela) => {
+  const navegar = (
+    tela
+  ) => {
 
     if (onNavigate) {
-      onNavigate(tela);
+
+      onNavigate(
+        tela
+      );
+
     }
 
   };
@@ -91,7 +138,7 @@ function MenuPrincipal({
             navegar(
               isCostureira
                 ? 'feedPedidos'
-                : 'meusPedidos'
+                : 'areaCliente'
             )
           }
         >
@@ -109,27 +156,35 @@ function MenuPrincipal({
 
         <div className="menu-links">
 
-          {itens.map((item) => (
+          {itens.map(
+            (item) => (
 
-            <button
-              key={item.tela}
+              <button
+                key={
+                  item.tela
+                }
 
-              type="button"
+                type="button"
 
-              className={
-                telaAtual === item.tela
-                  ? 'menu-link menu-link-ativo'
-                  : 'menu-link'
-              }
+                className={
+                  telaAtual === item.tela
 
-              onClick={() =>
-                navegar(item.tela)
-              }
-            >
-              {item.label}
-            </button>
+                    ? 'menu-link menu-link-ativo'
 
-          ))}
+                    : 'menu-link'
+                }
+
+                onClick={() =>
+                  navegar(
+                    item.tela
+                  )
+                }
+              >
+                {item.label}
+              </button>
+
+            )
+          )}
 
         </div>
 
@@ -137,12 +192,16 @@ function MenuPrincipal({
         <div className="menu-notificacoes">
 
           <BotaoNotificacoes
-            usuario={usuario}
-            onNavigate={onNavigate}
+            usuario={
+              usuario
+            }
+
+            onNavigate={
+              onNavigate
+            }
           />
 
         </div>
-
 
       </div>
 

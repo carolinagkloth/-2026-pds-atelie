@@ -1,0 +1,954 @@
+.meus-chats-page {
+  width: min(1160px, 92%);
+
+  margin: 0 auto;
+
+  padding: 46px 0 80px;
+
+  color: #4A424A;
+
+  font-family:
+    "Plus Jakarta Sans",
+    "Segoe UI",
+    sans-serif;
+}
+
+
+/* ==========================================
+   CABEÇALHO
+========================================== */
+
+.meus-chats-header {
+  display: flex;
+
+  align-items: flex-end;
+
+  justify-content: space-between;
+
+  gap: 32px;
+
+  margin-bottom: 38px;
+}
+
+
+.meus-chats-heading {
+  max-width: 650px;
+}
+
+
+.meus-chats-eyebrow {
+  display: block;
+
+  margin-bottom: 8px;
+
+  color: #917687;
+
+  font-size: 11px;
+
+  font-weight: 700;
+
+  letter-spacing: 1.4px;
+
+  text-transform: uppercase;
+}
+
+
+.meus-chats-heading h1 {
+  margin: 0;
+
+  color: #3E2445;
+
+  font-family:
+    "Playfair Display",
+    Georgia,
+    serif;
+
+  font-size:
+    clamp(34px, 4vw, 44px);
+
+  font-weight: 700;
+
+  line-height: 1.05;
+}
+
+
+.meus-chats-heading p {
+  max-width: 600px;
+
+  margin: 13px 0 0;
+
+  color: #857885;
+
+  font-size: 14px;
+
+  line-height: 1.7;
+}
+
+
+.meus-chats-header-actions {
+  display: flex;
+
+  align-items: center;
+
+  gap: 11px;
+
+  flex-shrink: 0;
+}
+
+
+.meus-chats-back {
+  min-height: 44px;
+
+  display: inline-flex;
+
+  align-items: center;
+
+  justify-content: center;
+
+  gap: 8px;
+
+  padding: 0 17px;
+
+  background: #FFFFFF;
+
+  color: #6E5568;
+
+  border:
+    1px solid #DDD3D9;
+
+  border-radius: 12px;
+
+  font-size: 12px;
+
+  font-weight: 700;
+
+  cursor: pointer;
+}
+
+
+.meus-chats-back:hover {
+  background: #F7F2F5;
+
+  border-color: #CDBFC8;
+
+  transform: translateY(-1px);
+}
+
+
+.meus-chats-back span {
+  font-size: 15px;
+}
+
+
+.meus-chats-avatar {
+  margin-left: 2px;
+}
+
+
+/* ==========================================
+   CONTAINER
+========================================== */
+
+.meus-chats-shell {
+  overflow: hidden;
+
+  background: #FFFFFF;
+
+  border:
+    1px solid #EBE5E0;
+
+  border-radius: 20px;
+
+  box-shadow:
+    0 12px 32px
+    rgba(62, 36, 69, 0.06);
+}
+
+
+/* ==========================================
+   TOOLBAR
+========================================== */
+
+.meus-chats-toolbar {
+  min-height: 92px;
+
+  padding: 19px 23px;
+
+  display: flex;
+
+  align-items: center;
+
+  justify-content: space-between;
+
+  gap: 30px;
+
+  border-bottom:
+    1px solid #F0EAE7;
+
+  background:
+    rgba(255, 255, 255, 0.96);
+}
+
+
+.meus-chats-user {
+  display: flex;
+
+  align-items: center;
+
+  gap: 13px;
+}
+
+
+.meus-chats-user-avatar {
+  width: 48px;
+  height: 48px;
+
+  flex-shrink: 0;
+
+  display: flex;
+
+  align-items: center;
+
+  justify-content: center;
+
+  background: #F3ECEF;
+
+  color: #7A5B72;
+
+  border:
+    1px solid #E4D9E0;
+
+  border-radius: 14px;
+
+  font-family:
+    "Playfair Display",
+    Georgia,
+    serif;
+
+  font-size: 19px;
+
+  font-weight: 700;
+}
+
+
+.meus-chats-user-label {
+  display: block;
+
+  margin-bottom: 2px;
+
+  color: #A0949C;
+
+  font-size: 8px;
+
+  font-weight: 700;
+
+  letter-spacing: 0.9px;
+
+  text-transform: uppercase;
+}
+
+
+.meus-chats-user h2 {
+  margin: 0;
+
+  color: #3E2445;
+
+  font-family:
+    "Playfair Display",
+    Georgia,
+    serif;
+
+  font-size: 18px;
+
+  line-height: 1.2;
+}
+
+
+.meus-chats-user p {
+  margin: 3px 0 0;
+
+  color: #91858E;
+
+  font-size: 10px;
+}
+
+
+/* ==========================================
+   FILTRO
+========================================== */
+
+.meus-chats-filter {
+  display: flex;
+
+  align-items: center;
+
+  gap: 10px;
+}
+
+
+.meus-chats-filter label {
+  color: #91858E;
+
+  font-size: 10px;
+
+  font-weight: 700;
+}
+
+
+.meus-chats-filter select {
+  min-width: 200px;
+
+  height: 44px;
+
+  padding: 0 13px;
+
+  background: #FAF8F7;
+
+  color: #554C54;
+
+  border:
+    1px solid #DED6D1;
+
+  border-radius: 11px;
+
+  outline: none;
+
+  font-size: 11px;
+
+  cursor: pointer;
+
+  transition:
+    background-color 160ms ease,
+    border-color 160ms ease,
+    box-shadow 160ms ease;
+}
+
+
+.meus-chats-filter select:hover {
+  background: #FFFFFF;
+
+  border-color: #D1C5CC;
+}
+
+
+.meus-chats-filter select:focus {
+  background: #FFFFFF;
+
+  border-color: #BB91AD;
+
+  box-shadow:
+    0 0 0 4px
+    rgba(187, 145, 173, 0.10);
+}
+
+
+/* ==========================================
+   CONTEÚDO
+========================================== */
+
+.meus-chats-content {
+  min-height: 500px;
+
+  padding: 24px;
+
+  background: #FAF7F5;
+}
+
+
+/* ==========================================
+   CARREGAMENTO
+========================================== */
+
+.meus-chats-state {
+  min-height: 420px;
+
+  display: flex;
+
+  flex-direction: column;
+
+  align-items: center;
+
+  justify-content: center;
+
+  gap: 14px;
+
+  color: #91858E;
+
+  font-size: 12px;
+}
+
+
+.meus-chats-spinner {
+  width: 28px;
+  height: 28px;
+
+  border:
+    3px solid #E8DDE4;
+
+  border-top-color:
+    #7A5B72;
+
+  border-radius: 50%;
+
+  animation:
+    meusChatsSpin
+    0.8s linear infinite;
+}
+
+
+@keyframes meusChatsSpin {
+
+  to {
+    transform:
+      rotate(360deg);
+  }
+
+}
+
+
+/* ==========================================
+   ERRO
+========================================== */
+
+.meus-chats-error {
+  padding: 12px 14px;
+
+  display: flex;
+
+  align-items: center;
+
+  gap: 10px;
+
+  background: #FFF1F1;
+
+  color: #A43B3B;
+
+  border:
+    1px solid #F1D5D5;
+
+  border-radius: 11px;
+
+  font-size: 12px;
+}
+
+
+.meus-chats-error-icon {
+  width: 23px;
+  height: 23px;
+
+  display: flex;
+
+  align-items: center;
+
+  justify-content: center;
+
+  flex-shrink: 0;
+
+  background: #F5DADA;
+
+  border-radius: 50%;
+
+  font-weight: 700;
+}
+
+
+/* ==========================================
+   VAZIO
+========================================== */
+
+.meus-chats-empty {
+  min-height: 420px;
+
+  display: flex;
+
+  flex-direction: column;
+
+  align-items: center;
+
+  justify-content: center;
+
+  text-align: center;
+}
+
+
+.meus-chats-empty-icon {
+  width: 58px;
+  height: 58px;
+
+  margin-bottom: 16px;
+
+  display: flex;
+
+  align-items: center;
+
+  justify-content: center;
+
+  background: #F3ECEF;
+
+  color: #7A5B72;
+
+  border-radius: 17px;
+
+  font-size: 22px;
+}
+
+
+.meus-chats-empty-label {
+  margin-bottom: 7px;
+
+  color: #917687;
+
+  font-size: 10px;
+
+  font-weight: 700;
+
+  letter-spacing: 1.1px;
+
+  text-transform: uppercase;
+}
+
+
+.meus-chats-empty h3 {
+  margin: 0;
+
+  color: #3E2445;
+
+  font-family:
+    "Playfair Display",
+    Georgia,
+    serif;
+
+  font-size: 24px;
+}
+
+
+.meus-chats-empty p {
+  max-width: 380px;
+
+  margin: 10px 0 0;
+
+  color: #91858E;
+
+  font-size: 13px;
+
+  line-height: 1.7;
+}
+
+
+/* ==========================================
+   LISTA
+========================================== */
+
+.meus-chats-list {
+  display: flex;
+
+  flex-direction: column;
+
+  gap: 12px;
+}
+
+
+/* ==========================================
+   ITEM DE CONVERSA
+========================================== */
+
+.meus-chats-item {
+  position: relative;
+
+  display: grid;
+
+  grid-template-columns:
+    auto minmax(0, 1fr) auto;
+
+  align-items: center;
+
+  gap: 16px;
+
+  padding: 18px 18px;
+
+  background: #FFFFFF;
+
+  border:
+    1px solid #E9E1DD;
+
+  border-radius: 14px;
+
+  box-shadow:
+    0 3px 10px
+    rgba(62, 36, 69, 0.035);
+
+  cursor: pointer;
+
+  transition:
+    transform 170ms ease,
+    box-shadow 170ms ease,
+    border-color 170ms ease,
+    background-color 170ms ease;
+}
+
+
+.meus-chats-item:hover {
+  transform: translateY(-2px);
+
+  border-color: #D8CFD5;
+
+  box-shadow:
+    0 9px 24px
+    rgba(62, 36, 69, 0.075);
+}
+
+
+.meus-chats-item-unread {
+  background: #FDF9FB;
+
+  border-left:
+    4px solid #917687;
+}
+
+
+/* ==========================================
+   AVATAR CONTATO
+========================================== */
+
+.meus-chats-contact-avatar {
+  width: 48px;
+  height: 48px;
+
+  display: flex;
+
+  align-items: center;
+
+  justify-content: center;
+
+  background: #F3ECEF;
+
+  color: #7A5B72;
+
+  border:
+    1px solid #E4D9E0;
+
+  border-radius: 14px;
+
+  font-family:
+    "Playfair Display",
+    Georgia,
+    serif;
+
+  font-size: 18px;
+
+  font-weight: 700;
+}
+
+
+/* ==========================================
+   TEXTO CENTRAL
+========================================== */
+
+.meus-chats-item-main {
+  min-width: 0;
+}
+
+
+.meus-chats-item-heading {
+  display: flex;
+
+  align-items: center;
+
+  gap: 8px;
+
+  margin-bottom: 5px;
+
+  flex-wrap: wrap;
+}
+
+
+.meus-chats-item-heading h3 {
+  margin: 0;
+
+  color: #3E2445;
+
+  font-family:
+    "Playfair Display",
+    Georgia,
+    serif;
+
+  font-size: 18px;
+
+  font-weight: 700;
+}
+
+
+.meus-chats-status {
+  padding: 5px 8px;
+
+  border-radius: 999px;
+
+  font-size: 8px;
+
+  font-weight: 700;
+
+  letter-spacing: 0.2px;
+
+  text-transform: uppercase;
+
+  white-space: nowrap;
+}
+
+
+.meus-chats-new-message {
+  color: #917687;
+
+  font-size: 8px;
+
+  font-weight: 700;
+
+  letter-spacing: 0.5px;
+
+  text-transform: uppercase;
+}
+
+
+.meus-chats-service {
+  display: block;
+
+  margin-bottom: 5px;
+
+  overflow: hidden;
+
+  color: #625962;
+
+  font-size: 11px;
+
+  font-weight: 700;
+
+  text-overflow: ellipsis;
+
+  white-space: nowrap;
+}
+
+
+.meus-chats-preview {
+  margin: 0;
+
+  overflow: hidden;
+
+  color: #91858E;
+
+  font-size: 11px;
+
+  font-weight: 400;
+
+  text-overflow: ellipsis;
+
+  white-space: nowrap;
+}
+
+
+.meus-chats-preview-unread {
+  color: #6E5568;
+
+  font-weight: 700;
+}
+
+
+/* ==========================================
+   LADO DIREITO
+========================================== */
+
+.meus-chats-item-side {
+  display: flex;
+
+  flex-direction: column;
+
+  align-items: flex-end;
+
+  justify-content: center;
+
+  gap: 10px;
+
+  flex-shrink: 0;
+}
+
+
+.meus-chats-time {
+  color: #A0949C;
+
+  font-size: 9px;
+
+  white-space: nowrap;
+}
+
+
+.meus-chats-time-unread {
+  color: #7A5B72;
+
+  font-weight: 700;
+}
+
+
+.meus-chats-item-actions {
+  display: flex;
+
+  align-items: center;
+
+  gap: 8px;
+}
+
+
+.meus-chats-unread-count {
+  min-width: 24px;
+  height: 24px;
+
+  padding: 0 7px;
+
+  display: inline-flex;
+
+  align-items: center;
+
+  justify-content: center;
+
+  background: #917687;
+
+  color: #FFFFFF;
+
+  border-radius: 999px;
+
+  font-size: 9px;
+
+  font-weight: 700;
+}
+
+
+.meus-chats-open {
+  min-height: 34px;
+
+  display: inline-flex;
+
+  align-items: center;
+
+  justify-content: center;
+
+  gap: 7px;
+
+  padding: 0 11px;
+
+  background: #7A5B72;
+
+  color: #FFFFFF;
+
+  border-radius: 9px;
+
+  font-size: 9px;
+
+  font-weight: 700;
+
+  white-space: nowrap;
+}
+
+
+.meus-chats-open span {
+  font-size: 14px;
+}
+
+
+/* ==========================================
+   RESPONSIVO
+========================================== */
+
+@media (max-width: 850px) {
+
+  .meus-chats-page {
+    width: 92%;
+
+    padding-top: 32px;
+  }
+
+
+  .meus-chats-header {
+    align-items: flex-start;
+
+    flex-direction: column;
+
+    gap: 22px;
+  }
+
+
+  .meus-chats-toolbar {
+    align-items: flex-start;
+
+    flex-direction: column;
+  }
+
+
+  .meus-chats-filter {
+    width: 100%;
+  }
+
+
+  .meus-chats-filter select {
+    flex: 1;
+
+    min-width: 0;
+  }
+
+}
+
+
+@media (max-width: 650px) {
+
+  .meus-chats-heading h1 {
+    font-size: 33px;
+  }
+
+
+  .meus-chats-header-actions {
+    width: 100%;
+
+    flex-wrap: wrap;
+  }
+
+
+  .meus-chats-content {
+    padding: 15px;
+  }
+
+
+  .meus-chats-item {
+    grid-template-columns:
+      auto minmax(0, 1fr);
+
+    gap: 12px;
+
+    padding: 15px;
+  }
+
+
+  .meus-chats-item-side {
+    grid-column:
+      1 / -1;
+
+    width: 100%;
+
+    padding-top: 12px;
+
+    flex-direction: row;
+
+    align-items: center;
+
+    justify-content: space-between;
+
+    border-top:
+      1px solid #F0EAE7;
+  }
+
+
+  .meus-chats-item-actions {
+    margin-left: auto;
+  }
+
+
+  .meus-chats-open {
+    min-height: 32px;
+  }
+
+}

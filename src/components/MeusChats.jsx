@@ -399,7 +399,7 @@ function MeusChats({
               onNavigate(
                 isCostureira
                   ? 'feedPedidos'
-                  : 'meusPedidos'
+                  : 'areaCliente'
               )
             }
 
@@ -434,7 +434,7 @@ function MeusChats({
           >
             ← {isCostureira
               ? 'Voltar aos pedidos'
-              : 'Meus pedidos'}
+              : 'Área do cliente'}
           </button>
 
 

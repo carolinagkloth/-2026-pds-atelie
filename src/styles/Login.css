@@ -1,16 +1,22 @@
 html,
 body,
 #root {
-  margin: 0;
-  padding: 0;
   width: 100%;
   min-height: 100%;
+
+  margin: 0;
+  padding: 0;
 }
+
 
 body {
   overflow-x: hidden;
 }
 
+
+/* ==========================================
+   PÁGINA
+========================================== */
 
 .login-page {
   width: 100%;
@@ -19,10 +25,14 @@ body {
   margin: 0;
   padding: 0;
 
-  background: #F3F2ED;
-  color: #917687;
+  background: #EDD8D5;
 
-  font-family: "Poppins", sans-serif;
+  color: #4A424A;
+
+  font-family:
+    "Plus Jakarta Sans",
+    "Poppins",
+    sans-serif;
 }
 
 
@@ -38,11 +48,9 @@ body {
 
   display: block;
 
-  box-sizing: border-box;
-
   overflow: hidden;
 
-  background: #F3F2ED;
+  background: #EDD8D5;
 }
 
 
@@ -65,16 +73,16 @@ body {
 ========================================== */
 
 .login-area {
-  min-height: 500px;
+  min-height: 520px;
 
   display: flex;
 
   justify-content: center;
+
   align-items: flex-start;
 
-  padding: 45px 20px 70px;
-
-  box-sizing: border-box;
+  padding:
+    50px 20px 80px;
 }
 
 
@@ -84,21 +92,30 @@ body {
 
 .login-card {
   width: 100%;
-  max-width: 430px;
+  max-width: 450px;
 
-  padding: 34px 36px;
+  padding:
+    38px 38px 36px;
 
-  box-sizing: border-box;
+  background:
+    rgba(
+      255,
+      255,
+      255,
+      0.92
+    );
 
-  background: rgba(255, 255, 255, 0.72);
+  border:
+    1px solid #DDC7CE;
 
-  border: 1px solid rgba(145, 118, 135, 0.24);
-
-  border-radius: 14px;
+  border-radius: 20px;
 
   box-shadow:
-    0 10px 30px
-    rgba(145, 118, 135, 0.09);
+    0 18px 45px
+    rgba(62, 36, 69, 0.09);
+
+  backdrop-filter:
+    blur(8px);
 }
 
 
@@ -107,23 +124,31 @@ body {
 ========================================== */
 
 .login-cabecalho {
-  margin-bottom: 25px;
+  margin-bottom: 28px;
 
   text-align: center;
 }
 
 
 .login-etiqueta {
-  display: block;
+  display: inline-block;
 
-  margin-bottom: 7px;
+  margin-bottom: 10px;
 
-  color: #BB91AD;
+  padding:
+    5px 10px;
+
+  background: #F1DFE3;
+
+  color: #917687;
+
+  border-radius: 999px;
 
   font-size: 9px;
-  font-weight: 600;
 
-  letter-spacing: 1.5px;
+  font-weight: 700;
+
+  letter-spacing: 1.2px;
 
   text-transform: uppercase;
 }
@@ -132,28 +157,28 @@ body {
 .login-card h1 {
   margin: 0;
 
-  color: #917687;
+  color: #3E2445;
 
   font-family:
-    "Playfair Display SC",
+    "Playfair Display",
+    Georgia,
     serif;
 
-  font-size: 25px;
+  font-size: 30px;
 
-  line-height: 1.25;
+  line-height: 1.2;
 }
 
 
 .login-subtitle {
-  max-width: 340px;
+  max-width: 350px;
 
-  margin: 11px auto 0;
+  margin:
+    12px auto 0;
 
-  color: #917687;
+  color: #746A72;
 
-  opacity: 0.82;
-
-  font-size: 11px;
+  font-size: 12px;
 
   line-height: 1.7;
 }
@@ -164,17 +189,19 @@ body {
 ========================================== */
 
 .login-erro {
-  margin-bottom: 17px;
+  margin-bottom: 18px;
 
-  padding: 10px 12px;
+  padding:
+    11px 13px;
 
   background: #FFF1F1;
 
   color: #A43B3B;
 
-  border: 1px solid #F1D5D5;
+  border:
+    1px solid #F1D5D5;
 
-  border-radius: 8px;
+  border-radius: 10px;
 
   font-size: 11px;
 }
@@ -189,7 +216,7 @@ body {
 
   justify-content: center;
 
-  margin-bottom: 18px;
+  margin-bottom: 20px;
 }
 
 
@@ -198,21 +225,22 @@ body {
 ========================================== */
 
 .login-separador {
+  margin:
+    20px 0 22px;
+
   display: flex;
 
   align-items: center;
 
   gap: 12px;
 
-  margin: 18px 0 20px;
-
-  color: rgba(145, 118, 135, 0.65);
+  color: #9A858F;
 
   font-size: 9px;
 
-  text-transform: uppercase;
-
   letter-spacing: 0.7px;
+
+  text-transform: uppercase;
 }
 
 
@@ -224,7 +252,7 @@ body {
 
   height: 1px;
 
-  background: rgba(145, 118, 135, 0.25);
+  background: #E2D3D7;
 }
 
 
@@ -233,60 +261,68 @@ body {
 ========================================== */
 
 .login-form-group {
-  margin-bottom: 15px;
+  margin-bottom: 17px;
 }
 
 
 .login-form-group label {
   display: block;
 
-  margin-bottom: 6px;
+  margin-bottom: 7px;
 
-  color: #7A5B72;
+  color: #5F525C;
 
-  font-size: 10px;
+  font-size: 11px;
 
-  font-weight: 600;
+  font-weight: 700;
 }
 
 
 .login-form-group input {
   width: 100%;
-  height: 42px;
+  height: 46px;
 
-  padding: 0 12px;
+  padding: 0 13px;
 
-  box-sizing: border-box;
+  color: #4A424A;
 
-  color: #7A5B72;
+  background: #FAF3F2;
 
-  background: rgba(255, 255, 255, 0.38);
+  border:
+    1px solid #DCCBD0;
 
-  border: 1px solid rgba(145, 118, 135, 0.32);
-
-  border-radius: 7px;
+  border-radius: 11px;
 
   outline: none;
 
-  font-family: "Poppins", sans-serif;
+  font-family:
+    "Plus Jakarta Sans",
+    sans-serif;
 
-  font-size: 11px;
-
-  transition: 0.2s;
+  font-size: 12px;
 }
 
 
 .login-form-group input::placeholder {
-  color: rgba(145, 118, 135, 0.46);
+  color: #AC9DA4;
+}
+
+
+.login-form-group input:hover {
+  background: #FFFFFF;
+
+  border-color: #CEB9C2;
 }
 
 
 .login-form-group input:focus {
+  background: #FFFFFF;
+
   border-color: #BB91AD;
 
   box-shadow:
-    0 0 0 3px
-    rgba(187, 145, 173, 0.11);
+    0 0 0 4px
+    rgba(187, 145, 173, 0.10);
 }
 
 
@@ -300,7 +336,7 @@ body {
 
 
 .login-senha-box input {
-  padding-right: 43px;
+  padding-right: 45px;
 }
 
 
@@ -308,9 +344,10 @@ body {
   position: absolute;
 
   top: 50%;
-  right: 10px;
+  right: 11px;
 
-  transform: translateY(-50%);
+  transform:
+    translateY(-50%);
 
   width: auto !important;
   height: auto !important;
@@ -318,13 +355,16 @@ body {
   display: flex;
 
   align-items: center;
+
   justify-content: center;
 
   padding: 3px !important;
 
-  background: transparent !important;
+  background:
+    transparent !important;
 
-  border: none !important;
+  border:
+    none !important;
 
   cursor: pointer;
 }
@@ -339,7 +379,8 @@ body {
 
   justify-content: flex-end;
 
-  margin: -3px 0 18px;
+  margin:
+    -3px 0 20px;
 }
 
 
@@ -349,19 +390,30 @@ body {
 
   padding: 0 !important;
 
-  color: #7A5B72 !important;
+  background:
+    transparent !important;
 
-  background: transparent !important;
+  color:
+    #7A5B72 !important;
 
-  border: none !important;
-
-  font-family: "Poppins", sans-serif;
+  border:
+    none !important;
 
   font-size: 10px;
 
-  text-decoration: underline;
+  font-weight: 600;
+
+  text-decoration: none;
 
   cursor: pointer;
+}
+
+
+.login-link-texto:hover {
+  color:
+    #3E2445 !important;
+
+  text-decoration: underline;
 }
 
 
@@ -371,32 +423,37 @@ body {
 
 .login-button {
   width: 100%;
-  height: 44px;
 
-  background: #917687;
+  height: 46px;
+
+  background: #7A5B72;
 
   color: #FFFFFF;
 
-  border: none;
+  border:
+    1px solid #7A5B72;
 
-  border-radius: 7px;
+  border-radius: 11px;
 
-  font-family: "Poppins", sans-serif;
+  font-size: 12px;
 
-  font-size: 11px;
-
-  font-weight: 600;
-
-  letter-spacing: 0.2px;
+  font-weight: 700;
 
   cursor: pointer;
 
-  transition: 0.2s;
+  box-shadow:
+    0 6px 16px
+    rgba(62, 36, 69, 0.13);
 }
 
 
 .login-button:hover {
-  background: #7A5B72;
+  background: #694D62;
+
+  border-color: #694D62;
+
+  transform:
+    translateY(-1px);
 }
 
 
@@ -412,16 +469,17 @@ body {
 ========================================== */
 
 .login-criar-conta {
+  margin-top: 21px;
+
   display: flex;
 
   justify-content: center;
+
   align-items: center;
 
   gap: 5px;
 
-  margin-top: 17px;
-
-  color: #917687;
+  color: #746A72;
 
   font-size: 10px;
 }
@@ -433,21 +491,28 @@ body {
 
   padding: 0 !important;
 
-  background: transparent !important;
+  background:
+    transparent !important;
 
-  color: #7A5B72 !important;
+  color:
+    #7A5B72 !important;
 
-  border: none !important;
-
-  font-family: "Poppins", sans-serif;
+  border:
+    none !important;
 
   font-size: 10px;
 
-  font-weight: 600;
-
-  text-decoration: underline;
+  font-weight: 700;
 
   cursor: pointer;
+}
+
+
+.login-criar-conta button:hover {
+  color:
+    #3E2445 !important;
+
+  text-decoration: underline;
 }
 
 
@@ -457,38 +522,20 @@ body {
 
 @media (max-width: 600px) {
 
-  .login-banner {
-    width: 100%;
-
-    margin: 0;
-
-    padding: 0;
-  }
-
-
-  .login-banner img {
-    width: 100%;
-
-    max-width: none;
-
-    margin: 0;
-
-    border-radius: 0;
-  }
-
-
   .login-area {
-    padding: 30px 15px 55px;
+    padding:
+      32px 15px 60px;
   }
 
 
   .login-card {
-    padding: 28px 21px;
+    padding:
+      30px 22px;
   }
 
 
   .login-card h1 {
-    font-size: 22px;
+    font-size: 26px;
   }
 
 }

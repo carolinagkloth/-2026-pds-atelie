@@ -1,4 +1,7 @@
-import React, { useState, useEffect } from 'react';
+import React, {
+  useState,
+  useEffect
+} from 'react';
 
 
 function ChatHeader({
@@ -8,8 +11,10 @@ function ChatHeader({
   onNavigate
 }) {
 
-  const [erroImagem, setErroImagem] =
-    useState(false);
+  const [
+    erroImagem,
+    setErroImagem
+  ] = useState(false);
 
 
   const usuarioSalvo = (() => {
@@ -71,26 +76,38 @@ function ChatHeader({
 
     <header
       style={{
-        display: 'flex',
-        justifyContent: 'space-between',
-        alignItems: 'center',
+        display:
+          'flex',
 
-        gap: '16px',
+        justifyContent:
+          'space-between',
 
-        marginBottom: '18px',
+        alignItems:
+          'center',
 
-        padding: '14px 18px',
+        gap:
+          '16px',
 
-        background: '#FFFFFF',
+        marginBottom:
+          '18px',
 
-        border: '1px solid #EBE5E0',
+        padding:
+          '14px 18px',
 
-        borderRadius: '13px',
+        background:
+          '#FFFFFF',
+
+        border:
+          '1px solid #EBE5E0',
+
+        borderRadius:
+          '13px',
 
         boxShadow:
           '0 6px 18px rgba(62,36,69,0.045)',
 
-        flexWrap: 'wrap'
+        flexWrap:
+          'wrap'
       }}
     >
 
@@ -108,39 +125,54 @@ function ChatHeader({
         }
 
         style={{
-          height: '38px',
+          height:
+            '40px',
 
-          padding: '0 14px',
+          padding:
+            '0 14px',
 
-          display: 'flex',
+          display:
+            'flex',
 
-          alignItems: 'center',
+          alignItems:
+            'center',
 
-          gap: '6px',
+          gap:
+            '7px',
 
-          background: '#FFFFFF',
+          background:
+            '#FFFFFF',
 
-          color: '#7A5B72',
+          color:
+            '#7A5B72',
 
           border:
             '1px solid #D8CFD5',
 
-          borderRadius: '8px',
+          borderRadius:
+            '9px',
 
           fontFamily:
-            "'Poppins', 'Segoe UI', sans-serif",
+            "'Plus Jakarta Sans', 'Segoe UI', sans-serif",
 
-          fontSize: '10px',
+          fontSize:
+            '11px',
 
-          fontWeight: '600',
+          fontWeight:
+            '700',
 
-          cursor: 'pointer'
+          cursor:
+            'pointer'
         }}
       >
+
         <span
           style={{
-            fontSize: '14px',
-            lineHeight: 1
+            fontSize:
+              '15px',
+
+            lineHeight:
+              1
           }}
         >
           ←
@@ -151,7 +183,7 @@ function ChatHeader({
       </button>
 
 
-      {/* PERFIL */}
+      {/* PERFIL DO USUÁRIO LOGADO */}
 
       <button
         type="button"
@@ -163,27 +195,39 @@ function ChatHeader({
           )
         }
 
-        title="Abrir Meu Perfil e Agenda"
+        title={
+          isCostureira
+            ? 'Abrir perfil profissional e agenda'
+            : 'Abrir meu perfil'
+        }
 
         style={{
-          display: 'flex',
+          display:
+            'flex',
 
-          alignItems: 'center',
+          alignItems:
+            'center',
 
-          gap: '10px',
+          gap:
+            '10px',
 
-          padding: '5px 12px 5px 5px',
+          padding:
+            '5px 13px 5px 5px',
 
-          background: '#FAF8F7',
+          background:
+            '#FAF3F2',
 
           border:
-            '1px solid #E6DDE2',
+            '1px solid #E2D4D9',
 
-          borderRadius: '999px',
+          borderRadius:
+            '999px',
 
-          cursor: 'pointer',
+          cursor:
+            'pointer',
 
-          textAlign: 'left'
+          textAlign:
+            'left'
         }}
       >
 
@@ -192,24 +236,35 @@ function ChatHeader({
 
         <div
           style={{
-            width: '37px',
-            height: '37px',
+            width:
+              '39px',
 
-            flexShrink: 0,
+            height:
+              '39px',
 
-            display: 'flex',
+            flexShrink:
+              0,
 
-            alignItems: 'center',
-            justifyContent: 'center',
+            display:
+              'flex',
 
-            overflow: 'hidden',
+            alignItems:
+              'center',
 
-            background: '#F3ECEF',
+            justifyContent:
+              'center',
+
+            overflow:
+              'hidden',
+
+            background:
+              '#F1DFE3',
 
             border:
-              '1px solid #E2D5DD',
+              '1px solid #DFC9D1',
 
-            borderRadius: '50%',
+            borderRadius:
+              '50%',
 
             boxShadow:
               '0 2px 8px rgba(62,36,69,0.07)'
@@ -220,9 +275,13 @@ function ChatHeader({
            !erroImagem ? (
 
             <img
-              src={fotoExibir}
+              src={
+                fotoExibir
+              }
 
-              alt={nomeExibir}
+              alt={
+                nomeExibir
+              }
 
               referrerPolicy="no-referrer"
 
@@ -233,12 +292,17 @@ function ChatHeader({
               }
 
               style={{
-                width: '100%',
-                height: '100%',
+                width:
+                  '100%',
 
-                display: 'block',
+                height:
+                  '100%',
 
-                objectFit: 'cover'
+                display:
+                  'block',
+
+                objectFit:
+                  'cover'
               }}
             />
 
@@ -246,16 +310,20 @@ function ChatHeader({
 
             <span
               style={{
-                color: '#7A5B72',
+                color:
+                  '#7A5B72',
 
                 fontFamily:
-                  "'Playfair Display SC', 'Playfair Display', Georgia, serif",
+                  "'Playfair Display', Georgia, serif",
 
-                fontSize: '15px',
+                fontSize:
+                  '16px',
 
-                fontWeight: '700',
+                fontWeight:
+                  '700',
 
-                userSelect: 'none'
+                userSelect:
+                  'none'
               }}
             >
               {primeiraLetra}
@@ -270,26 +338,33 @@ function ChatHeader({
 
         <div
           style={{
-            display: 'flex',
+            display:
+              'flex',
 
-            flexDirection: 'column',
+            flexDirection:
+              'column',
 
-            gap: '1px',
+            gap:
+              '1px',
 
-            lineHeight: '1.3'
+            lineHeight:
+              '1.3'
           }}
         >
 
           <span
             style={{
-              color: '#5F4B5B',
+              color:
+                '#4F3C49',
 
               fontFamily:
-                "'Poppins', 'Segoe UI', sans-serif",
+                "'Plus Jakarta Sans', 'Segoe UI', sans-serif",
 
-              fontSize: '10px',
+              fontSize:
+                '11px',
 
-              fontWeight: '600'
+              fontWeight:
+                '700'
             }}
           >
             {nomeExibir}
@@ -298,24 +373,24 @@ function ChatHeader({
 
           <span
             style={{
-              color: '#998C95',
+              color:
+                '#92858E',
 
               fontFamily:
-                "'Poppins', 'Segoe UI', sans-serif",
+                "'Plus Jakarta Sans', 'Segoe UI', sans-serif",
 
-              fontSize: '8px'
+              fontSize:
+                '9px'
             }}
           >
             {isCostureira
-              ? 'Meu Perfil • Agenda'
-              : 'Meu Perfil'
-            }
+              ? 'Perfil profissional • Agenda'
+              : 'Conta de cliente'}
           </span>
 
         </div>
 
       </button>
-
 
     </header>
 

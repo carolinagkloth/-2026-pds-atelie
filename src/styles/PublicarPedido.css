@@ -1,12 +1,14 @@
 .publicar-page {
-  width: min(900px, 94%);
+  width: min(940px, 92%);
 
-  margin: 38px auto 70px;
+  margin: 0 auto;
+
+  padding: 46px 0 80px;
 
   color: #4A424A;
 
   font-family:
-    "Poppins",
+    "Plus Jakarta Sans",
     "Segoe UI",
     sans-serif;
 }
@@ -19,25 +21,30 @@
 .publicar-cabecalho {
   display: flex;
 
-  justify-content: space-between;
   align-items: flex-end;
 
-  gap: 24px;
+  justify-content: space-between;
 
-  margin-bottom: 25px;
+  gap: 30px;
 
-  flex-wrap: wrap;
+  margin-bottom: 38px;
+}
+
+
+.publicar-cabecalho > div {
+  max-width: 650px;
 }
 
 
 .publicar-etiqueta {
   display: block;
 
-  margin-bottom: 6px;
+  margin-bottom: 8px;
 
   color: #917687;
 
-  font-size: 10px;
+  font-size: 11px;
+
   font-weight: 700;
 
   letter-spacing: 1.4px;
@@ -52,49 +59,79 @@
   color: #3E2445;
 
   font-family:
-    "Playfair Display SC",
     "Playfair Display",
+    Georgia,
     serif;
 
-  font-size: 34px;
-  line-height: 1.15;
+  font-size:
+    clamp(34px, 4vw, 44px);
+
+  font-weight: 700;
+
+  line-height: 1.05;
 }
 
 
 .publicar-cabecalho p {
   max-width: 620px;
 
-  margin: 8px 0 0;
+  margin: 13px 0 0;
 
-  color: #857885;
+  color: #746A72;
 
-  font-size: 12px;
-  line-height: 1.6;
+  font-size: 14px;
+
+  line-height: 1.7;
 }
 
 
 .publicar-voltar {
-  height: 40px;
+  min-height: 44px;
 
-  padding: 0 15px;
+  flex-shrink: 0;
+
+  display: inline-flex;
+
+  align-items: center;
+
+  justify-content: center;
+
+  padding: 0 17px;
 
   background: #FFFFFF;
 
-  color: #7A5B72;
+  color: #6E5568;
 
-  border: 1px solid #D8CFD5;
+  border:
+    1px solid #D8C9D0;
 
-  border-radius: 8px;
+  border-radius: 12px;
 
   font-family:
-    "Poppins",
+    "Plus Jakarta Sans",
     sans-serif;
 
-  font-size: 10px;
+  font-size: 12px;
 
-  font-weight: 600;
+  font-weight: 700;
 
   cursor: pointer;
+
+  transition:
+    background-color 160ms ease,
+    color 160ms ease,
+    border-color 160ms ease,
+    box-shadow 160ms ease,
+    transform 160ms ease;
+}
+
+
+.publicar-voltar:hover {
+  background: #F5E8E6;
+
+  border-color: #C9AEB9;
+
+  transform: translateY(-1px);
 }
 
 
@@ -107,19 +144,18 @@
 
   margin: 0;
 
-  padding: 30px;
-
-  box-sizing: border-box;
+  padding: 34px;
 
   background: #FFFFFF;
 
-  border: 1px solid #EBE5E0;
+  border:
+    1px solid #DFCBCD;
 
-  border-radius: 15px;
+  border-radius: 22px;
 
   box-shadow:
-    0 10px 28px
-    rgba(62, 36, 69, 0.06);
+    0 14px 38px
+    rgba(62, 36, 69, 0.075);
 }
 
 
@@ -128,22 +164,24 @@
 ========================================== */
 
 .publicar-card-topo {
-  margin-bottom: 25px;
+  margin-bottom: 28px;
 
-  padding-bottom: 20px;
+  padding-bottom: 23px;
 
-  border-bottom: 1px solid #EEE7E3;
+  border-bottom:
+    1px solid #EFE3E5;
 }
 
 
 .publicar-card-etiqueta {
   display: block;
 
-  margin-bottom: 4px;
+  margin-bottom: 5px;
 
-  color: #BB91AD;
+  color: #917687;
 
   font-size: 9px;
+
   font-weight: 700;
 
   letter-spacing: 1px;
@@ -158,24 +196,26 @@
   color: #3E2445;
 
   font-family:
-    "Playfair Display SC",
     "Playfair Display",
+    Georgia,
     serif;
 
-  font-size: 22px;
+  font-size: 24px;
+
+  font-weight: 700;
 
   text-align: left;
 }
 
 
 .publicar-subtitle {
-  margin:
-    6px 0 0;
+  margin: 7px 0 0;
 
-  color: #91858E;
+  color: #8A7C84;
 
-  font-size: 10px;
-  line-height: 1.6;
+  font-size: 11px;
+
+  line-height: 1.65;
 
   text-align: left;
 }
@@ -186,19 +226,20 @@
 ========================================== */
 
 .publicar-erro {
-  margin-bottom: 18px;
+  margin-bottom: 20px;
 
-  padding: 11px 14px;
+  padding: 12px 14px;
 
   background: #FFF1F1;
 
   color: #A43B3B;
 
-  border: 1px solid #F1D5D5;
+  border:
+    1px solid #F1D5D5;
 
-  border-radius: 8px;
+  border-radius: 11px;
 
-  font-size: 10px;
+  font-size: 11px;
 }
 
 
@@ -207,20 +248,20 @@
 ========================================== */
 
 .publicar-form-group {
-  margin-bottom: 18px;
+  margin-bottom: 20px;
 }
 
 
 .publicar-form-group label {
   display: block;
 
-  margin-bottom: 6px;
+  margin-bottom: 7px;
 
   color: #5F525C;
 
-  font-size: 10px;
+  font-size: 11px;
 
-  font-weight: 600;
+  font-weight: 700;
 }
 
 
@@ -229,42 +270,57 @@
 .publicar-form-group textarea {
   width: 100%;
 
-  padding: 11px 12px;
+  padding: 0 13px;
 
-  box-sizing: border-box;
-
-  background: #FAF8F7;
+  background: #FAF3F2;
 
   color: #4A424A;
 
-  border: 1px solid #DED6D1;
+  border:
+    1px solid #DCCBD0;
 
-  border-radius: 8px;
+  border-radius: 11px;
 
-  font-family:
-    "Poppins",
-    sans-serif;
-
-  font-size: 11px;
+  box-sizing: border-box;
 
   outline: none;
 
-  transition: 0.2s;
+  font-family:
+    "Plus Jakarta Sans",
+    sans-serif;
+
+  font-size: 12px;
+
+  transition:
+    background-color 160ms ease,
+    border-color 160ms ease,
+    box-shadow 160ms ease;
 }
 
 
 .publicar-form-group input,
 .publicar-form-group select {
-  height: 42px;
+  height: 46px;
 }
 
 
 .publicar-form-group textarea {
-  min-height: 125px;
+  min-height: 140px;
+
+  padding: 13px;
 
   resize: vertical;
 
-  line-height: 1.6;
+  line-height: 1.65;
+}
+
+
+.publicar-form-group input:hover,
+.publicar-form-group select:hover,
+.publicar-form-group textarea:hover {
+  background: #FFFFFF;
+
+  border-color: #CEB9C2;
 }
 
 
@@ -276,14 +332,14 @@
   border-color: #BB91AD;
 
   box-shadow:
-    0 0 0 3px
-    rgba(187, 145, 173, 0.11);
+    0 0 0 4px
+    rgba(187, 145, 173, 0.10);
 }
 
 
 .publicar-form-group input::placeholder,
 .publicar-form-group textarea::placeholder {
-  color: #A99DA4;
+  color: #A99AA2;
 }
 
 
@@ -295,9 +351,9 @@
   display: grid;
 
   grid-template-columns:
-    1fr 1fr;
+    repeat(2, minmax(0, 1fr));
 
-  gap: 16px;
+  gap: 17px;
 }
 
 
@@ -306,16 +362,16 @@
 ========================================== */
 
 .publicar-horario-box {
-  margin:
-    3px 0 20px;
+  margin: 5px 0 23px;
 
-  padding: 17px 18px 2px;
+  padding: 20px 20px 4px;
 
-  background: #FAF8F7;
+  background: #F7E9E8;
 
-  border: 1px solid #EEE7E3;
+  border:
+    1px solid #E4D0D4;
 
-  border-radius: 10px;
+  border-radius: 15px;
 }
 
 
@@ -324,58 +380,64 @@
 
   align-items: center;
 
-  gap: 7px;
+  gap: 8px;
 
-  margin-bottom: 13px;
+  margin-bottom: 15px;
 }
 
 
 .publicar-horario-titulo span {
-  color: #6E5568;
+  color: #5E4557;
 
-  font-size: 10px;
+  font-size: 11px;
 
   font-weight: 700;
 }
 
 
 .publicar-horario-titulo small {
-  padding:
-    3px 7px;
+  padding: 4px 8px;
 
-  background:
-    #F3ECEF;
+  background: #EFDDE2;
 
-  color:
-    #917687;
+  color: #7A5B72;
 
-  border-radius:
-    999px;
+  border:
+    1px solid #E0C8D0;
 
-  font-size:
-    7px;
+  border-radius: 999px;
 
-  font-weight:
-    700;
+  font-size: 7px;
 
-  text-transform:
-    uppercase;
+  font-weight: 700;
+
+  letter-spacing: 0.4px;
+
+  text-transform: uppercase;
 }
 
 
 .publicar-horario input:disabled {
-  opacity: 0.5;
+  background: #EFE4E4;
+
+  color: #A3949B;
+
+  opacity: 0.7;
 
   cursor: not-allowed;
 }
 
+
+/* ==========================================
+   CHECKBOX
+========================================== */
 
 .publicar-checkbox-area {
   display: flex;
 
   align-items: center;
 
-  padding-bottom: 18px;
+  padding-bottom: 20px;
 }
 
 
@@ -384,23 +446,25 @@
 
   align-items: center;
 
-  gap: 8px;
+  gap: 9px;
 
-  color: #6A6066;
+  color: #665A61;
 
-  font-size: 10px;
+  font-size: 11px;
 
-  line-height: 1.4;
+  line-height: 1.45;
 
   cursor: pointer;
 }
 
 
 .publicar-checkbox-area input {
-  width: 15px;
-  height: 15px;
+  width: 17px;
+  height: 17px;
 
-  accent-color: #917687;
+  flex-shrink: 0;
+
+  accent-color: #7A5B72;
 
   cursor: pointer;
 }
@@ -411,52 +475,72 @@
 ========================================== */
 
 .publicar-upload {
-  margin-top: 5px;
+  margin-top: 8px;
 }
 
 
 .publicar-upload-ajuda {
   display: block;
 
-  margin:
-    -2px 0 8px;
+  margin: -2px 0 9px;
 
   color: #9A8E96;
 
   font-size: 8px;
 
-  text-transform: uppercase;
+  font-weight: 700;
 
-  letter-spacing: 0.4px;
+  letter-spacing: 0.5px;
+
+  text-transform: uppercase;
 }
 
 
 .publicar-upload-box {
-  min-height: 125px;
+  min-height: 160px;
 
   display: flex !important;
 
   flex-direction: column;
 
   align-items: center;
+
   justify-content: center;
 
-  gap: 4px;
+  gap: 5px;
 
-  padding: 20px;
+  padding: 24px;
 
-  box-sizing: border-box;
-
-  background: #FAF8F7;
+  background: #FAF3F2;
 
   border:
-    1px dashed #D5C8D0 !important;
+    1px dashed #CDB6C0 !important;
 
-  border-radius: 10px;
+  border-radius: 15px;
 
   text-align: center;
 
   cursor: pointer;
+
+  transition:
+    background-color 160ms ease,
+    border-color 160ms ease,
+    box-shadow 160ms ease,
+    transform 160ms ease;
+}
+
+
+.publicar-upload-box:hover {
+  background: #F7E9E8;
+
+  border-color:
+    #BB91AD !important;
+
+  box-shadow:
+    0 7px 20px
+    rgba(62, 36, 69, 0.05);
+
+  transform: translateY(-1px);
 }
 
 
@@ -466,80 +550,104 @@
 
 
 .publicar-upload-box strong {
-  color: #625762;
+  margin-top: 3px;
 
-  font-size: 10px;
+  color: #5E4557;
+
+  font-size: 12px;
 }
 
 
 .publicar-upload-box > span:last-of-type {
-  color: #9A8E96;
+  max-width: 370px;
 
-  font-size: 9px;
+  color: #8E7F87;
+
+  font-size: 10px;
 
   font-weight: 400;
+
+  line-height: 1.5;
 }
 
 
 .publicar-upload-icone {
-  width: 34px;
-  height: 34px;
+  width: 43px;
+  height: 43px;
 
-  margin-bottom: 4px;
+  margin-bottom: 5px;
 
   display: flex;
 
   align-items: center;
+
   justify-content: center;
 
-  background: #F0E7EC;
+  background: #EEDCE1;
 
   color: #7A5B72;
 
-  border-radius: 50%;
+  border:
+    1px solid #DEC6CE;
 
-  font-size: 18px;
+  border-radius: 13px;
 
-  font-weight: 600;
+  font-size: 21px;
+
+  font-weight: 500;
 }
 
 
 /* ==========================================
-   PRÉVIA
+   PRÉ-VISUALIZAÇÃO
 ========================================== */
 
 .publicar-preview {
-  margin-top: 16px;
+  margin-top: 18px;
+
+  padding: 14px;
+
+  background: #F7E9E8;
+
+  border:
+    1px solid #E4D0D4;
+
+  border-radius: 14px;
 }
 
 
 .publicar-preview span {
   display: block;
 
-  margin-bottom: 7px;
+  margin-bottom: 9px;
 
   color: #7A5B72;
 
   font-size: 9px;
 
-  font-weight: 600;
+  font-weight: 700;
+
+  letter-spacing: 0.5px;
+
+  text-transform: uppercase;
 }
 
 
 .publicar-preview img {
   width: 100%;
 
-  max-height: 280px;
+  max-height: 330px;
 
   display: block;
 
   object-fit: contain;
 
-  background: #FAF8F7;
+  background: #FFFFFF;
 
-  border: 1px solid #E5DDDF;
+  border:
+    1px solid #E2D2D6;
 
-  border-radius: 10px;
+  border-radius: 11px;
 }
 
 
@@ -552,99 +660,94 @@
 
   justify-content: flex-end;
 
-  gap: 9px;
+  gap: 10px;
 
-  margin-top: 26px;
+  margin-top: 30px;
 
-  padding-top: 20px;
+  padding-top: 23px;
 
-  border-top: 1px solid #EEE7E3;
+  border-top:
+    1px solid #EFE3E5;
+}
+
+
+.publicar-button-principal,
+.publicar-button-cancelar {
+  min-height: 44px;
+
+  padding: 0 18px;
+
+  border-radius: 11px;
+
+  font-family:
+    "Plus Jakarta Sans",
+    sans-serif;
+
+  font-size: 11px;
+
+  font-weight: 700;
+
+  cursor: pointer;
+
+  transition:
+    background-color 160ms ease,
+    color 160ms ease,
+    border-color 160ms ease,
+    box-shadow 160ms ease,
+    transform 160ms ease;
 }
 
 
 .publicar-button-principal {
-  padding:
-    11px 17px;
+  background: #7A5B72;
 
-  background:
-    #7A5B72;
-
-  color:
-    #FFFFFF;
+  color: #FFFFFF;
 
   border:
-    none;
+    1px solid #7A5B72;
 
-  border-radius:
-    8px;
-
-  font-family:
-    "Poppins",
-    sans-serif;
-
-  font-size:
-    10px;
-
-  font-weight:
-    600;
-
-  cursor:
-    pointer;
-
-  transition:
-    0.2s;
+  box-shadow:
+    0 6px 16px
+    rgba(62, 36, 69, 0.13);
 }
 
 
-.publicar-button-principal:hover {
-  background:
-    #6C4E64;
+.publicar-button-principal:hover:not(:disabled) {
+  background: #694D62;
+
+  border-color: #694D62;
+
+  transform: translateY(-1px);
+
+  box-shadow:
+    0 9px 21px
+    rgba(62, 36, 69, 0.17);
 }
 
 
 .publicar-button-principal:disabled {
-  opacity:
-    0.65;
+  opacity: 0.65;
 
-  cursor:
-    not-allowed;
+  cursor: not-allowed;
 }
 
 
 .publicar-button-cancelar {
-  padding:
-    10px 16px;
+  background: #FFFFFF;
 
-  background:
-    #FFFFFF;
-
-  color:
-    #7A5B72;
+  color: #6E5568;
 
   border:
-    1px solid #D8CFD5;
-
-  border-radius:
-    8px;
-
-  font-family:
-    "Poppins",
-    sans-serif;
-
-  font-size:
-    10px;
-
-  font-weight:
-    600;
-
-  cursor:
-    pointer;
+    1px solid #D8C9D0;
 }
 
 
 .publicar-button-cancelar:hover {
-  background:
-    #FAF8F7;
+  background: #F5E8E6;
+
+  border-color: #C9AEB9;
+
+  transform: translateY(-1px);
 }
 
 
@@ -652,60 +755,62 @@
    RESPONSIVO
 ========================================== */
 
-@media (max-width: 650px) {
+@media (max-width: 700px) {
 
   .publicar-page {
-    width:
-      min(94%, 600px);
+    width: 92%;
 
-    margin:
-      28px auto 50px;
+    padding:
+      32px 0 60px;
   }
 
 
   .publicar-cabecalho {
-    align-items:
-      flex-start;
+    align-items: flex-start;
 
-    flex-direction:
-      column;
+    flex-direction: column;
+
+    gap: 20px;
   }
 
 
   .publicar-cabecalho h1 {
-    font-size:
-      28px;
+    font-size: 33px;
   }
 
 
   .publicar-card {
-    padding:
-      24px 19px;
+    padding: 25px 20px;
+
+    border-radius: 18px;
   }
 
 
   .publicar-duas-colunas {
-    grid-template-columns:
-      1fr;
+    grid-template-columns: 1fr;
+  }
+
+
+  .publicar-horario-box {
+    padding:
+      18px 16px 3px;
   }
 
 
   .publicar-checkbox-area {
     padding:
-      0 0 18px;
+      0 0 19px;
   }
 
 
   .publicar-botoes {
-    flex-direction:
-      column-reverse;
+    flex-direction: column-reverse;
   }
 
 
   .publicar-button-principal,
   .publicar-button-cancelar {
-    width:
-      100%;
+    width: 100%;
   }
 
 }

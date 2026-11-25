@@ -265,8 +265,8 @@ function Cadastro({
 
       const response =
         await fetch(
-          '/api/cadastro',
-          {
+          '/api/usuario/cadastro',
+      {
             method: 'POST',
 
             headers: {

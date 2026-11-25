@@ -1,0 +1,690 @@
+.notificacoes-page {
+  width: min(900px, 92%);
+
+  margin: 0 auto;
+
+  padding: 46px 0 80px;
+
+  color: #4A424A;
+
+  font-family:
+    "Plus Jakarta Sans",
+    "Segoe UI",
+    sans-serif;
+}
+
+
+/* ==========================================
+   CABEÇALHO
+========================================== */
+
+.notificacoes-header {
+  display: flex;
+
+  align-items: flex-end;
+
+  justify-content: space-between;
+
+  gap: 30px;
+
+  margin-bottom: 38px;
+}
+
+
+.notificacoes-header > div {
+  max-width: 620px;
+}
+
+
+.notificacoes-eyebrow {
+  display: block;
+
+  margin-bottom: 8px;
+
+  color: #917687;
+
+  font-size: 11px;
+
+  font-weight: 700;
+
+  letter-spacing: 1.4px;
+
+  text-transform: uppercase;
+}
+
+
+.notificacoes-header h1 {
+  margin: 0;
+
+  color: #3E2445;
+
+  font-family:
+    "Playfair Display",
+    Georgia,
+    serif;
+
+  font-size:
+    clamp(34px, 4vw, 44px);
+
+  line-height: 1.05;
+}
+
+
+.notificacoes-header p {
+  max-width: 580px;
+
+  margin: 13px 0 0;
+
+  color: #746A72;
+
+  font-size: 14px;
+
+  line-height: 1.7;
+}
+
+
+.notificacoes-voltar {
+  min-height: 44px;
+
+  display: inline-flex;
+
+  align-items: center;
+
+  justify-content: center;
+
+  gap: 8px;
+
+  flex-shrink: 0;
+
+  padding: 0 17px;
+
+  background: #FFFFFF;
+
+  color: #6E5568;
+
+  border:
+    1px solid #D8C9D0;
+
+  border-radius: 12px;
+
+  font-size: 12px;
+
+  font-weight: 700;
+
+  cursor: pointer;
+}
+
+
+.notificacoes-voltar:hover {
+  background: #F5E8E6;
+
+  border-color: #C9AEB9;
+
+  transform: translateY(-1px);
+}
+
+
+/* ==========================================
+   CARD
+========================================== */
+
+.notificacoes-card {
+  overflow: hidden;
+
+  background: #FFFFFF;
+
+  border:
+    1px solid #DFCBCD;
+
+  border-radius: 22px;
+
+  box-shadow:
+    0 14px 38px
+    rgba(62, 36, 69, 0.075);
+}
+
+
+/* ==========================================
+   TOPO DO CARD
+========================================== */
+
+.notificacoes-card-header {
+  padding: 28px 30px;
+
+  display: flex;
+
+  align-items: center;
+
+  justify-content: space-between;
+
+  gap: 25px;
+
+  background:
+    linear-gradient(
+      135deg,
+      #FAF3F2,
+      #F2E1E5
+    );
+
+  border-bottom:
+    1px solid #E7D6DA;
+}
+
+
+.notificacoes-card-eyebrow {
+  display: block;
+
+  margin-bottom: 5px;
+
+  color: #917687;
+
+  font-size: 9px;
+
+  font-weight: 700;
+
+  letter-spacing: 1px;
+
+  text-transform: uppercase;
+}
+
+
+.notificacoes-card-header h2 {
+  margin: 0;
+
+  color: #3E2445;
+
+  font-family:
+    "Playfair Display",
+    Georgia,
+    serif;
+
+  font-size: 24px;
+}
+
+
+.notificacoes-card-header p {
+  max-width: 520px;
+
+  margin: 7px 0 0;
+
+  color: #806F78;
+
+  font-size: 11px;
+
+  line-height: 1.65;
+}
+
+
+.notificacoes-header-icon {
+  width: 50px;
+  height: 50px;
+
+  flex-shrink: 0;
+
+  display: flex;
+
+  align-items: center;
+
+  justify-content: center;
+
+  background: #EEDCE1;
+
+  color: #7A5B72;
+
+  border:
+    1px solid #DEC6CE;
+
+  border-radius: 15px;
+
+  font-size: 24px;
+}
+
+
+/* ==========================================
+   CONTEÚDO
+========================================== */
+
+.notificacoes-content {
+  padding: 28px 30px 30px;
+}
+
+
+/* ==========================================
+   WHATSAPP
+========================================== */
+
+.notificacoes-whatsapp {
+  margin-bottom: 30px;
+
+  padding: 19px 20px;
+
+  display: flex;
+
+  align-items: center;
+
+  justify-content: space-between;
+
+  gap: 30px;
+
+  background:
+    linear-gradient(
+      135deg,
+      #F3E8E8,
+      #F8EFEE
+    );
+
+  border:
+    1px solid #DEC8CE;
+
+  border-left:
+    4px solid #917687;
+
+  border-radius: 15px;
+}
+
+
+.notificacoes-item-tag {
+  display: inline-block;
+
+  margin-bottom: 5px;
+
+  color: #917687;
+
+  font-size: 8px;
+
+  font-weight: 700;
+
+  letter-spacing: 0.8px;
+
+  text-transform: uppercase;
+}
+
+
+/* ==========================================
+   CABEÇALHO SEÇÃO
+========================================== */
+
+.notificacoes-section-header {
+  margin-bottom: 17px;
+}
+
+
+.notificacoes-section-header > span {
+  display: block;
+
+  margin-bottom: 4px;
+
+  color: #917687;
+
+  font-size: 9px;
+
+  font-weight: 700;
+
+  letter-spacing: 1px;
+
+  text-transform: uppercase;
+}
+
+
+.notificacoes-section-header h3 {
+  margin: 0;
+
+  color: #3E2445;
+
+  font-family:
+    "Playfair Display",
+    Georgia,
+    serif;
+
+  font-size: 21px;
+}
+
+
+.notificacoes-section-header p {
+  margin: 5px 0 0;
+
+  color: #8E7F87;
+
+  font-size: 10px;
+
+  line-height: 1.6;
+}
+
+
+/* ==========================================
+   LISTA
+========================================== */
+
+.notificacoes-list {
+  display: flex;
+
+  flex-direction: column;
+
+  gap: 10px;
+}
+
+
+.notificacoes-item {
+  min-height: 73px;
+
+  padding: 14px 16px;
+
+  display: flex;
+
+  align-items: center;
+
+  justify-content: space-between;
+
+  gap: 25px;
+
+  background: #FAF3F2;
+
+  border:
+    1px solid #E6D8DB;
+
+  border-radius: 13px;
+
+  transition:
+    background-color 160ms ease,
+    border-color 160ms ease,
+    box-shadow 160ms ease,
+    transform 160ms ease;
+}
+
+
+.notificacoes-item:hover {
+  border-color: #D5BBC4;
+
+  transform: translateY(-1px);
+
+  box-shadow:
+    0 5px 16px
+    rgba(62, 36, 69, 0.045);
+}
+
+
+.notificacoes-item-ativo {
+  background: #F7E9E8;
+
+  border-color: #DFC9CF;
+}
+
+
+.notificacoes-item-text {
+  min-width: 0;
+}
+
+
+.notificacoes-item-text strong {
+  display: block;
+
+  color: #4F3C49;
+
+  font-size: 12px;
+
+  font-weight: 700;
+}
+
+
+.notificacoes-item-text p {
+  margin: 4px 0 0;
+
+  color: #81737B;
+
+  font-size: 10px;
+
+  line-height: 1.55;
+}
+
+
+/* ==========================================
+   SWITCH
+========================================== */
+
+.notificacoes-switch {
+  position: relative;
+
+  width: 44px;
+  height: 24px;
+
+  flex-shrink: 0;
+
+  display: inline-block;
+
+  cursor: pointer;
+}
+
+
+.notificacoes-switch input {
+  width: 0;
+  height: 0;
+
+  opacity: 0;
+}
+
+
+.notificacoes-switch-slider {
+  position: absolute;
+
+  inset: 0;
+
+  background: #D8C9CE;
+
+  border-radius: 999px;
+
+  transition:
+    background-color 180ms ease;
+}
+
+
+.notificacoes-switch-slider::before {
+  content: "";
+
+  position: absolute;
+
+  width: 18px;
+  height: 18px;
+
+  left: 3px;
+  top: 3px;
+
+  background: #FFFFFF;
+
+  border-radius: 50%;
+
+  box-shadow:
+    0 2px 7px
+    rgba(62, 36, 69, 0.18);
+
+  transition:
+    transform 180ms ease;
+}
+
+
+.notificacoes-switch
+input:checked
++
+.notificacoes-switch-slider {
+  background: #7A5B72;
+}
+
+
+.notificacoes-switch
+input:checked
++
+.notificacoes-switch-slider::before {
+  transform:
+    translateX(20px);
+}
+
+
+/* ==========================================
+   AÇÕES
+========================================== */
+
+.notificacoes-actions {
+  margin-top: 28px;
+
+  padding-top: 22px;
+
+  border-top:
+    1px solid #EDE0E3;
+}
+
+
+.notificacoes-salvar {
+  width: 100%;
+
+  min-height: 46px;
+
+  background: #7A5B72;
+
+  color: #FFFFFF;
+
+  border:
+    1px solid #7A5B72;
+
+  border-radius: 12px;
+
+  font-size: 12px;
+
+  font-weight: 700;
+
+  cursor: pointer;
+
+  box-shadow:
+    0 6px 16px
+    rgba(62, 36, 69, 0.13);
+}
+
+
+.notificacoes-salvar:hover:not(:disabled) {
+  background: #694D62;
+
+  border-color: #694D62;
+
+  transform: translateY(-1px);
+
+  box-shadow:
+    0 9px 21px
+    rgba(62, 36, 69, 0.17);
+}
+
+
+.notificacoes-salvar:disabled {
+  opacity: 0.6;
+
+  cursor: not-allowed;
+}
+
+
+/* ==========================================
+   CARREGAMENTO
+========================================== */
+
+.notificacoes-loading {
+  min-height: 320px;
+
+  display: flex;
+
+  flex-direction: column;
+
+  align-items: center;
+
+  justify-content: center;
+
+  gap: 14px;
+
+  color: #857885;
+
+  font-size: 12px;
+}
+
+
+.notificacoes-spinner {
+  width: 28px;
+  height: 28px;
+
+  border:
+    3px solid #E8D9DE;
+
+  border-top-color: #7A5B72;
+
+  border-radius: 50%;
+
+  animation:
+    notificacoesSpin
+    0.8s linear infinite;
+}
+
+
+@keyframes notificacoesSpin {
+
+  to {
+    transform:
+      rotate(360deg);
+  }
+
+}
+
+
+/* ==========================================
+   RESPONSIVO
+========================================== */
+
+@media (max-width: 700px) {
+
+  .notificacoes-page {
+    width: 92%;
+
+    padding:
+      32px 0 60px;
+  }
+
+
+  .notificacoes-header {
+    align-items: flex-start;
+
+    flex-direction: column;
+
+    gap: 20px;
+  }
+
+
+  .notificacoes-header h1 {
+    font-size: 33px;
+  }
+
+
+  .notificacoes-card-header {
+    padding: 23px 20px;
+  }
+
+
+  .notificacoes-header-icon {
+    display: none;
+  }
+
+
+  .notificacoes-content {
+    padding:
+      23px 19px;
+  }
+
+
+  .notificacoes-whatsapp {
+    align-items: flex-start;
+
+    gap: 15px;
+
+    padding: 16px;
+  }
+
+
+  .notificacoes-item {
+    gap: 15px;
+
+    padding: 14px;
+  }
+
+}

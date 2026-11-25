@@ -1,0 +1,104 @@
+.avatar-perfil {
+  flex-shrink: 0;
+
+  padding: 0;
+
+  overflow: hidden;
+
+  display: flex;
+
+  align-items: center;
+
+  justify-content: center;
+
+  background: #F1DFE3;
+
+  color: #7A5B72;
+
+  border:
+    2px solid #DCC8CF;
+
+  border-radius: 50%;
+
+  box-shadow:
+    0 4px 12px
+    rgba(
+      62,
+      36,
+      69,
+      0.08
+    );
+
+  cursor: pointer;
+
+  transition:
+    transform 160ms ease,
+    box-shadow 160ms ease,
+    border-color 160ms ease;
+}
+
+
+.avatar-perfil:hover {
+  border-color: #BB91AD;
+
+  box-shadow:
+    0 7px 18px
+    rgba(
+      62,
+      36,
+      69,
+      0.13
+    );
+
+  transform:
+    translateY(-1px)
+    scale(1.035);
+}
+
+
+.avatar-perfil:focus-visible {
+  outline: none;
+
+  border-color: #917687;
+
+  box-shadow:
+    0 0 0 4px
+    rgba(
+      187,
+      145,
+      173,
+      0.15
+    );
+}
+
+
+.avatar-perfil img {
+  width: 100%;
+  height: 100%;
+
+  display: block;
+
+  object-fit: cover;
+}
+
+
+.avatar-perfil span {
+  color: #6F5268;
+
+  font-family:
+    "Playfair Display",
+    Georgia,
+    serif;
+
+  font-size:
+    var(
+      --avatar-font-size,
+      17px
+    );
+
+  font-weight: 700;
+
+  line-height: 1;
+
+  user-select: none;
+}

@@ -1,0 +1,72 @@
+:root {
+  --bg-page: #EDD8D5;
+  --bg-page-soft: #F5E8E6;
+
+  --surface: #FFFFFF;
+  --surface-soft: #FAF3F2;
+  --surface-hover: #F3E4E8;
+
+  --primary: #7A5B72;
+  --primary-hover: #6E5267;
+  --primary-dark: #3E2445;
+
+  --accent: #BB91AD;
+  --accent-soft: #E7D8E1;
+
+  --text-main: #332D32;
+  --text-secondary: #746A72;
+  --text-muted: #9A9097;
+
+  --border: #E3D3D6;
+  --border-strong: #D5C0C7;
+
+  --success: #54715B;
+  --success-bg: #EEF5EF;
+
+  --danger: #9A5A62;
+  --danger-bg: #FBF0F1;
+
+  --warning: #8A7247;
+  --warning-bg: #F8F3E8;
+
+  --font-body:
+    "Plus Jakarta Sans",
+    "Poppins",
+    "Segoe UI",
+    sans-serif;
+
+  --font-title:
+    "Playfair Display",
+    Georgia,
+    serif;
+
+  --text-xs: 11px;
+  --text-sm: 12px;
+  --text-md: 14px;
+  --text-lg: 16px;
+
+  --radius-xs: 8px;
+  --radius-sm: 10px;
+  --radius-md: 14px;
+  --radius-lg: 18px;
+  --radius-xl: 24px;
+  --radius-pill: 999px;
+
+  --shadow-xs:
+    0 2px 8px rgba(62, 36, 69, 0.04);
+
+  --shadow-sm:
+    0 5px 18px rgba(62, 36, 69, 0.06);
+
+  --shadow-md:
+    0 12px 35px rgba(62, 36, 69, 0.08);
+
+  --shadow-lg:
+    0 20px 55px rgba(62, 36, 69, 0.12);
+
+  --page-width: 1180px;
+  --page-width-large: 1280px;
+
+  --transition-fast: 160ms ease;
+  --transition-normal: 220ms ease;
+}

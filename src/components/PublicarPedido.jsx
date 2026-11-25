@@ -318,11 +318,11 @@ function PublicarPedido({
 
             onClick={() =>
               onNavigate(
-                'meusPedidos'
+                'areaCliente'
               )
             }
           >
-            ← Meus pedidos
+            ← Área do cliente
           </button>
 
         )}
@@ -671,7 +671,7 @@ function PublicarPedido({
 
                 onClick={() =>
                   onNavigate(
-                    'meusPedidos'
+                    'areaCliente'
                   )
                 }
 

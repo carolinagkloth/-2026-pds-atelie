@@ -1,0 +1,1171 @@
+.feed-pedidos-page {
+  width: min(1160px, 92%);
+
+  margin: 0 auto;
+
+  padding: 46px 0 80px;
+
+  color: #4A424A;
+
+  font-family:
+    "Plus Jakarta Sans",
+    "Segoe UI",
+    sans-serif;
+}
+
+
+/* ==========================================
+   CABEÇALHO
+========================================== */
+
+.feed-pedidos-header {
+  display: flex;
+
+  align-items: flex-end;
+
+  justify-content: space-between;
+
+  gap: 32px;
+
+  margin-bottom: 38px;
+}
+
+
+.feed-pedidos-heading {
+  max-width: 650px;
+}
+
+
+.feed-pedidos-eyebrow {
+  display: block;
+
+  margin-bottom: 8px;
+
+  color: #917687;
+
+  font-size: 11px;
+
+  font-weight: 700;
+
+  letter-spacing: 1.4px;
+
+  text-transform: uppercase;
+}
+
+
+.feed-pedidos-heading h1 {
+  margin: 0;
+
+  color: #3E2445;
+
+  font-family:
+    "Playfair Display",
+    Georgia,
+    serif;
+
+  font-size:
+    clamp(34px, 4vw, 44px);
+
+  font-weight: 700;
+
+  line-height: 1.05;
+}
+
+
+.feed-pedidos-heading p {
+  max-width: 580px;
+
+  margin: 13px 0 0;
+
+  color: #857885;
+
+  font-size: 14px;
+
+  line-height: 1.7;
+}
+
+
+.feed-pedidos-heading p strong {
+  color: #6E5568;
+
+  font-weight: 700;
+}
+
+
+.feed-pedidos-header-actions {
+  display: flex;
+
+  align-items: center;
+
+  gap: 10px;
+
+  flex-shrink: 0;
+}
+
+
+.feed-pedidos-avatar {
+  margin-left: 3px;
+}
+
+
+/* ==========================================
+   CONTADOR
+========================================== */
+
+.feed-pedidos-counter {
+  min-width: 74px;
+
+  min-height: 46px;
+
+  padding: 6px 13px;
+
+  display: flex;
+
+  flex-direction: column;
+
+  align-items: center;
+
+  justify-content: center;
+
+  background: #F3ECEF;
+
+  border:
+    1px solid #E4D9E0;
+
+  border-radius: 12px;
+}
+
+
+.feed-pedidos-counter span {
+  color: #917687;
+
+  font-size: 8px;
+
+  font-weight: 700;
+
+  letter-spacing: 0.7px;
+
+  text-transform: uppercase;
+}
+
+
+.feed-pedidos-counter strong {
+  margin-top: -1px;
+
+  color: #3E2445;
+
+  font-family:
+    "Playfair Display",
+    Georgia,
+    serif;
+
+  font-size: 20px;
+
+  line-height: 1.1;
+}
+
+
+/* ==========================================
+   BOTÃO SECUNDÁRIO
+========================================== */
+
+.feed-button-secondary {
+  min-height: 44px;
+
+  padding: 0 18px;
+
+  background: #FFFFFF;
+
+  color: #6E5568;
+
+  border:
+    1px solid #DDD3D9;
+
+  border-radius: 12px;
+
+  font-size: 12px;
+
+  font-weight: 700;
+
+  cursor: pointer;
+}
+
+
+.feed-button-secondary:hover {
+  background: #F7F2F5;
+
+  border-color: #CDBFC8;
+
+  transform: translateY(-1px);
+}
+
+
+/* ==========================================
+   FILTROS
+========================================== */
+
+.feed-pedidos-filters {
+  margin-bottom: 28px;
+
+  padding: 25px 27px;
+
+  background: #FFFFFF;
+
+  border:
+    1px solid #EBE5E0;
+
+  border-radius: 18px;
+
+  box-shadow:
+    0 6px 20px
+    rgba(62, 36, 69, 0.045);
+}
+
+
+.feed-pedidos-filter-header {
+  display: flex;
+
+  align-items: flex-end;
+
+  justify-content: space-between;
+
+  gap: 30px;
+
+  margin-bottom: 22px;
+}
+
+
+.feed-pedidos-filter-eyebrow {
+  display: block;
+
+  margin-bottom: 4px;
+
+  color: #917687;
+
+  font-size: 9px;
+
+  font-weight: 700;
+
+  letter-spacing: 1.1px;
+
+  text-transform: uppercase;
+}
+
+
+.feed-pedidos-filter-header h2 {
+  margin: 0;
+
+  color: #3E2445;
+
+  font-family:
+    "Playfair Display",
+    Georgia,
+    serif;
+
+  font-size: 21px;
+}
+
+
+.feed-pedidos-filter-header p {
+  max-width: 390px;
+
+  margin: 0;
+
+  color: #91858E;
+
+  font-size: 11px;
+
+  line-height: 1.6;
+
+  text-align: right;
+}
+
+
+.feed-pedidos-filter-grid {
+  display: grid;
+
+  grid-template-columns:
+    repeat(3, minmax(0, 1fr));
+
+  gap: 14px;
+}
+
+
+/* ==========================================
+   CAMPOS
+========================================== */
+
+.feed-pedidos-field label {
+  display: block;
+
+  margin-bottom: 7px;
+
+  color: #625762;
+
+  font-size: 11px;
+
+  font-weight: 700;
+}
+
+
+.feed-pedidos-field select,
+.feed-pedidos-field input {
+  width: 100%;
+
+  height: 46px;
+
+  padding: 0 13px;
+
+  background: #FAF8F7;
+
+  color: #4A424A;
+
+  border:
+    1px solid #DED6D1;
+
+  border-radius: 11px;
+
+  outline: none;
+
+  font-size: 12px;
+
+  transition:
+    background-color 160ms ease,
+    border-color 160ms ease,
+    box-shadow 160ms ease;
+}
+
+
+.feed-pedidos-field select {
+  cursor: pointer;
+}
+
+
+.feed-pedidos-field select:hover,
+.feed-pedidos-field input:hover {
+  background: #FFFFFF;
+
+  border-color: #D1C5CC;
+}
+
+
+.feed-pedidos-field select:focus,
+.feed-pedidos-field input:focus {
+  background: #FFFFFF;
+
+  border-color: #BB91AD;
+
+  box-shadow:
+    0 0 0 4px
+    rgba(187, 145, 173, 0.10);
+}
+
+
+.feed-pedidos-month-field {
+  display: flex;
+
+  align-items: center;
+
+  gap: 7px;
+}
+
+
+.feed-pedidos-month-field input {
+  min-width: 0;
+
+  flex: 1;
+}
+
+
+.feed-pedidos-clear {
+  width: 46px;
+  height: 46px;
+
+  flex-shrink: 0;
+
+  display: flex;
+
+  align-items: center;
+
+  justify-content: center;
+
+  padding: 0;
+
+  background: #F3ECEF;
+
+  color: #7A5B72;
+
+  border:
+    1px solid #D8CFD5;
+
+  border-radius: 11px;
+
+  font-size: 20px;
+
+  font-weight: 400;
+
+  cursor: pointer;
+}
+
+
+.feed-pedidos-clear:hover {
+  background: #EBE0E6;
+}
+
+
+/* ==========================================
+   CARREGANDO
+========================================== */
+
+.feed-pedidos-state {
+  min-height: 220px;
+
+  display: flex;
+
+  flex-direction: column;
+
+  align-items: center;
+
+  justify-content: center;
+
+  gap: 14px;
+
+  background: #FFFFFF;
+
+  border:
+    1px solid #EBE5E0;
+
+  border-radius: 18px;
+
+  color: #857885;
+
+  font-size: 12px;
+}
+
+
+.feed-pedidos-spinner {
+  width: 28px;
+  height: 28px;
+
+  border:
+    3px solid #E8DDE4;
+
+  border-top-color:
+    #7A5B72;
+
+  border-radius: 50%;
+
+  animation:
+    feedPedidosSpin
+    0.8s linear infinite;
+}
+
+
+@keyframes feedPedidosSpin {
+
+  to {
+    transform:
+      rotate(360deg);
+  }
+
+}
+
+
+/* ==========================================
+   ERRO
+========================================== */
+
+.feed-pedidos-error {
+  margin-bottom: 18px;
+
+  padding: 12px 14px;
+
+  display: flex;
+
+  align-items: center;
+
+  gap: 10px;
+
+  background: #FFF1F1;
+
+  color: #A43B3B;
+
+  border:
+    1px solid #F1D5D5;
+
+  border-radius: 11px;
+
+  font-size: 12px;
+}
+
+
+.feed-pedidos-error-icon {
+  width: 23px;
+  height: 23px;
+
+  display: flex;
+
+  align-items: center;
+
+  justify-content: center;
+
+  flex-shrink: 0;
+
+  background: #F5DADA;
+
+  border-radius: 50%;
+
+  font-weight: 700;
+}
+
+
+/* ==========================================
+   GRID
+========================================== */
+
+.feed-pedidos-list {
+  display: grid;
+
+  grid-template-columns:
+    repeat(2, minmax(0, 1fr));
+
+  gap: 20px;
+}
+
+
+/* ==========================================
+   CARD
+========================================== */
+
+.feed-pedidos-card {
+  min-width: 0;
+
+  overflow: hidden;
+
+  display: flex;
+
+  flex-direction: column;
+
+  background: #FFFFFF;
+
+  border:
+    1px solid #EBE5E0;
+
+  border-radius: 18px;
+
+  box-shadow:
+    0 6px 20px
+    rgba(62, 36, 69, 0.045);
+
+  transition:
+    transform 180ms ease,
+    border-color 180ms ease,
+    box-shadow 180ms ease;
+}
+
+
+.feed-pedidos-card:hover {
+  transform:
+    translateY(-3px);
+
+  border-color:
+    #DED3DA;
+
+  box-shadow:
+    0 16px 38px
+    rgba(62, 36, 69, 0.085);
+}
+
+
+/* ==========================================
+   IMAGEM
+========================================== */
+
+.feed-pedidos-card-image {
+  width: 100%;
+
+  height: 225px;
+
+  overflow: hidden;
+
+  background: #FAF8F7;
+
+  border-bottom:
+    1px solid #EEE7E3;
+}
+
+
+.feed-pedidos-card-image img {
+  width: 100%;
+  height: 100%;
+
+  display: block;
+
+  object-fit: cover;
+
+  transition:
+    transform 350ms ease;
+}
+
+
+.feed-pedidos-card:hover
+.feed-pedidos-card-image img {
+  transform:
+    scale(1.025);
+}
+
+
+.feed-pedidos-card-placeholder {
+  height: 125px;
+
+  display: flex;
+
+  align-items: center;
+
+  justify-content: center;
+
+  background:
+    linear-gradient(
+      135deg,
+      #FAF8F7,
+      #F3ECEF
+    );
+
+  color: #BCAEB7;
+
+  border-bottom:
+    1px solid #EEE7E3;
+}
+
+
+.feed-pedidos-card-placeholder span {
+  width: 48px;
+  height: 48px;
+
+  display: flex;
+
+  align-items: center;
+
+  justify-content: center;
+
+  background: rgba(
+    255,
+    255,
+    255,
+    0.7
+  );
+
+  border-radius: 14px;
+
+  font-size: 20px;
+}
+
+
+/* ==========================================
+   CONTEÚDO
+========================================== */
+
+.feed-pedidos-card-content {
+  flex: 1;
+
+  min-width: 0;
+
+  display: flex;
+
+  flex-direction: column;
+
+  padding: 24px;
+}
+
+
+.feed-pedidos-card-meta {
+  display: flex;
+
+  align-items: center;
+
+  justify-content: space-between;
+
+  gap: 12px;
+
+  margin-bottom: 15px;
+}
+
+
+.feed-pedidos-category {
+  max-width: 68%;
+
+  overflow: hidden;
+
+  padding: 6px 10px;
+
+  background: #F3ECEF;
+
+  color: #6E5568;
+
+  border:
+    1px solid #E7DCE2;
+
+  border-radius: 999px;
+
+  font-size: 9px;
+
+  font-weight: 700;
+
+  letter-spacing: 0.35px;
+
+  text-overflow: ellipsis;
+
+  text-transform: uppercase;
+
+  white-space: nowrap;
+}
+
+
+.feed-pedidos-date {
+  flex-shrink: 0;
+
+  color: #A0949C;
+
+  font-size: 9px;
+}
+
+
+.feed-pedidos-card-eyebrow {
+  display: block;
+
+  margin-bottom: 4px;
+
+  color: #A0949C;
+
+  font-size: 9px;
+
+  font-weight: 700;
+
+  letter-spacing: 0.8px;
+
+  text-transform: uppercase;
+}
+
+
+.feed-pedidos-card-content h3 {
+  margin: 0 0 12px;
+
+  color: #3E2445;
+
+  font-family:
+    "Playfair Display",
+    Georgia,
+    serif;
+
+  font-size: 23px;
+
+  font-weight: 700;
+
+  line-height: 1.2;
+}
+
+
+.feed-pedidos-description {
+  flex: 1;
+
+  margin: 0 0 20px;
+
+  color: #625962;
+
+  font-size: 13px;
+
+  line-height: 1.7;
+
+  white-space: pre-line;
+}
+
+
+/* ==========================================
+   DETALHES
+========================================== */
+
+.feed-pedidos-details {
+  display: grid;
+
+  grid-template-columns:
+    repeat(2, minmax(0, 1fr));
+
+  gap: 9px;
+
+  margin-bottom: 20px;
+}
+
+
+.feed-pedidos-detail {
+  min-width: 0;
+
+  display: flex;
+
+  align-items: center;
+
+  gap: 10px;
+
+  padding: 11px 12px;
+
+  background: #FAF8F7;
+
+  border:
+    1px solid #F0EAE7;
+
+  border-radius: 11px;
+}
+
+
+.feed-pedidos-detail-icon {
+  width: 29px;
+  height: 29px;
+
+  flex-shrink: 0;
+
+  display: flex;
+
+  align-items: center;
+
+  justify-content: center;
+
+  background: #F0E8ED;
+
+  color: #7A5B72;
+
+  border-radius: 8px;
+
+  font-size: 11px;
+}
+
+
+.feed-pedidos-detail > div:last-child {
+  min-width: 0;
+
+  display: flex;
+
+  flex-direction: column;
+
+  gap: 2px;
+}
+
+
+.feed-pedidos-detail span {
+  color: #A0949C;
+
+  font-size: 8px;
+
+  font-weight: 700;
+
+  letter-spacing: 0.45px;
+
+  text-transform: uppercase;
+}
+
+
+.feed-pedidos-detail strong {
+  overflow: hidden;
+
+  color: #554C54;
+
+  font-size: 10px;
+
+  font-weight: 700;
+
+  line-height: 1.45;
+
+  text-overflow: ellipsis;
+}
+
+
+/* ==========================================
+   RODAPÉ DO CARD
+========================================== */
+
+.feed-pedidos-card-footer {
+  padding-top: 18px;
+
+  border-top:
+    1px solid #F0EAE7;
+}
+
+
+.feed-pedidos-interest-button {
+  width: 100%;
+
+  min-height: 42px;
+
+  display: flex;
+
+  align-items: center;
+
+  justify-content: center;
+
+  gap: 9px;
+
+  padding: 0 16px;
+
+  background: #7A5B72;
+
+  color: #FFFFFF;
+
+  border:
+    1px solid #7A5B72;
+
+  border-radius: 11px;
+
+  font-size: 11px;
+
+  font-weight: 700;
+
+  cursor: pointer;
+
+  box-shadow:
+    0 5px 14px
+    rgba(62, 36, 69, 0.10);
+}
+
+
+.feed-pedidos-interest-button:hover {
+  background: #6E5267;
+
+  border-color: #6E5267;
+
+  transform:
+    translateY(-1px);
+
+  box-shadow:
+    0 8px 20px
+    rgba(62, 36, 69, 0.15);
+}
+
+
+.feed-pedidos-interest-button span {
+  font-size: 16px;
+}
+
+
+.feed-pedidos-restricted {
+  padding: 11px;
+
+  background: #FAF8F7;
+
+  color: #91858E;
+
+  border-radius: 9px;
+
+  font-size: 10px;
+
+  font-style: italic;
+
+  line-height: 1.5;
+
+  text-align: center;
+}
+
+
+/* ==========================================
+   VAZIO
+========================================== */
+
+.feed-pedidos-empty {
+  min-height: 350px;
+
+  padding: 50px 25px;
+
+  display: flex;
+
+  flex-direction: column;
+
+  align-items: center;
+
+  justify-content: center;
+
+  background: #FFFFFF;
+
+  border:
+    1px solid #EBE5E0;
+
+  border-radius: 20px;
+
+  box-shadow:
+    0 8px 25px
+    rgba(62, 36, 69, 0.04);
+
+  text-align: center;
+}
+
+
+.feed-pedidos-empty-icon {
+  width: 58px;
+  height: 58px;
+
+  margin-bottom: 16px;
+
+  display: flex;
+
+  align-items: center;
+
+  justify-content: center;
+
+  background: #F3ECEF;
+
+  color: #7A5B72;
+
+  border-radius: 17px;
+
+  font-size: 22px;
+}
+
+
+.feed-pedidos-empty-label {
+  margin-bottom: 7px;
+
+  color: #917687;
+
+  font-size: 10px;
+
+  font-weight: 700;
+
+  letter-spacing: 1.2px;
+
+  text-transform: uppercase;
+}
+
+
+.feed-pedidos-empty h3 {
+  margin: 0;
+
+  color: #3E2445;
+
+  font-family:
+    "Playfair Display",
+    Georgia,
+    serif;
+
+  font-size: 25px;
+}
+
+
+.feed-pedidos-empty p {
+  max-width: 450px;
+
+  margin: 10px 0 0;
+
+  color: #91858E;
+
+  font-size: 13px;
+
+  line-height: 1.7;
+}
+
+
+/* ==========================================
+   RESPONSIVO
+========================================== */
+
+@media (max-width: 900px) {
+
+  .feed-pedidos-page {
+    width: 92%;
+
+    padding-top: 32px;
+  }
+
+
+  .feed-pedidos-header {
+    align-items: flex-start;
+
+    flex-direction: column;
+
+    gap: 22px;
+  }
+
+
+  .feed-pedidos-header-actions {
+    width: 100%;
+  }
+
+
+  .feed-pedidos-filter-grid {
+    grid-template-columns:
+      1fr 1fr;
+  }
+
+
+  .feed-pedidos-list {
+    grid-template-columns:
+      1fr;
+  }
+
+}
+
+
+@media (max-width: 650px) {
+
+  .feed-pedidos-heading h1 {
+    font-size: 33px;
+  }
+
+
+  .feed-pedidos-header-actions {
+    flex-wrap: wrap;
+  }
+
+
+  .feed-pedidos-filter-header {
+    align-items: flex-start;
+
+    flex-direction: column;
+
+    gap: 8px;
+  }
+
+
+  .feed-pedidos-filter-header p {
+    max-width: none;
+
+    text-align: left;
+  }
+
+
+  .feed-pedidos-filter-grid {
+    grid-template-columns:
+      1fr;
+  }
+
+
+  .feed-pedidos-filters {
+    padding: 21px 18px;
+  }
+
+
+  .feed-pedidos-card-image {
+    height: 210px;
+  }
+
+
+  .feed-pedidos-card-content {
+    padding: 21px 18px;
+  }
+
+
+  .feed-pedidos-card-meta {
+    align-items: flex-start;
+
+    flex-direction: column;
+
+    gap: 7px;
+  }
+
+
+  .feed-pedidos-category {
+    max-width: 100%;
+  }
+
+
+  .feed-pedidos-details {
+    grid-template-columns:
+      1fr;
+  }
+
+}

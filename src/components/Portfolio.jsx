@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import '../styles/Portfolio.css';
 
 
 function Portfolio({
@@ -459,6 +460,15 @@ function Portfolio({
   return (
 
     <div
+      className={`portfolio-page ${
+        exibirPerfilCompleto
+          ? 'portfolio-publico'
+          : 'portfolio-embutido'
+      } ${
+        modoEdicao
+          ? 'portfolio-edicao'
+          : ''
+      }`}
       style={{
         width:
           exibirPerfilCompleto
@@ -1771,8 +1781,6 @@ function Portfolio({
 
         ) : itens.length === 0 ? (
 
-          /* VAZIO */
-
           <div
             style={{
               minHeight:
@@ -1893,8 +1901,6 @@ function Portfolio({
 
         ) : (
 
-          /* FOTOS */
-
           <div
             style={{
               display:
@@ -1957,8 +1963,6 @@ function Portfolio({
                   >
 
 
-                    {/* FOTO */}
-
                     <div
                       style={{
                         width:
@@ -2004,8 +2008,6 @@ function Portfolio({
 
                     </div>
 
-
-                    {/* TÍTULO */}
 
                     {(item.tituloTrabalho ||
                       item.titulo_trabalho) && (
@@ -2063,8 +2065,6 @@ function Portfolio({
 
                     )}
 
-
-                    {/* EXCLUIR */}
 
                     {modoEdicao &&
                      !confirmandoEsta && (
@@ -2138,8 +2138,6 @@ function Portfolio({
 
                     )}
 
-
-                    {/* CONFIRMAÇÃO */}
 
                     {modoEdicao &&
                      confirmandoEsta && (
@@ -2382,8 +2380,6 @@ function Portfolio({
           >
 
 
-            {/* CABEÇALHO MODAL */}
-
             <div
               style={{
                 display:
@@ -2548,8 +2544,6 @@ function Portfolio({
             >
 
 
-              {/* TÍTULO */}
-
               <div
                 style={{
                   marginBottom:
@@ -2629,8 +2623,6 @@ function Portfolio({
 
               </div>
 
-
-              {/* FOTO */}
 
               <div
                 style={{
@@ -2789,8 +2781,6 @@ function Portfolio({
               </div>
 
 
-              {/* PRÉVIA */}
-
               {imagemBase64 && (
 
                 <div
@@ -2869,8 +2859,6 @@ function Portfolio({
 
               )}
 
-
-              {/* AÇÕES */}
 
               <div
                 style={{

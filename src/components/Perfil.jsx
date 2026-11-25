@@ -415,13 +415,19 @@ function Perfil({
       .toUpperCase();
 
 
+  /* ========================================
+     VOLTAR
+     CLIENTE -> ÁREA DO CLIENTE
+     COSTUREIRA -> MURAL
+  ======================================== */
+
   const handleVoltar = () => {
 
     if (onNavigate) {
 
       onNavigate(
         isCliente
-          ? 'meusPedidos'
+          ? 'areaCliente'
           : 'feedPedidos'
       );
 
@@ -1042,6 +1048,7 @@ function Perfil({
                 <strong>
                   Especialidades:
                 </strong>{' '}
+
                 {
                   formData.especialidades
                 }
@@ -1643,7 +1650,10 @@ function Perfil({
       </form>
 
 
-      {/* REPUTAÇÃO */}
+      {/* =====================================
+          REPUTAÇÃO
+          SOMENTE COSTUREIRA
+      ====================================== */}
 
       {!isCliente && (
 
@@ -1761,11 +1771,11 @@ function Perfil({
                 display:
                   'flex',
 
-                alignItems:
-                  'center',
+              alignItems:
+                'center',
 
-                gap:
-                  '12px'
+              gap:
+                '12px'
               }}
             >
 
@@ -1837,20 +1847,30 @@ function Perfil({
       )}
 
 
-      {/* AGENDA — COMPONENTE ATUAL DA CAROLINA */}
+      {/* =====================================
+          AGENDA
+          SOMENTE COSTUREIRA
+      ====================================== */}
 
-      <Agenda
-        idUsuario={
-          idUsuario
-        }
+      {!isCliente && (
 
-        isCliente={
-          isCliente
-        }
-      />
+        <Agenda
+          idUsuario={
+            idUsuario
+          }
+
+          isCliente={
+            false
+          }
+        />
+
+      )}
 
 
-      {/* DEPOIMENTOS */}
+      {/* =====================================
+          DEPOIMENTOS
+          SOMENTE COSTUREIRA
+      ====================================== */}
 
       {!isCliente &&
        reputacao.depoimentos &&
@@ -2052,7 +2072,10 @@ function Perfil({
       )}
 
 
-      {/* COMPONENTES ATUAIS DA CAROLINA */}
+      {/* =====================================
+          TABELA DE PREÇOS + PORTFÓLIO
+          SOMENTE COSTUREIRA
+      ====================================== */}
 
       {!isCliente && (
 
