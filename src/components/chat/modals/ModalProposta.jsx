@@ -5,10 +5,20 @@ const parsePrazoCliente = (prazoStr) => {
     return { dataMax: '', horarioMax: '', temHorarioFixo: false };
   }
   const str = String(prazoStr).trim();
-  const matchData = str.match(/(\d{4}-\d{2}-\d{2})/);
-  const dataMax = matchData ? matchData[1] : '';
 
-  const matchHora = str.match(/\((\d{2}:\d{2})\)/);
+  let dataMax = '';
+  const matchIso = str.match(/(\d{4}-\d{2}-\d{2})/);
+  if (matchIso) {
+    dataMax = matchIso[1];
+  } else {
+    const matchBr = str.match(/(\d{2})\/(\d{2})\/(\d{4})/);
+    if (matchBr) {
+      dataMax = `${matchBr[3]}-${matchBr[2]}-${matchBr[1]}`;
+    }
+  }
+
+  // Extrai qualquer horário HH:MM presente na string caso venha concatenado
+  const matchHora = str.match(/(\d{2}:\d{2})/);
   const horarioMax = matchHora ? matchHora[1] : '';
 
   return {
@@ -24,7 +34,11 @@ const formatarDataBR = (yyyyMmDd) => {
   return ano && mes && dia ? `${dia}/${mes}/${ano}` : yyyyMmDd;
 };
 
-function ModalProposta({ isOpen, onClose, onEnviar, descricaoInicial, tipoInicial, prazoDesejado }) {
+const extrairNumeroMoeda = (valorStr) => {
+  return parseFloat(String(valorStr || '0').replace(/[^\d,]/g, '').replace(',', '.')) || 0;
+};
+
+function ModalProposta({ isOpen, onClose, onEnviar, descricaoInicial, tipoInicial, prazoDesejado, horarioLimite }) {
   const [tipoServico, setTipoServico] = useState(tipoInicial || 'Ajuste / Conserto');
   const [descricao, setDescricao] = useState(descricaoInicial || '');
   const [valorTotal, setValorTotal] = useState('R$ 0,00');
@@ -36,7 +50,11 @@ function ModalProposta({ isOpen, onClose, onEnviar, descricaoInicial, tipoInicia
   const agora = new Date();
   const hoje = `${agora.getFullYear()}-${String(agora.getMonth() + 1).padStart(2, '0')}-${String(agora.getDate()).padStart(2, '0')}`;
 
-  const { dataMax, horarioMax, temHorarioFixo } = parsePrazoCliente(prazoDesejado);
+  const { dataMax, horarioMax: horarioExtraido } = parsePrazoCliente(prazoDesejado);
+  const horarioLimpo = String(horarioLimite || '').trim();
+  const matchHorarioProp = horarioLimpo.match(/^(\d{2}:\d{2})/);
+  const horarioMax = matchHorarioProp ? matchHorarioProp[1] : horarioExtraido;
+  const temHorarioFixo = Boolean(horarioMax);
   const prazoClienteVencido = Boolean(dataMax && dataMax < hoje);
 
   useEffect(() => {
@@ -45,11 +63,16 @@ function ModalProposta({ isOpen, onClose, onEnviar, descricaoInicial, tipoInicia
       setDescricao(descricaoInicial || '');
       setValorTotal('R$ 0,00');
       setValorEntrada('R$ 0,00');
-      setPrevisaoEntrega(dataMax && dataMax >= hoje ? dataMax : '');
-      setHorarioEntrega(horarioMax || '14:00');
       setErro('');
     }
-  }, [isOpen, tipoInicial, descricaoInicial, dataMax, horarioMax, hoje]);
+  }, [isOpen, tipoInicial, descricaoInicial]);
+
+  useEffect(() => {
+    if (isOpen) {
+      setPrevisaoEntrega(dataMax && dataMax >= hoje ? dataMax : '');
+      setHorarioEntrega(temHorarioFixo ? horarioMax : '14:00');
+    }
+  }, [isOpen, dataMax, horarioMax, temHorarioFixo, hoje]);
 
   if (!isOpen) return null;
 
@@ -62,19 +85,35 @@ function ModalProposta({ isOpen, onClose, onEnviar, descricaoInicial, tipoInicia
 
   const handleDataChange = (novaData) => {
     setPrevisaoEntrega(novaData);
-    // Se voltar para a data limite da cliente e o horário escolhido passar do limite, ajusta automaticamente
     if (temHorarioFixo && novaData === dataMax && horarioEntrega > horarioMax) {
       setHorarioEntrega(horarioMax);
     }
+  };
+
+  const handleHorarioChange = (novoHorario) => {
+    if (!prazoClienteVencido && temHorarioFixo && previsaoEntrega === dataMax && novoHorario > horarioMax) {
+      setErro(`Para entrega na data limite (${formatarDataBR(dataMax)}), o horário máximo permitido pela cliente é ${horarioMax}.`);
+      setHorarioEntrega(horarioMax);
+      return;
+    }
+    setErro('');
+    setHorarioEntrega(novoHorario);
   };
 
   const handleSubmit = (e) => {
     e.preventDefault();
     setErro('');
 
-    const totalNumerico = parseFloat(valorTotal.replace(/[^\d,]/g, '').replace(',', '.')) || 0;
+    const totalNumerico = extrairNumeroMoeda(valorTotal);
+    const entradaNumerica = extrairNumeroMoeda(valorEntrada);
+
     if (totalNumerico <= 0) {
       setErro('Informe um valor total maior que R$ 0,00 para enviar o orçamento.');
+      return;
+    }
+
+    if (entradaNumerica > totalNumerico) {
+      setErro('O valor de entrada (sinal) não pode ser maior que o valor total do orçamento.');
       return;
     }
 
@@ -97,6 +136,7 @@ function ModalProposta({ isOpen, onClose, onEnviar, descricaoInicial, tipoInicia
   };
 
   const limiteHorarioAtivo = !prazoClienteVencido && temHorarioFixo && previsaoEntrega === dataMax;
+  const sinalMaiorQueTotal = extrairNumeroMoeda(valorEntrada) > extrairNumeroMoeda(valorTotal) && extrairNumeroMoeda(valorTotal) > 0;
 
   return (
     <div style={{ position: 'fixed', inset: 0, background: 'rgba(30, 18, 34, 0.55)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1100, padding: '15px' }}>
@@ -122,7 +162,9 @@ function ModalProposta({ isOpen, onClose, onEnviar, descricaoInicial, tipoInicia
             <span style={{ display: 'block', color: '#666', marginTop: '2px' }}>
               {prazoClienteVencido
                 ? 'A data original já passou; selecione a data mais próxima disponível.'
-                : 'Você pode manter esse prazo ou adiantar a entrega.'}
+                : limiteHorarioAtivo
+                ? `Na data limite (${formatarDataBR(dataMax)}), o horário não pode passar de ${horarioMax}. Em datas anteriores, qualquer horário está liberado.`
+                : 'Você pode manter o prazo limite ou adiantar a entrega.'}
             </span>
           </div>
         )}
@@ -145,7 +187,23 @@ function ModalProposta({ isOpen, onClose, onEnviar, descricaoInicial, tipoInicia
 
           <div style={{ marginBottom: '12px' }}>
             <label style={{ display: 'block', fontSize: '13px', fontWeight: 'bold', marginBottom: '4px' }}>Valor Entrada / Sinal (R$)</label>
-            <input type="text" value={valorEntrada} onChange={(e) => setValorEntrada(mascararMoeda(e.target.value))} style={{ width: '100%', padding: '9px', borderRadius: '6px', border: '1px solid #ccc', boxSizing: 'border-box' }} />
+            <input
+              type="text"
+              value={valorEntrada}
+              onChange={(e) => setValorEntrada(mascararMoeda(e.target.value))}
+              style={{
+                width: '100%',
+                padding: '9px',
+                borderRadius: '6px',
+                border: sinalMaiorQueTotal ? '1px solid #C62828' : '1px solid #ccc',
+                boxSizing: 'border-box'
+              }}
+            />
+            {sinalMaiorQueTotal && (
+              <small style={{ color: '#C62828', fontSize: '11.5px', display: 'block', marginTop: '3px' }}>
+                O sinal não pode ser maior que o valor total.
+              </small>
+            )}
           </div>
 
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px', marginBottom: '12px' }}>
@@ -167,7 +225,7 @@ function ModalProposta({ isOpen, onClose, onEnviar, descricaoInicial, tipoInicia
                 type="time"
                 max={limiteHorarioAtivo ? horarioMax : undefined}
                 value={horarioEntrega}
-                onChange={(e) => setHorarioEntrega(e.target.value)}
+                onChange={(e) => handleHorarioChange(e.target.value)}
                 style={{ width: '100%', padding: '9px', borderRadius: '6px', border: '1px solid #ccc', boxSizing: 'border-box' }}
                 required
               />

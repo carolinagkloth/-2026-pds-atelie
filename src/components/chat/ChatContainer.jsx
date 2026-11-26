@@ -29,7 +29,14 @@ function ChatContainer({ pedido, usuario, idCostureiraProp, onNavigate }) {
 
   useEffect(() => {
     if (pedido) {
-      setPedidoDados((prev) => ({ ...prev, ...pedido }));
+      setPedidoDados((prev) => ({
+        ...prev,
+        ...pedido,
+        prazo_desejado: pedido.prazo_desejado || pedido.prazoDesejado || prev?.prazo_desejado || '',
+        prazoDesejado: pedido.prazo_desejado || pedido.prazoDesejado || prev?.prazoDesejado || '',
+        horario_limite: pedido.horario_limite || pedido.horarioLimite || prev?.horario_limite || '',
+        horarioLimite: pedido.horario_limite || pedido.horarioLimite || prev?.horarioLimite || ''
+      }));
     }
   }, [pedido]);
 
@@ -229,9 +236,31 @@ function ChatContainer({ pedido, usuario, idCostureiraProp, onNavigate }) {
         console.error('Erro HTTP ao carregar mensagens:', resMsgs.status);
       }
 
+      let pedData = null;
       if (resPed && resPed.ok) {
-        const pedData = await resPed.json();
-        setPedidoDados((prev) => ({ ...prev, ...pedData }));
+        pedData = await resPed.json();
+      } else {
+        // Fallback caso a rota GET /api/pedidos/:id não esteja mapeada
+        const resTodos = await fetch('/api/pedidos').catch(() => null);
+        if (resTodos && resTodos.ok) {
+          const lista = await resTodos.json();
+          if (Array.isArray(lista)) {
+            pedData = lista.find((p) => Number(p.id_pedido || p.id) === Number(idPedido)) || null;
+          }
+        }
+      }
+
+      if (pedData) {
+        const prazoEncontrado = pedData.prazo_desejado || pedData.prazoDesejado || '';
+        const horarioEncontrado = pedData.horario_limite || pedData.horarioLimite || '';
+        setPedidoDados((prev) => ({
+          ...prev,
+          ...pedData,
+          prazo_desejado: prazoEncontrado || prev?.prazo_desejado || '',
+          prazoDesejado: prazoEncontrado || prev?.prazoDesejado || '',
+          horario_limite: horarioEncontrado || prev?.horario_limite || '',
+          horarioLimite: horarioEncontrado || prev?.horarioLimite || ''
+        }));
         const statusReal = pedData.status_kanban || pedData.status_pedido || pedData.status;
         if (statusReal) setOrcamentoAtual((prev) => ({ ...prev, status: statusReal }));
         if (pedData.descricao) setDescricaoPedido((prev) => prev || pedData.descricao);
@@ -338,7 +367,7 @@ function ChatContainer({ pedido, usuario, idCostureiraProp, onNavigate }) {
     }
   };
 
- const handleEnviarPropostaProva = async (dadosForm) => {
+  const handleEnviarPropostaProva = async (dadosForm) => {
     const [ano, mes, dia] = dadosForm.dataProva.split('-');
     const dataFormatada = `${dia}/${mes}/${ano}`;
     const horarioTexto = dadosForm.horarioProva;
@@ -593,6 +622,13 @@ function ChatContainer({ pedido, usuario, idCostureiraProp, onNavigate }) {
     pedido?.prazoDesejado ||
     '';
 
+  const horarioLimiteCliente =
+    pedidoDados?.horario_limite ||
+    pedidoDados?.horarioLimite ||
+    pedido?.horario_limite ||
+    pedido?.horarioLimite ||
+    '';
+
   const provaComLocalFallback = provaAgendada
     ? { ...provaAgendada, local: provaAgendada.local || costureiraEndereco || '' }
     : null;
@@ -651,6 +687,7 @@ function ChatContainer({ pedido, usuario, idCostureiraProp, onNavigate }) {
         descricaoInicial={infoDesc.descricao}
         tipoInicial={infoDesc.tipo}
         prazoDesejado={prazoSolicitadoCliente}
+        horarioLimite={horarioLimiteCliente}
       />
 
       <ModalProva

@@ -17,7 +17,7 @@ function PublicarPedido({
   const [descricao, setDescricao] = useState('');
   const [prazoDesejado, setPrazoDesejado] = useState('');
   const [horarioPreferencial, setHorarioPreferencial] = useState('14:00');
-  const [semPreferenciaHorario, setSemPreferenciaHorario] = useState(true);
+  const [semPreferenciaHorario, setSemPreferenciaHorario] = useState(false);  
   const [localizacao, setLocalizacao] = useState('');
   const [previewFoto, setPreviewFoto] = useState('');
   const [carregando, setCarregando] = useState(false);
@@ -62,9 +62,7 @@ function PublicarPedido({
     try {
       // Formatação limpa mantendo a descrição acessível para a proposta sem misturar com a localização
       const descricaoFormatada = `[${tiposervico}] - Localização: ${localizacao}\n\n${descricao.trim()}`;
-      
-      const horarioTexto = semPreferenciaHorario ? 'Horário a combinar' : (horarioPreferencial || 'Horário a definir');
-      const prazoFormatadoComHorario = `${prazoDesejado} (${horarioTexto})`;
+      const horarioLimiteEnvio = semPreferenciaHorario ? null : (horarioPreferencial || null);
 
       const response = await fetch('/api/pedidos', {
         method: 'POST',
@@ -75,7 +73,8 @@ function PublicarPedido({
           id_cliente: idCliente,
           descricao: descricaoFormatada,
           fotos_referencia: previewFoto || null,
-          prazo_desejado: prazoFormatadoComHorario
+          prazo_desejado: prazoDesejado,
+          horario_limite: horarioLimiteEnvio
         })
       });
 
@@ -83,7 +82,7 @@ function PublicarPedido({
 
       if (!response.ok) {
         throw new Error(
-          data.erro || 'Erro ao publicar o pedido.'
+          data.erro || data.error || 'Erro ao publicar o pedido.'
         );
       }
 
@@ -93,7 +92,8 @@ function PublicarPedido({
         clienteNome: user?.nome || 'Cliente',
         tiposervico,
         descricao: descricaoFormatada,
-        prazoDesejado: prazoFormatadoComHorario,
+        prazoDesejado: prazoDesejado,
+        horarioLimite: horarioLimiteEnvio,
         localizacao,
         fotoReferencia: previewFoto || null,
         status: 'Aberto',
@@ -211,7 +211,7 @@ function PublicarPedido({
         {/* Seleção de Horário Preferencial */}
         <div className="publicar-duas-colunas" style={{ marginTop: '10px' }}>
           <div className="publicar-form-group">
-            <label>Horário Preferencial</label>
+            <label>Horário Limite de Entrega</label>
             <input
               type="time"
               value={horarioPreferencial}

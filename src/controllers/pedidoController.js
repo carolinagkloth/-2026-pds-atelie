@@ -6,7 +6,7 @@ class PedidoController {
   static async criar(req, res) {
     try {
       const id_cliente = req.body.id_cliente || req.usuarioId || (req.usuario && req.usuario.id);
-      const { descricao, fotos_referencia, prazo_desejado, status_pedido } = req.body;
+      const { descricao, fotos_referencia, prazo_desejado, horario_limite, status_pedido } = req.body;
       
       if (!id_cliente || !descricao || !prazo_desejado) {
         return res.status(400).json({ error: 'ID do cliente, descrição e prazo desejado são obrigatórios.' });
@@ -16,7 +16,8 @@ class PedidoController {
         id_cliente, 
         descricao, 
         fotos_referencia, 
-        prazo_desejado, 
+        prazo_desejado,
+        horario_limite: horario_limite || null,
         status_pedido 
       });
 
@@ -58,7 +59,7 @@ class PedidoController {
   static async atualizar(req, res) {
     const { id } = req.params;
     const id_cliente = req.body.id_cliente || req.usuarioId || (req.usuario && req.usuario.id);
-    const { descricao, fotos_referencia, prazo_desejado } = req.body;
+    const { descricao, fotos_referencia, prazo_desejado, horario_limite } = req.body;
 
     if (!descricao || !descricao.trim()) {
       return res.status(400).json({ error: 'A descrição do pedido é obrigatória.' });
@@ -72,7 +73,12 @@ class PedidoController {
         return res.status(400).json({ error: 'Não é possível editar um pedido que já teve proposta aceita ou está em produção.' });
       }
 
-      const pedidoAtualizado = await PedidoModel.atualizar(id, id_cliente, { descricao, fotos_referencia, prazo_desejado });
+      const pedidoAtualizado = await PedidoModel.atualizar(id, id_cliente, {
+        descricao,
+        fotos_referencia,
+        prazo_desejado,
+        horario_limite: horario_limite !== undefined ? (horario_limite || null) : checagem.horario_limite
+      });
       return res.json({ mensagem: 'Pedido atualizado com sucesso!', pedido: pedidoAtualizado });
     } catch (error) {
       return res.status(500).json({ error: 'Erro interno ao atualizar pedido.' });
