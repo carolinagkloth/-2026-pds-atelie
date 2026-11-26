@@ -1,9 +1,24 @@
 const pool = require('../config/database');
 const UsuarioModel = require('./usuarioModel');
 
+let colunasOSVerificadas = false;
+
+async function garantirColunasOS(dbClient) {
+  if (colunasOSVerificadas && !dbClient) return;
+  const db = dbClient || pool;
+  try {
+    await db.query(`ALTER TABLE ordens_servico ADD COLUMN IF NOT EXISTS data_entrega DATE;`);
+    await db.query(`ALTER TABLE ordens_servico ADD COLUMN IF NOT EXISTS status_pagamento VARCHAR(40) DEFAULT 'Aguardando Sinal';`);
+    await db.query(`ALTER TABLE ordens_servico ADD COLUMN IF NOT EXISTS fotos_andamento TEXT DEFAULT '[]';`);
+    if (!dbClient) colunasOSVerificadas = true;
+  } catch (err) {
+    console.error('Erro ao verificar colunas de ordens_servico:', err);
+  }
+}
+
 class OrdemServicoModel {
-  // Criar Ordem de Serviço isolada com validação de Costureira
   static async criar({ id_pedido, id_costureira, valor_total, previsao_entrega, status_kanban }) {
+    await garantirColunasOS();
     const usuario = await UsuarioModel.buscarPorId(id_costureira);
 
     if (!usuario || (usuario.tipo_usuario !== 'Costureira' && usuario.tipo_usuario !== 'costureira')) {
@@ -11,8 +26,8 @@ class OrdemServicoModel {
     }
 
     const query = `
-      INSERT INTO ordens_servico (id_pedido, id_costureira, valor_total, data_inicio, previsao_entrega, status_kanban)
-      VALUES ($1, $2, $3, NOW(), $4, $5)
+      INSERT INTO ordens_servico (id_pedido, id_costureira, valor_total, data_inicio, previsao_entrega, status_kanban, status_pagamento, fotos_andamento)
+      VALUES ($1, $2, $3, NOW(), $4, $5, 'Aguardando Sinal', '[]')
       RETURNING *;
     `;
     const statusInicial = status_kanban || 'A Fazer';
@@ -26,25 +41,29 @@ class OrdemServicoModel {
     return result.rows[0];
   }
 
-  // Aceitar Proposta e Gerar OS (Preserva data_prova caso já tenha sido agendada)
   static async aceitarProposta(client, { id_pedido, id_costureira, valor_total, previsao_entrega, valor_entrada }) {
+    await garantirColunasOS(client);
+    const statusPagInicial = Number(valor_entrada) > 0 ? 'Aguardando Sinal' : 'Em Débito';
+
     const queryOS = `
-      INSERT INTO ordens_servico (id_pedido, id_costureira, valor_total, previsao_entrega, valor_entrada, status_kanban)
-      VALUES ($1, $2, $3, $4, $5, 'Em Produção')
+      INSERT INTO ordens_servico (id_pedido, id_costureira, valor_total, previsao_entrega, valor_entrada, status_kanban, status_pagamento, fotos_andamento)
+      VALUES ($1, $2, $3, $4, $5, 'Em Produção', $6, '[]')
       ON CONFLICT (id_pedido) DO UPDATE SET 
         id_costureira = $2,
         valor_total = $3, 
         previsao_entrega = $4, 
         valor_entrada = $5, 
-        status_kanban = 'Em Produção'
+        status_kanban = 'Em Produção',
+        status_pagamento = COALESCE(ordens_servico.status_pagamento, $6)
       RETURNING *;
     `;
     const osResult = await client.query(queryOS, [
-      id_pedido, 
-      id_costureira, 
-      valor_total || 0, 
-      previsao_entrega || null, 
-      valor_entrada || 0
+      id_pedido,
+      id_costureira,
+      valor_total || 0,
+      previsao_entrega || null,
+      valor_entrada || 0,
+      statusPagInicial
     ]);
 
     await client.query(`UPDATE pedidos SET status_pedido = 'Em Produção' WHERE id_pedido = $1`, [id_pedido]);
@@ -52,8 +71,8 @@ class OrdemServicoModel {
     return osResult.rows[0];
   }
 
-  // Listar todas as Ordens de Serviço
   static async listarTodos() {
+    await garantirColunasOS();
     const query = `
       SELECT 
         os.*,
@@ -69,8 +88,8 @@ class OrdemServicoModel {
     return result.rows;
   }
 
-  // Buscar Ordem por ID da OS
   static async buscarPorId(id_ordem_servico) {
+    await garantirColunasOS();
     const query = `
       SELECT 
         os.*,
@@ -87,12 +106,14 @@ class OrdemServicoModel {
     return result.rows[0];
   }
 
-  // Listar Ordens por Usuário (Cliente ou Costureira) com Prova e Entrega
   static async listarPorUsuario(idUsuario) {
-    await pool.query(`ALTER TABLE ordens_servico ADD COLUMN IF NOT EXISTS data_entrega DATE;`);
+    await garantirColunasOS();
     const query = `
       SELECT os.id_ordem_servico AS id, os.id_ordem_servico, os.id_pedido AS "idPedido", 
              os.valor_total AS "valorTotal", os.valor_entrada AS "valorEntrada",
+             COALESCE(os.status_pagamento, 'Aguardando Sinal') AS status_pagamento,
+             COALESCE(os.status_pagamento, 'Aguardando Sinal') AS "statusPagamento",
+             COALESCE(os.fotos_andamento, '[]') AS fotos_andamento,
              os.data_inicio AS "dataInicio", 
              os.previsao_entrega, os.previsao_entrega AS "previsaoEntrega",
              os.data_entrega, os.data_entrega AS "dataEntrega",
@@ -111,13 +132,20 @@ class OrdemServicoModel {
       ORDER BY COALESCE(os.data_prova, os.data_entrega, os.previsao_entrega) ASC;
     `;
     const result = await pool.query(query, [idUsuario]);
-    return result.rows;
+    return result.rows.map((row) => {
+      let fotos = [];
+      try {
+        fotos = typeof row.fotos_andamento === 'string' ? JSON.parse(row.fotos_andamento) : (row.fotos_andamento || []);
+      } catch {
+        fotos = [];
+      }
+      return { ...row, fotosAndamento: Array.isArray(fotos) ? fotos : [] };
+    });
   }
 
-  // Atualizar Status Kanban (preenche data_entrega se movido para Entregue)
   static async atualizarStatus(clientOrPool, idOrdem, status_kanban) {
     const db = clientOrPool || pool;
-    await db.query(`ALTER TABLE ordens_servico ADD COLUMN IF NOT EXISTS data_entrega DATE;`);
+    await garantirColunasOS(db);
 
     const query = `
       UPDATE ordens_servico 
@@ -137,6 +165,77 @@ class OrdemServicoModel {
     await db.query(`UPDATE pedidos SET status_pedido = $1 WHERE id_pedido = $2`, [status_kanban, ordem.id_pedido]);
 
     return ordem;
+  }
+
+  static async atualizarPagamento(idOrdem, status_pagamento) {
+    await garantirColunasOS();
+    const query = `
+      UPDATE ordens_servico
+      SET status_pagamento = $1
+      WHERE id_ordem_servico = $2
+      RETURNING *;
+    `;
+    const result = await pool.query(query, [status_pagamento, idOrdem]);
+    return result.rows[0] || null;
+  }
+
+  static async adicionarFotoAndamento(idOrdem, { url_imagem, legenda }) {
+    await garantirColunasOS();
+    const atualRes = await pool.query(
+      `SELECT COALESCE(fotos_andamento, '[]') AS fotos_andamento FROM ordens_servico WHERE id_ordem_servico = $1;`,
+      [idOrdem]
+    );
+    if (atualRes.rowCount === 0) return null;
+
+    let lista = [];
+    try {
+      lista = JSON.parse(atualRes.rows[0].fotos_andamento || '[]');
+      if (!Array.isArray(lista)) lista = [];
+    } catch {
+      lista = [];
+    }
+
+    const novaFoto = {
+      id: Date.now(),
+      url: url_imagem,
+      legenda: (legenda || '').trim(),
+      data: new Date().toISOString()
+    };
+
+    lista.push(novaFoto);
+
+    const updRes = await pool.query(
+      `UPDATE ordens_servico SET fotos_andamento = $1 WHERE id_ordem_servico = $2 RETURNING *;`,
+      [JSON.stringify(lista), idOrdem]
+    );
+
+    return { ordem: updRes.rows[0], fotosAndamento: lista };
+  }
+
+  static async removerFotoAndamento(idOrdem, idFoto) {
+    await garantirColunasOS();
+    const atualRes = await pool.query(
+      `SELECT COALESCE(fotos_andamento, '[]') AS fotos_andamento FROM ordens_servico WHERE id_ordem_servico = $1;`,
+      [idOrdem]
+    );
+    if (atualRes.rowCount === 0) return null;
+
+    let lista = [];
+    try {
+      lista = JSON.parse(atualRes.rows[0].fotos_andamento || '[]');
+      if (!Array.isArray(lista)) lista = [];
+    } catch {
+      lista = [];
+    }
+
+    const filtrada = lista.filter((f) => String(f.id) !== String(idFoto));
+
+    const updRes = await pool.query(
+      `UPDATE ordens_servico SET fotos_andamento = $1 WHERE id_ordem_servico = $2 RETURNING *;`,
+      [JSON.stringify(filtrada), idOrdem]
+    );
+
+    return { ordem: updRes.rows[0], fotosAndamento: filtrada };
   }
 
   static async buscarClientePorPedido(idPedido) {

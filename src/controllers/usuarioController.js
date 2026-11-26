@@ -4,16 +4,17 @@ const pool = require('../config/database');
 const { OAuth2Client } = require('google-auth-library');
 const usuarioModel = require('../models/usuarioModel');
 const { enviarEmailNovoAcesso, enviarEmailRecuperacao } = require('../services/emailService');
+const { criptografar, descriptografar } = require('../services/criptografia');
+const { dispararNotificacao } = require('../services/notificacaoService');
 
 const googleClient = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
 
 class UsuarioController {
-  // Helper interno para gerar token de segurança (1h) e disparar alerta de novo acesso
   static async notificarNovoAcesso(usuario) {
     try {
       const idUsuario = usuario.id_usuario || usuario.id;
       const token = crypto.randomBytes(32).toString('hex');
-      const expiracao = new Date(Date.now() + 60 * 60 * 1000); // 1 hora
+      const expiracao = new Date(Date.now() + 60 * 60 * 1000);
 
       await usuarioModel.salvarTokenRedefinicao(idUsuario, token, expiracao);
       await enviarEmailNovoAcesso(usuario.email, usuario.nome, token);
@@ -37,14 +38,15 @@ class UsuarioController {
     }
 
     try {
+      const telDigitos = telefone ? telefone.replace(/\D/g, '') : '';
       const queryVerificacao = `
         SELECT email, telefone FROM usuarios 
         WHERE LOWER(email) = LOWER($1) 
-           OR ($2::text IS NOT NULL AND $2::text <> '' AND telefone = $2::text);
+           OR ($2::text <> '' AND regexp_replace(COALESCE(telefone, ''), '\\D', '', 'g') = $2::text);
       `;
       const resultVerificacao = await pool.query(queryVerificacao, [
-        email.trim(), 
-        telefone ? telefone.trim() : null
+        email.trim(),
+        telDigitos
       ]);
 
       if (resultVerificacao.rows.length > 0) {
@@ -52,12 +54,27 @@ class UsuarioController {
         if (usuarioExistente.email.toLowerCase() === email.trim().toLowerCase()) {
           return res.status(400).json({ erro: 'Este e-mail já está cadastrado em outra conta.' });
         }
-        if (telefone && usuarioExistente.telefone === telefone.trim()) {
+        if (telDigitos) {
           return res.status(400).json({ erro: 'Este número de telefone/WhatsApp já está cadastrado em outra conta.' });
         }
       }
 
       const senhaHash = await bcrypt.hash(senha, 10);
+
+      const cpfDigitos = cpf_cnpj ? cpf_cnpj.replace(/\D/g, '') : '';
+      if (cpfDigitos) {
+        const todosCpfsRes = await pool.query(
+          "SELECT cpf_cnpj FROM usuarios WHERE cpf_cnpj IS NOT NULL AND cpf_cnpj <> '' AND senha <> 'CONTA_EXCLUIDA';"
+        );
+        const cpfJaCadastrado = todosCpfsRes.rows.some((row) => {
+          const decifrado = descriptografar(row.cpf_cnpj) || '';
+          return decifrado.replace(/\D/g, '') === cpfDigitos;
+        });
+
+        if (cpfJaCadastrado) {
+          return res.status(400).json({ erro: 'Este CPF/CNPJ já está cadastrado em outra conta.' });
+        }
+      }
 
       const queryInsert = `
         INSERT INTO usuarios (nome, email, senha, telefone, tipo_usuario, endereco, cpf_cnpj)
@@ -71,11 +88,14 @@ class UsuarioController {
         senhaHash,
         telefone ? telefone.trim() : null,
         tipoFinal,
-        endereco ? endereco.trim() : '',
-        cpf_cnpj || null
+        criptografar(endereco),
+        criptografar(cpf_cnpj)
       ]);
 
-      const usuarioCriado = novoUsuario.rows[0];
+      const usuarioCriado = {
+        ...novoUsuario.rows[0],
+        endereco: descriptografar(novoUsuario.rows[0].endereco) || ''
+      };
 
       await pool.query(
         'INSERT INTO configuracoes_notificacoes (id_usuario) VALUES ($1) ON CONFLICT DO NOTHING;',
@@ -95,14 +115,17 @@ class UsuarioController {
 
   static async login(req, res) {
     try {
-      const { email, senha } = req.body;
-      if (!email || !senha) return res.status(400).json({ erro: 'Preencha o e-mail e a senha.' });
+      const { email, identificador, senha } = req.body;
+      const loginInput = (identificador || email || '').trim();
+      if (!loginInput || !senha) {
+        return res.status(400).json({ erro: 'Preencha o e-mail/telefone e a senha.' });
+      }
 
-      const usuario = await usuarioModel.buscarPorEmail(email.trim().toLowerCase());
-      if (!usuario) return res.status(400).json({ erro: 'E-mail ou senha incorretos.' });
+      const usuario = await usuarioModel.buscarPorEmailOuTelefone(loginInput);
+      if (!usuario) return res.status(400).json({ erro: 'Credenciais incorretas.' });
 
       const senhaValida = await bcrypt.compare(senha, usuario.senha);
-      if (!senhaValida) return res.status(400).json({ erro: 'E-mail ou senha incorretos.' });
+      if (!senhaValida) return res.status(400).json({ erro: 'Credenciais incorretas.' });
 
       UsuarioController.notificarNovoAcesso(usuario);
 
@@ -178,7 +201,7 @@ class UsuarioController {
       if (!usuario) return res.status(404).json({ erro: 'Este e-mail não está cadastrado.' });
 
       const token = crypto.randomBytes(32).toString('hex');
-      const expiracao = new Date(Date.now() + 60 * 60 * 1000); // 1 hora
+      const expiracao = new Date(Date.now() + 60 * 60 * 1000);
 
       await usuarioModel.salvarTokenRedefinicao(usuario.id_usuario, token, expiracao);
       await enviarEmailRecuperacao(usuario.email, usuario.nome, token);
@@ -242,27 +265,117 @@ class UsuarioController {
         return res.status(400).json({ erro: 'O endereço de atendimento é obrigatório para costureiras.' });
       }
 
-      const query = `
-        UPDATE usuarios 
-        SET nome = $1, telefone = $2, endereco = $3, bio = $4, especialidades = $5, foto_perfil = $6
-        WHERE id_usuario = $7
-        RETURNING id_usuario AS id, id_usuario, nome, email, telefone, endereco, bio, especialidades, foto_perfil, tipo_usuario;
-      `;
+      const usuarioAtualizado = await usuarioModel.atualizarPerfil(id, {
+        nome: nome.trim(),
+        telefone: telefone || null,
+        endereco: endereco ? endereco.trim() : null,
+        bio: bio || null,
+        especialidades: especialidades || null,
+        foto_perfil: foto_perfil || null
+      });
 
-      const result = await pool.query(query, [
-        nome.trim(),
-        telefone || null,
-        endereco ? endereco.trim() : null,
-        bio || null,
-        especialidades || null,
-        foto_perfil || null,
-        id
-      ]);
-
-      return res.json({ mensagem: 'Perfil atualizado com sucesso!', usuario: result.rows[0] });
+      return res.json({ mensagem: 'Perfil atualizado com sucesso!', usuario: usuarioAtualizado });
     } catch (err) {
       console.error('Erro ao atualizar perfil:', err);
       return res.status(500).json({ erro: 'Erro ao atualizar dados do perfil.' });
+    }
+  }
+
+  static async excluirConta(req, res) {
+    const { id } = req.params;
+    const client = await pool.connect();
+
+    try {
+      await client.query('BEGIN');
+
+      const userRes = await client.query(
+        'SELECT id_usuario, nome, tipo_usuario FROM usuarios WHERE id_usuario = $1;',
+        [id]
+      );
+
+      if (userRes.rows.length === 0) {
+        await client.query('ROLLBACK');
+        return res.status(404).json({ erro: 'Usuário não encontrado.' });
+      }
+
+      const usuarioExcluido = userRes.rows[0];
+      const papel = (usuarioExcluido.tipo_usuario || '').toLowerCase() === 'costureira' ? 'A costureira' : 'A cliente';
+      const nomeRotulo = (usuarioExcluido.tipo_usuario || '').toLowerCase() === 'costureira'
+        ? 'Costureira (Conta Excluída)'
+        : 'Cliente (Conta Excluída)';
+
+      // Busca todos os pedidos e interlocutores vinculados a este usuário
+      const pedidosRes = await client.query(
+        `SELECT DISTINCT
+           p.id_pedido,
+           p.descricao,
+           COALESCE(os.status_kanban, p.status_pedido) AS status_atual,
+           CASE
+             WHEN p.id_cliente = $1 THEN os.id_costureira
+             ELSE p.id_cliente
+           END AS id_outro_usuario
+         FROM pedidos p
+         LEFT JOIN ordens_servico os ON os.id_pedido = p.id_pedido
+         LEFT JOIN mensagens_chat m ON m.id_pedido = p.id_pedido
+         WHERE p.id_cliente = $1 OR os.id_costureira = $1 OR m.id_remetente = $1;`,
+        [id]
+      );
+
+      const interlocutoresNotificados = new Set();
+
+      for (const ped of pedidosRes.rows) {
+        // Registra aviso automático dentro do chat para registro histórico
+        await client.query(
+          `INSERT INTO mensagens_chat (id_pedido, id_remetente, conteudo, tipo_mensagem, data_hora_envio, lida)
+           VALUES ($1, $2, $3, 'sistema_conta_excluida', NOW(), false);`,
+          [
+            ped.id_pedido,
+            id,
+            `⚠️ ${papel} ${usuarioExcluido.nome} excluiu a conta na plataforma. Não é mais possível enviar mensagens neste atendimento.`
+          ]
+        );
+
+        if (ped.id_outro_usuario && Number(ped.id_outro_usuario) !== Number(id) && !interlocutoresNotificados.has(ped.id_outro_usuario)) {
+          interlocutoresNotificados.add(ped.id_outro_usuario);
+
+          // Dispara notificação no sininho e no WhatsApp
+          dispararNotificacao({
+            idUsuarioDestino: ped.id_outro_usuario,
+            tipoNotificacao: 'cancelamento',
+            titulo: 'Conta de contato encerrada',
+            mensagem: `⚠️ ${papel} ${usuarioExcluido.nome} excluiu a conta no Ateliê Entre Linhas. Confira o pedido #${ped.id_pedido} (${ped.status_atual || 'Aberto'}) na sua lista de conversas.`,
+            idPedido: ped.id_pedido,
+            forcarWhatsapp: true
+          }).catch((err) => console.error('Erro ao notificar interlocutor sobre exclusão de conta:', err.message));
+        }
+      }
+
+      // Anonimiza dados pessoais (LGPD) preservando histórico de mensagens e pedidos
+      await client.query(
+        `UPDATE usuarios
+         SET nome = $1,
+             email = $2,
+             senha = 'CONTA_EXCLUIDA',
+             telefone = NULL,
+             cpf_cnpj = NULL,
+             endereco = NULL,
+             bio = NULL,
+             especialidades = NULL,
+             foto_perfil = NULL,
+             token_redefinicao = NULL,
+             token_expiracao = NULL
+         WHERE id_usuario = $3;`,
+        [nomeRotulo, `excluido_${id}_${Date.now()}@atelie.local`, id]
+      );
+
+      await client.query('COMMIT');
+      return res.json({ mensagem: 'Conta excluída com sucesso.' });
+    } catch (err) {
+      await client.query('ROLLBACK');
+      console.error('Erro ao excluir/anonimizar conta:', err);
+      return res.status(500).json({ erro: 'Erro interno ao processar a exclusão da conta.' });
+    } finally {
+      client.release();
     }
   }
 

@@ -280,7 +280,8 @@ function ChatContainer({ pedido, usuario, idCostureiraProp, onNavigate }) {
     }
   }, [isCostureira, pedidoDados?.clienteId, pedidoDados?.id_cliente, idUsuario]);
 
-  const handleEnviarMensagem = async (texto) => {
+  const handleEnviarMensagem = async (texto, imagemBase64 = null) => {
+    if (!texto && !imagemBase64) return;
     try {
       const res = await fetch('/api/mensagens-chat', {
         method: 'POST',
@@ -289,11 +290,17 @@ function ChatContainer({ pedido, usuario, idCostureiraProp, onNavigate }) {
           id_pedido: Number(idPedido),
           id_remetente: Number(idUsuario),
           id_costureira: Number(idCostureiraChat),
-          conteudo: texto,
-          tipo_mensagem: 'texto'
+          conteudo: texto || '',
+          anexo_imagem: imagemBase64 || null,
+          tipo_mensagem: imagemBase64 ? 'imagem' : 'texto'
         })
       });
-      if (res.ok) carregarMensagens(false);
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        alert(data.error || data.erro || 'Não foi possível enviar a mensagem/foto.');
+        return;
+      }
+      carregarMensagens(false);
     } catch (err) {
       alert(err.message);
     }
@@ -591,7 +598,7 @@ function ChatContainer({ pedido, usuario, idCostureiraProp, onNavigate }) {
     : null;
 
   return (
-    <div style={{ maxWidth: '1100px', margin: '20px auto', fontFamily: "'Segoe UI', Tahoma, sans-serif" }}>
+    <div style={{ maxWidth: '1100px', margin: '20px auto', padding: '0 12px', fontFamily: "'Segoe UI', Tahoma, sans-serif" }}>
       <ChatHeader
         nomeUsuario={user?.nome}
         fotoPerfil={user?.foto_perfil}
@@ -599,7 +606,7 @@ function ChatContainer({ pedido, usuario, idCostureiraProp, onNavigate }) {
         onNavigate={onNavigate}
       />
 
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 340px', gap: '20px' }}>
+      <div className="chat-layout-grid">
         <ChatMessageList
           mensagens={mensagens}
           idUsuario={idUsuario}

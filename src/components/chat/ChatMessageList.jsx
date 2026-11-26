@@ -1,4 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
+import { comprimirImagem } from '../../services/comprimirImagem';
 
 const obterEstiloStatus = (status) => {
   const s = (status || '').toLowerCase();
@@ -39,17 +40,93 @@ function ChatMessageList({
   onRecusarProva
 }) {
   const [novaMensagem, setNovaMensagem] = useState('');
+  const [imagemPreview, setImagemPreview] = useState(null);
+  const [processandoFoto, setProcessandoFoto] = useState(false);
+  const [imagemAmpliada, setImagemAmpliada] = useState(null);
+  const [menuFotoAberto, setMenuFotoAberto] = useState(false);
+  const [cameraAberta, setCameraAberta] = useState(false);
+  const videoRef = useRef(null);
+  const streamRef = useRef(null);
+
+  const pararStreamCamera = () => {
+    if (streamRef.current) {
+      streamRef.current.getTracks().forEach((t) => t.stop());
+      streamRef.current = null;
+    }
+  };
+
+  useEffect(() => {
+    return () => pararStreamCamera();
+  }, []);
+
+  const abrirCamera = async () => {
+    setMenuFotoAberto(false);
+    if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+      alert('Seu navegador não possui suporte para câmera ou não há câmera conectada.');
+      return;
+    }
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } });
+      streamRef.current = stream;
+      setCameraAberta(true);
+      setTimeout(() => {
+        if (videoRef.current) {
+          videoRef.current.srcObject = stream;
+        }
+      }, 80);
+    } catch (err) {
+      alert('Não foi possível acessar a câmera. Verifique se há uma câmera conectada e se a permissão foi concedida.');
+    }
+  };
+
+  const fecharCamera = () => {
+    pararStreamCamera();
+    setCameraAberta(false);
+  };
+
+  const capturarFotoCamera = () => {
+    const video = videoRef.current;
+    if (!video) return;
+    const canvas = document.createElement('canvas');
+    const maxLargura = 1080;
+    const escala = video.videoWidth > maxLargura ? maxLargura / video.videoWidth : 1;
+    canvas.width = Math.round(video.videoWidth * escala);
+    canvas.height = Math.round(video.videoHeight * escala);
+    const ctx = canvas.getContext('2d');
+    ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+    const dataUrl = canvas.toDataURL('image/jpeg', 0.75);
+    setImagemPreview(dataUrl);
+    fecharCamera();
+  };
+
+  const inputFotoRef = useRef(null);
   const chatBottomRef = useRef(null);
 
   useEffect(() => {
     chatBottomRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [mensagens]);
 
+  const handleSelecionarFoto = async (e) => {
+    const arquivo = e.target.files?.[0];
+    if (!arquivo) return;
+    setProcessandoFoto(true);
+    try {
+      const comprimida = await comprimirImagem(arquivo, { maxLargura: 1080, qualidade: 0.75 });
+      setImagemPreview(comprimida);
+    } catch (err) {
+      alert(err.message || 'Erro ao carregar imagem.');
+    } finally {
+      setProcessandoFoto(false);
+      e.target.value = '';
+    }
+  };
+
   const handleSubmit = (e) => {
     e.preventDefault();
-    if (!novaMensagem.trim()) return;
-    onEnviarMensagem(novaMensagem.trim());
+    if (!novaMensagem.trim() && !imagemPreview) return;
+    onEnviarMensagem(novaMensagem.trim(), imagemPreview);
     setNovaMensagem('');
+    setImagemPreview(null);
   };
 
   const formatarDataHeader = (dataStr) => {
@@ -75,6 +152,11 @@ function ChatMessageList({
   const pedidoCancelado = statusPedido === 'Cancelado';
   const pedidoEncerrado = ['Cancelado', 'Entregue'].includes(statusPedido);
   const estiloStatus = obterEstiloStatus(statusPedido);
+  const interlocutorExcluido = mensagens.some(
+    (m) =>
+      m.tipo_mensagem === 'sistema_conta_excluida' ||
+      (Boolean(m.remetenteExcluido) && Number(m.id_remetente || m.idRemetente) !== Number(idUsuario))
+  );
 
   const temPropostaPendente =
     !contratoAtivo &&
@@ -138,6 +220,8 @@ function ChatMessageList({
           const ehMinha = Number(msg.id_remetente || msg.idRemetente) === Number(idUsuario);
           const ehProposta = msg.tipo_mensagem === 'proposta' || (msg.conteudo && msg.conteudo.includes('Proposta de Orçamento:'));
           const ehPropostaProva = msg.tipo_mensagem === 'proposta_prova' || (msg.conteudo && msg.conteudo.includes('Proposta de Agendamento de Prova:'));
+          const anexoImagem = msg.anexo_imagem;
+          const ocultarLegendaPadrao = anexoImagem && msg.conteudo === '📷 Foto enviada';
 
           let dadosProposta = msg.dados_proposta || {};
           if (typeof dadosProposta === 'string') {
@@ -161,9 +245,31 @@ function ChatMessageList({
                     {msg.remetente_nome || msg.nomeRemetente || (ehMinha ? 'Você' : 'Interlocutor')}
                   </div>
 
-                  <div style={{ fontSize: '14px', whiteSpace: 'pre-line', paddingBottom: '12px' }}>
-                    {msg.conteudo}
-                  </div>
+                  {anexoImagem && (
+                    <div style={{ marginBottom: ocultarLegendaPadrao ? '4px' : '8px' }}>
+                      <img
+                        src={anexoImagem}
+                        alt="Foto enviada no chat"
+                        onClick={() => setImagemAmpliada(anexoImagem)}
+                        style={{
+                          maxWidth: '240px',
+                          maxHeight: '240px',
+                          width: '100%',
+                          borderRadius: '8px',
+                          objectFit: 'cover',
+                          cursor: 'zoom-in',
+                          display: 'block',
+                          border: ehMinha ? '1px solid rgba(255,255,255,0.25)' : '1px solid #DDD'
+                        }}
+                      />
+                    </div>
+                  )}
+
+                  {!ocultarLegendaPadrao && msg.conteudo && (
+                    <div style={{ fontSize: '14px', whiteSpace: 'pre-line', paddingBottom: '8px' }}>
+                      {msg.conteudo}
+                    </div>
+                  )}
 
                   {/* Card de Proposta de Orçamento */}
                   {ehProposta && (
@@ -270,18 +376,243 @@ function ChatMessageList({
         </div>
       )}
 
-      <form onSubmit={handleSubmit} style={{ padding: '15px', background: '#fff', borderTop: '1px solid #eee', display: 'flex', gap: '10px' }}>
-        <input
-          type="text"
-          value={novaMensagem}
-          onChange={(e) => setNovaMensagem(e.target.value)}
-          placeholder={pedidoCancelado ? 'Envie uma mensagem para combinar a retirada ou pendências...' : 'Digite sua mensagem...'}
-          style={{ flex: 1, padding: '11px 14px', borderRadius: '6px', border: '1px solid #ccc', outline: 'none' }}
-        />
-        <button type="submit" style={{ padding: '11px 20px', background: '#3E2445', color: '#fff', border: 'none', borderRadius: '6px', fontWeight: 'bold', cursor: 'pointer' }}>
-          Enviar
-        </button>
-      </form>
+      {/* Pré-visualização da foto antes do envio */}
+      {imagemPreview && (
+        <div style={{ padding: '10px 15px', background: '#FAF6FA', borderTop: '1px solid #EADCEB', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '12px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+            <img src={imagemPreview} alt="Prévia" style={{ width: '54px', height: '54px', objectFit: 'cover', borderRadius: '6px', border: '1px solid #3E2445' }} />
+            <span style={{ fontSize: '12.5px', color: '#3E2445', fontWeight: 'bold' }}>Foto pronta para envio (digite uma legenda opcional)</span>
+          </div>
+          <button
+            type="button"
+            onClick={() => setImagemPreview(null)}
+            style={{ background: '#FFEBEE', color: '#C62828', border: '1px solid #EF9A9A', borderRadius: '6px', padding: '5px 10px', fontSize: '12px', fontWeight: 'bold', cursor: 'pointer' }}
+          >
+            ✕ Remover
+          </button>
+        </div>
+      )}
+
+      {interlocutorExcluido && (
+        <div style={{ background: '#ECECEC', borderTop: '1px solid #D0D0D0', color: '#555', padding: '10px 16px', fontSize: '12.5px', textAlign: 'center', fontWeight: '500' }}>
+          {isCostureira
+            ? 'A cliente apagou a conta na plataforma. O histórico foi mantido apenas para consulta.'
+            : 'A costureira apagou a conta na plataforma. O histórico foi mantido apenas para consulta.'}
+        </div>
+      )}
+
+      {!interlocutorExcluido && (
+        <form onSubmit={handleSubmit} style={{ position: 'relative', padding: '12px 15px', background: '#fff', borderTop: '1px solid #eee', display: 'flex', gap: '8px', alignItems: 'center' }}>
+          <input
+            ref={inputFotoRef}
+            type="file"
+            accept="image/*"
+            onChange={handleSelecionarFoto}
+            style={{ display: 'none' }}
+          />
+
+          <div style={{ position: 'relative', flexShrink: 0 }}>
+            <button
+              type="button"
+              onClick={() => setMenuFotoAberto((prev) => !prev)}
+              disabled={processandoFoto}
+              title="Tirar foto ou escolher imagem"
+              style={{
+                padding: '10px 12px',
+                background: '#F4EFF5',
+                color: '#3E2445',
+                border: '1px solid #D8C7DA',
+                borderRadius: '6px',
+                fontWeight: 'bold',
+                fontSize: '16px',
+                cursor: 'pointer'
+              }}
+            >
+              {processandoFoto ? '...' : '📷'}
+            </button>
+
+            {menuFotoAberto && (
+              <div
+                style={{
+                  position: 'absolute',
+                  bottom: '48px',
+                  left: 0,
+                  background: '#fff',
+                  border: '1px solid #D8C7DA',
+                  borderRadius: '8px',
+                  boxShadow: '0 6px 18px rgba(62, 36, 69, 0.18)',
+                  minWidth: '175px',
+                  zIndex: 1200,
+                  overflow: 'hidden'
+                }}
+              >
+                <button
+                  type="button"
+                  onClick={abrirCamera}
+                  style={{
+                    display: 'block',
+                    width: '100%',
+                    padding: '10px 14px',
+                    background: '#fff',
+                    border: 'none',
+                    borderBottom: '1px solid #F0E8F2',
+                    textAlign: 'left',
+                    fontSize: '13px',
+                    fontWeight: 'bold',
+                    color: '#3E2445',
+                    cursor: 'pointer'
+                  }}
+                >
+                  Tirar Foto
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setMenuFotoAberto(false);
+                    inputFotoRef.current?.click();
+                  }}
+                  style={{
+                    display: 'block',
+                    width: '100%',
+                    padding: '10px 14px',
+                    background: '#fff',
+                    border: 'none',
+                    textAlign: 'left',
+                    fontSize: '13px',
+                    fontWeight: 'bold',
+                    color: '#3E2445',
+                    cursor: 'pointer'
+                  }}
+                >
+                  Escolher Foto
+                </button>
+              </div>
+            )}
+          </div>
+
+          <input
+            type="text"
+            value={novaMensagem}
+            onChange={(e) => setNovaMensagem(e.target.value)}
+            placeholder={
+              imagemPreview
+                ? 'Adicione uma legenda para a foto (opcional)...'
+                : pedidoCancelado
+                ? 'Envie uma mensagem para combinar a retirada ou pendências...'
+                : 'Digite sua mensagem...'
+            }
+            style={{ flex: 1, padding: '11px 14px', borderRadius: '6px', border: '1px solid #ccc', outline: 'none', minWidth: 0 }}
+          />
+          <button type="submit" style={{ padding: '11px 18px', background: '#3E2445', color: '#fff', border: 'none', borderRadius: '6px', fontWeight: 'bold', cursor: 'pointer', flexShrink: 0 }}>
+            Enviar
+          </button>
+        </form>
+      )}
+
+      {/* Modal da Câmera */}
+      {cameraAberta && (
+        <div
+          style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.82)', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', zIndex: 2100, padding: '20px' }}
+        >
+          <div style={{ background: '#fff', borderRadius: '12px', padding: '16px', maxWidth: '480px', width: '100%', textAlign: 'center' }}>
+            <h4 style={{ margin: '0 0 12px 0', color: '#3E2445' }}>Capturar Foto</h4>
+            <video
+              ref={videoRef}
+              autoPlay
+              playsInline
+              style={{ width: '100%', borderRadius: '8px', background: '#000', maxHeight: '340px', objectFit: 'cover' }}
+            />
+            <div style={{ display: 'flex', gap: '10px', marginTop: '14px' }}>
+              <button
+                type="button"
+                onClick={fecharCamera}
+                style={{ flex: 1, padding: '10px', background: '#eee', color: '#333', border: 'none', borderRadius: '6px', fontWeight: 'bold', cursor: 'pointer' }}
+              >
+                Cancelar
+              </button>
+              <button
+                type="button"
+                onClick={capturarFotoCamera}
+                style={{ flex: 1, padding: '10px', background: '#3E2445', color: '#fff', border: 'none', borderRadius: '6px', fontWeight: 'bold', cursor: 'pointer' }}
+              >
+                Capturar
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Modal de visualização ampliada da imagem com botão de salvar */}
+      {imagemAmpliada && (
+        <div
+          onClick={() => setImagemAmpliada(null)}
+          style={{
+            position: 'fixed',
+            inset: 0,
+            background: 'rgba(0,0,0,0.85)',
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+            justifyContent: 'center',
+            zIndex: 2000,
+            padding: '20px',
+            gap: '14px'
+          }}
+        >
+          <img
+            src={imagemAmpliada}
+            alt="Foto ampliada"
+            onClick={(e) => e.stopPropagation()}
+            style={{
+              maxWidth: '92%',
+              maxHeight: '80vh',
+              borderRadius: '10px',
+              boxShadow: '0 8px 30px rgba(0,0,0,0.5)',
+              cursor: 'default'
+            }}
+          />
+
+          <div
+            onClick={(e) => e.stopPropagation()}
+            style={{ display: 'flex', gap: '12px', alignItems: 'center' }}
+          >
+            <a
+              href={imagemAmpliada}
+              download={`atelie-pedido-${idPedido || 'foto'}-${Date.now()}.jpg`}
+              style={{
+                padding: '10px 18px',
+                background: '#3E2445',
+                color: '#fff',
+                border: '1px solid rgba(255,255,255,0.25)',
+                borderRadius: '8px',
+                fontWeight: 'bold',
+                fontSize: '13.5px',
+                textDecoration: 'none',
+                cursor: 'pointer'
+              }}
+            >
+              Salvar Foto
+            </a>
+
+            <button
+              type="button"
+              onClick={() => setImagemAmpliada(null)}
+              style={{
+                padding: '10px 18px',
+                background: '#fff',
+                color: '#3E2445',
+                border: 'none',
+                borderRadius: '8px',
+                fontWeight: 'bold',
+                fontSize: '13.5px',
+                cursor: 'pointer'
+              }}
+            >
+              Fechar
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

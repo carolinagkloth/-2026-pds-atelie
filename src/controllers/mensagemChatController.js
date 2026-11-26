@@ -7,26 +7,38 @@ const { dispararNotificacao } = require('../services/notificacaoService');
 class MensagemChatController {
   static async enviar(req, res, next) {
     try {
-      const { id_pedido, conteudo, tipo_mensagem, dados_proposta, valor_proposta, prazo_proposta, valor_entrada } = req.body;
+      const {
+        id_pedido,
+        conteudo,
+        tipo_mensagem,
+        dados_proposta,
+        valor_proposta,
+        prazo_proposta,
+        valor_entrada,
+        anexo_imagem
+      } = req.body;
       const id_remetente = req.body.id_remetente || req.usuarioId || (req.usuario && req.usuario.id);
 
       if (!id_remetente) {
         return res.status(401).json({ error: 'Não foi possível identificar o usuário remetente.' });
       }
 
-      if (!id_pedido || !conteudo) {
-        return res.status(400).json({ error: 'Os campos id_pedido e conteudo são obrigatórios.' });
+      if (!id_pedido || (!conteudo && !anexo_imagem)) {
+        return res.status(400).json({ error: 'Informe uma mensagem ou anexe uma foto.' });
       }
+
+      const textoFinal = (conteudo || '').trim() || '📷 Foto enviada';
 
       const novaMensagem = await MensagemChatModel.criar({
         id_pedido,
         id_remetente,
-        conteudo,
-        tipo_mensagem,
+        conteudo: textoFinal,
+        tipo_mensagem: tipo_mensagem || (anexo_imagem ? 'imagem' : 'texto'),
         dados_proposta,
         valor_proposta: valor_proposta || null,
         prazo_proposta: prazo_proposta || null,
-        valor_entrada: valor_entrada || 0
+        valor_entrada: valor_entrada || 0,
+        anexo_imagem: anexo_imagem || null
       });
 
       const pedido = await PedidoModel.buscarPorId(id_pedido);
@@ -42,7 +54,7 @@ class MensagemChatController {
         await dispararNotificacao({
           idUsuario: idDestinatario,
           titulo: tituloNotif,
-          mensagem: conteudo,
+          mensagem: textoFinal,
           tipo: tipoNotif,
           idPedido: id_pedido,
           forcarWhatsapp: false

@@ -17,7 +17,7 @@ const IconOlhoFechado = () => (
 );
 
 function LoginContent({ onNavigate, onLoginSucesso }) {
-  const [email, setEmail] = useState('');
+  const [identificador, setIdentificador] = useState('');
   const [senha, setSenha] = useState('');
   const [mostrarSenha, setMostrarSenha] = useState(false);
   const [erro, setErro] = useState('');
@@ -40,7 +40,6 @@ function LoginContent({ onNavigate, onLoginSucesso }) {
         throw new Error(data.erro || 'Falha na autenticação via Google.');
       }
 
-      // Se for um novo usuário, vai para cadastro preenchendo os dados
       if (data.novoUsuario) {
         if (onNavigate) {
           onNavigate('cadastro', data.dadosGoogle);
@@ -64,7 +63,7 @@ function LoginContent({ onNavigate, onLoginSucesso }) {
       const response = await fetch('/api/login', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email, senha })
+        body: JSON.stringify({ identificador, email: identificador, senha })
       });
 
       const data = await response.json();
@@ -97,15 +96,16 @@ function LoginContent({ onNavigate, onLoginSucesso }) {
         />
       </div>
 
-      <div style={{ textAlign: 'center', color: '#888', margin: '15px 0', fontSize: '12px', fontWeight: 'bold' }}>OU COM E-MAIL E SENHA</div>
+      <div style={{ textAlign: 'center', color: '#888', margin: '15px 0', fontSize: '12px', fontWeight: 'bold' }}>OU COM E-MAIL / TELEFONE E SENHA</div>
 
       <form onSubmit={handleSubmit}>
         <div style={{ marginBottom: '15px' }}>
-          <label style={{ display: 'block', marginBottom: '5px', fontSize: '14px', fontWeight: 'bold', color: '#3E2445' }}>E-mail *</label>
+          <label style={{ display: 'block', marginBottom: '5px', fontSize: '14px', fontWeight: 'bold', color: '#3E2445' }}>E-mail ou Telefone *</label>
           <input 
-            type="email" 
-            value={email} 
-            onChange={(e) => setEmail(e.target.value)} 
+            type="text" 
+            placeholder="seu@email.com ou (42) 99999-9999"
+            value={identificador} 
+            onChange={(e) => setIdentificador(e.target.value)} 
             required 
             style={{ width: '100%', padding: '10px', borderRadius: '6px', border: '1px solid #ccc', boxSizing: 'border-box', fontSize: '14px', outline: 'none' }} 
           />

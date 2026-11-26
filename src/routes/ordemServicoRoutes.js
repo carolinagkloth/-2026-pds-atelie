@@ -21,5 +21,8 @@ router.get('/:id', OrdemServicoController.buscarPorId);
 router.get('/usuario/:idUsuario', OrdemServicoController.listarPorUsuario);
 router.patch('/:id/status', OrdemServicoController.atualizarStatus);
 router.put('/:idOrdem/status', OrdemServicoController.atualizarStatus);
+router.put('/:idOrdem/pagamento', OrdemServicoController.atualizarPagamento);
+router.post('/:idOrdem/fotos', OrdemServicoController.adicionarFotoAndamento);
+router.delete('/:idOrdem/fotos/:idFoto', OrdemServicoController.removerFotoAndamento);
 
 module.exports = router;

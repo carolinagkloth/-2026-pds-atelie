@@ -146,7 +146,10 @@ function MeusChats({ usuario, onNavigate }) {
       {/* Lista de Conversas */}
       <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
         {conversasFiltradas.map((item) => {
-          const nomeOutraPessoa = isCostureira ? item.clienteNome : (item.costureiraNome || 'Ateliê');
+          const outraPessoaExcluida = Boolean(isCostureira ? item.clienteExcluido : item.costureiraExcluida);
+          const nomeOutraPessoa = isCostureira
+            ? (item.clienteNome || 'Cliente')
+            : (item.costureiraNome || 'Ateliê');
           const dataFormatada = item.dataUltimaAtividade ? new Date(item.dataUltimaAtividade).toLocaleString('pt-BR', { dateStyle: 'short', timeStyle: 'short' }) : '-';
           const statusAtual = item.status || 'Aberto';
           const estiloStatus = obterEstiloStatus(statusAtual);
@@ -161,33 +164,29 @@ function MeusChats({ usuario, onNavigate }) {
                 display: 'flex',
                 justifyContent: 'space-between',
                 alignItems: 'center',
-                background: temNaoLidas ? '#FAF6FA' : '#fff',
+                background: outraPessoaExcluida ? '#F3F3F4' : (temNaoLidas ? '#FAF6FA' : '#fff'),
+                opacity: outraPessoaExcluida ? 0.78 : 1,
                 border: '1px solid #E0E0E0',
-                borderLeft: temNaoLidas ? '4px solid #3E2445' : '1px solid #E0E0E0',
+                borderLeft: outraPessoaExcluida
+                  ? '4px solid #9E9E9E'
+                  : (temNaoLidas ? '4px solid #3E2445' : '1px solid #E0E0E0'),
                 borderRadius: '10px',
                 padding: '18px',
                 cursor: 'pointer',
                 transition: 'all 0.2s ease',
                 boxShadow: '0 2px 6px rgba(0,0,0,0.03)'
               }}
-              onMouseEnter={(e) => {
-                e.currentTarget.style.borderTopColor = '#3E2445';
-                e.currentTarget.style.borderRightColor = '#3E2445';
-                e.currentTarget.style.borderBottomColor = '#3E2445';
-                if (!temNaoLidas) e.currentTarget.style.borderLeftColor = '#3E2445';
-                e.currentTarget.style.background = '#FAF6FA';
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.borderTopColor = '#E0E0E0';
-                e.currentTarget.style.borderRightColor = '#E0E0E0';
-                e.currentTarget.style.borderBottomColor = '#E0E0E0';
-                if (!temNaoLidas) e.currentTarget.style.borderLeftColor = '#E0E0E0';
-                e.currentTarget.style.background = temNaoLidas ? '#FAF6FA' : '#fff';
-              }}
             >
               <div style={{ flex: 1, paddingRight: '20px', minWidth: 0 }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '6px', flexWrap: 'wrap' }}>
-                  <h3 style={{ margin: 0, color: '#3E2445', fontSize: '16px', fontWeight: 'bold' }}>{nomeOutraPessoa || 'Contato'}</h3>
+                  <h3 style={{ margin: 0, color: outraPessoaExcluida ? '#616161' : '#3E2445', fontSize: '16px', fontWeight: 'bold' }}>
+                    {nomeOutraPessoa}
+                  </h3>
+                  {outraPessoaExcluida && (
+                    <span style={{ background: '#E0E0E0', color: '#424242', padding: '2px 8px', borderRadius: '10px', fontSize: '11px', fontWeight: 'bold' }}>
+                      Conta encerrada
+                    </span>
+                  )}
                   <span
                     style={{
                       background: estiloStatus.background,
@@ -210,8 +209,8 @@ function MeusChats({ usuario, onNavigate }) {
                 <div
                   style={{
                     fontSize: '13px',
-                    color: temNaoLidas ? '#3E2445' : '#888',
-                    fontWeight: temNaoLidas ? 'bold' : 'normal',
+                    color: outraPessoaExcluida ? '#757575' : (temNaoLidas ? '#3E2445' : '#888'),
+                    fontWeight: temNaoLidas && !outraPessoaExcluida ? 'bold' : 'normal',
                     whiteSpace: 'nowrap',
                     overflow: 'hidden',
                     textOverflow: 'ellipsis',

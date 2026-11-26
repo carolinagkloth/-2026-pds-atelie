@@ -3,6 +3,7 @@ import "../styles/Perfil.css";
 import Portfolio from './Portfolio';
 import TabelaPrecos from './TabelaPrecos';
 import Agenda from './Agenda';
+import { comprimirImagem } from '../services/comprimirImagem';
 
 function Perfil({ usuario, onNavigate, onUpdateUsuario }) {
   const usuarioSalvo = (() => {
@@ -36,6 +37,18 @@ function Perfil({ usuario, onNavigate, onUpdateUsuario }) {
     foto_perfil: user?.foto_perfil || ''
   });
 
+  // Ficha de Medidas do Cliente (RF07)
+  const [medidas, setMedidas] = useState({
+    busto: '',
+    cintura: '',
+    quadril: '',
+    altura: '',
+    comprimento: '',
+    observacoes_medidas: ''
+  });
+  const [salvandoMedidas, setSalvandoMedidas] = useState(false);
+  const [msgMedidas, setMsgMedidas] = useState('');
+
   useEffect(() => {
     if (idUsuario) {
       fetch(`/api/usuarios/${idUsuario}`)
@@ -55,7 +68,23 @@ function Perfil({ usuario, onNavigate, onUpdateUsuario }) {
         })
         .catch(() => {});
 
-      if (!isCliente) {
+      if (isCliente) {
+        fetch(`/api/usuarios/${idUsuario}/medidas`)
+          .then((res) => res.json())
+          .then((data) => {
+            if (data && !data.erro) {
+              setMedidas({
+                busto: data.busto || '',
+                cintura: data.cintura || '',
+                quadril: data.quadril || '',
+                altura: data.altura || '',
+                comprimento: data.comprimento || '',
+                observacoes_medidas: data.observacoes_medidas || ''
+              });
+            }
+          })
+          .catch(() => {});
+      } else {
         fetch(`/api/avaliacoes/costureira/${idUsuario}`)
           .then((res) => res.json())
           .then((data) => {
@@ -80,15 +109,15 @@ function Perfil({ usuario, onNavigate, onUpdateUsuario }) {
     }));
   };
 
-  const handleFotoChange = (e) => {
-    const file = e.target.files[0];
-    if (file) {
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        setErroImagem(false);
-        setFormData((prev) => ({ ...prev, foto_perfil: reader.result }));
-      };
-      reader.readAsDataURL(file);
+  const handleFotoChange = async (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    try {
+      const comprimida = await comprimirImagem(file, { maxLargura: 600, qualidade: 0.8 });
+      setErroImagem(false);
+      setFormData((prev) => ({ ...prev, foto_perfil: comprimida }));
+    } catch (err) {
+      alert(err.message || 'Erro ao carregar foto de perfil.');
     }
   };
 
@@ -157,6 +186,142 @@ function Perfil({ usuario, onNavigate, onUpdateUsuario }) {
     }
   };
 
+  // --- FUNÇÕES DA FICHA DE MEDIDAS (RF07) ---
+  const handleSalvarMedidas = async (e) => {
+    e.preventDefault();
+    setSalvandoMedidas(true);
+    setMsgMedidas('');
+    try {
+      const res = await fetch(`/api/usuarios/${idUsuario}/medidas`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(medidas)
+      });
+      if (!res.ok) throw new Error('Erro ao salvar medidas.');
+      setMsgMedidas('Ficha de medidas salva com sucesso!');
+    } catch (err) {
+      alert(err.message);
+    } finally {
+      setSalvandoMedidas(false);
+    }
+  };
+
+  const possuiAlgumaMedida = () => {
+    return Object.values(medidas).some((v) => String(v || '').trim() !== '');
+  };
+
+  const handleExportarMedidasTXT = () => {
+    if (!possuiAlgumaMedida()) {
+      alert('Preencha ao menos uma medida antes de exportar.');
+      return;
+    }
+
+    const texto = [
+      '========================================',
+      'ATELIÊ ENTRE LINHAS - FICHA DE MEDIDAS',
+      '========================================',
+      `Cliente: ${formData.nome || 'Não informado'}`,
+      `Data de Emissão: ${new Date().toLocaleDateString('pt-BR')}`,
+      '----------------------------------------',
+      `Busto: ${medidas.busto ? `${medidas.busto} cm` : '-'}`,
+      `Cintura: ${medidas.cintura ? `${medidas.cintura} cm` : '-'}`,
+      `Quadril: ${medidas.quadril ? `${medidas.quadril} cm` : '-'}`,
+      `Altura: ${medidas.altura ? `${medidas.altura} cm` : '-'}`,
+      `Comprimento: ${medidas.comprimento ? `${medidas.comprimento} cm` : '-'}`,
+      '----------------------------------------',
+      'Observações:',
+      medidas.observacoes_medidas || 'Nenhuma observação adicional.',
+      '========================================'
+    ].join('\n');
+
+    const blob = new Blob([texto], { type: 'text/plain;charset=utf-8' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `Ficha_Medidas_${(formData.nome || 'Cliente').replace(/\s+/g, '_')}.txt`;
+    link.click();
+    URL.revokeObjectURL(url);
+  };
+
+  const handleExportarMedidasPDF = () => {
+    if (!possuiAlgumaMedida()) {
+      alert('Preencha ao menos uma medida antes de exportar.');
+      return;
+    }
+
+    const janela = window.open('', '_blank', 'width=720,height=820');
+    if (!janela) {
+      alert('Permita pop-ups no navegador para gerar o PDF.');
+      return;
+    }
+
+    janela.document.write(`
+      <!DOCTYPE html>
+      <html lang="pt-BR">
+      <head>
+        <meta charset="UTF-8" />
+        <title>Ficha de Medidas - ${formData.nome || 'Cliente'}</title>
+        <style>
+          body { font-family: 'Segoe UI', Arial, sans-serif; color: #2D2230; padding: 36px; }
+          .topo { background: #3E2445; color: #fff; padding: 20px 24px; border-radius: 10px; }
+          .topo h1 { margin: 0; font-size: 20px; }
+          .topo p { margin: 4px 0 0 0; font-size: 13px; color: #EADCEB; }
+          .info { margin: 20px 0; font-size: 14px; }
+          table { width: 100%; border-collapse: collapse; margin-top: 12px; }
+          th, td { border: 1px solid #D8C7DA; padding: 10px 14px; text-align: left; font-size: 14px; }
+          th { background: #FAF6FA; color: #3E2445; width: 45%; }
+          .obs { margin-top: 18px; padding: 14px; background: #FAF7FA; border-left: 4px solid #3E2445; border-radius: 6px; font-size: 13.5px; }
+          @media print { body { padding: 12px; } }
+        </style>
+      </head>
+      <body>
+        <div class="topo">
+          <h1>Ateliê Entre Linhas — Ficha de Medidas Corporais</h1>
+          <p>Documento gerado em ${new Date().toLocaleDateString('pt-BR')}</p>
+        </div>
+        <div class="info">
+          <strong>Cliente:</strong> ${formData.nome || 'Não informado'}<br/>
+          <strong>Contato:</strong> ${formData.telefone || formData.email || '-'}
+        </div>
+        <table>
+          <tr><th>Busto</th><td>${medidas.busto ? `${medidas.busto} cm` : '-'}</td></tr>
+          <tr><th>Cintura</th><td>${medidas.cintura ? `${medidas.cintura} cm` : '-'}</td></tr>
+          <tr><th>Quadril</th><td>${medidas.quadril ? `${medidas.quadril} cm` : '-'}</td></tr>
+          <tr><th>Altura</th><td>${medidas.altura ? `${medidas.altura} cm` : '-'}</td></tr>
+          <tr><th>Comprimento</th><td>${medidas.comprimento ? `${medidas.comprimento} cm` : '-'}</td></tr>
+        </table>
+        <div class="obs">
+          <strong>Observações:</strong><br/>
+          ${(medidas.observacoes_medidas || 'Nenhuma observação registrada.').replace(/\n/g, '<br/>')}
+        </div>
+        <script>window.onload = function() { window.print(); };</script>
+      </body>
+      </html>
+    `);
+    janela.document.close();
+  };
+
+  // --- EXCLUSÃO DE CONTA (RF06) ---
+  const handleExcluirConta = async () => {
+    const confirmou = window.confirm(
+      'Tem certeza que deseja excluir permanentemente sua conta e todos os seus dados pessoais? Esta ação não pode ser desfeita.'
+    );
+    if (!confirmou) return;
+
+    try {
+      const res = await fetch(`/api/usuarios/${idUsuario}`, { method: 'DELETE' });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        throw new Error(data.erro || 'Não foi possível excluir a conta.');
+      }
+      localStorage.removeItem('usuarioAtelie');
+      alert('Sua conta foi excluída com sucesso.');
+      if (onNavigate) onNavigate('inicio');
+    } catch (err) {
+      alert(err.message);
+    }
+  };
+
   const primeiraLetra = (formData.nome || user?.nome || 'U').trim().charAt(0).toUpperCase();
 
   const handleVoltar = () => {
@@ -178,9 +343,9 @@ function Perfil({ usuario, onNavigate, onUpdateUsuario }) {
   };
 
   return (
-    <div style={{ maxWidth: '750px', margin: '30px auto', background: '#fff', padding: '30px', borderRadius: '12px', boxShadow: '0 4px 16px rgba(62, 36, 69, 0.12)', fontFamily: "'Segoe UI', Tahoma, Geneva, Verdana, sans-serif" }}>
+    <div className="perfil-container" style={{ maxWidth: '750px', margin: '30px auto', background: '#fff', padding: '30px', borderRadius: '12px', boxShadow: '0 4px 16px rgba(62, 36, 69, 0.12)', fontFamily: "'Segoe UI', Tahoma, Geneva, Verdana, sans-serif" }}>
       
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px', borderBottom: '1px solid #f0f0f0', paddingBottom: '12px' }}>
+      <div className="perfil-header-topo" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px', borderBottom: '1px solid #f0f0f0', paddingBottom: '12px' }}>
         <h2 style={{ color: '#3E2445', margin: 0, fontSize: '22px' }}>
           {isCliente ? 'Meu Perfil' : 'Perfil Profissional da Costureira'}
         </h2>
@@ -201,7 +366,7 @@ function Perfil({ usuario, onNavigate, onUpdateUsuario }) {
         <div style={{ background: '#FAF6FA', border: '1px solid #EADCEB', padding: '15px 20px', borderRadius: '8px', marginBottom: '25px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
           <div>
             <h3 style={{ margin: 0, color: '#3E2445', fontSize: '16px' }}>Reputação & Avaliações</h3>
-            <div style={{ marginTop: '4px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <div style={{ marginTop: '4px', display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
               <span style={{ fontSize: '22px', color: '#FFB400', fontWeight: 'bold' }}>
                 {reputacao.media ? Number(reputacao.media).toFixed(1) : '0.0'}
               </span>
@@ -301,6 +466,23 @@ function Perfil({ usuario, onNavigate, onUpdateUsuario }) {
           />
         </div>
 
+        {/* Endereço (Cliente opcional / Costureira obrigatório — protegido por AES-256) */}
+        <div style={{ marginBottom: '15px' }}>
+          <label style={{ display: 'block', fontWeight: 'bold', fontSize: '14px', marginBottom: '5px', color: '#3E2445' }}>
+            {isCliente ? 'Endereço (Opcional)' : 'Endereço de Atendimento / Ateliê *'}
+          </label>
+          <input
+            type="text"
+            name="endereco"
+            value={formData.endereco}
+            onChange={handleChange}
+            disabled={!editando}
+            required={!isCliente}
+            placeholder="Ex: Rua XV de Novembro, 123 - Centro, Ponta Grossa / PR"
+            style={{ width: '100%', padding: '10px', borderRadius: '6px', border: '1px solid #ccc', boxSizing: 'border-box', background: editando ? '#fff' : '#f9f9f9', fontSize: '14px', outline: 'none' }}
+          />
+        </div>
+
         {/* Campos adicionais para Costureira */}
         {!isCliente && (
           <>
@@ -313,22 +495,6 @@ function Perfil({ usuario, onNavigate, onUpdateUsuario }) {
                 onChange={handleChange}
                 disabled={!editando}
                 placeholder="Ex: Vestidos de Festa, Ajustes de Jeans, Barra de Calça"
-                style={{ width: '100%', padding: '10px', borderRadius: '6px', border: '1px solid #ccc', boxSizing: 'border-box', background: editando ? '#fff' : '#f9f9f9', fontSize: '14px', outline: 'none' }}
-              />
-            </div>
-
-            <div style={{ marginBottom: '15px' }}>
-              <label style={{ display: 'block', fontWeight: 'bold', fontSize: '14px', marginBottom: '5px', color: '#3E2445' }}>
-                Endereço de Atendimento / Ateliê *
-              </label>
-              <input
-                type="text"
-                name="endereco"
-                value={formData.endereco}
-                onChange={handleChange}
-                disabled={!editando}
-                required={!isCliente}
-                placeholder="Ex: Rua XV de Novembro, 123 - Centro, Ponta Grossa / PR"
                 style={{ width: '100%', padding: '10px', borderRadius: '6px', border: '1px solid #ccc', boxSizing: 'border-box', background: editando ? '#fff' : '#f9f9f9', fontSize: '14px', outline: 'none' }}
               />
             </div>
@@ -361,9 +527,9 @@ function Perfil({ usuario, onNavigate, onUpdateUsuario }) {
                 }}
               >
                 <strong style={{ display: 'block', color: '#3E2445', marginBottom: '3px' }}>
-                  Privacidade dos seus dados
+                  Privacidade & LGPD
                 </strong>
-                Seus dados de contato e endereço (<strong>com exceção do CPF/CNPJ</strong>, que é confidencial e nunca é compartilhado) só ficarão visíveis para as clientes com quem você firmar pedido.
+                Seu endereço e CPF/CNPJ são criptografados no banco de dados. Seus dados de contato (<strong>exceto CPF/CNPJ</strong>) só ficam visíveis para as clientes com quem você firmar pedido.
               </div>
             )}
           </>
@@ -401,6 +567,114 @@ function Perfil({ usuario, onNavigate, onUpdateUsuario }) {
         </div>
       </form>
 
+      {/* Ficha de Medidas do Cliente com Exportação PDF / TXT (RF07) */}
+      {isCliente && (
+        <div style={{ marginTop: '30px', borderTop: '2px solid #F4EFF5', paddingTop: '20px' }}>
+          <h3 style={{ color: '#3E2445', marginTop: 0, marginBottom: '6px', fontSize: '18px' }}>
+            📏 Minha Ficha de Medidas
+          </h3>
+          <p style={{ marginTop: 0, marginBottom: '14px', fontSize: '13px', color: '#666' }}>
+            Mantenha suas medidas salvas para agilizar orçamentos ou exporte em PDF / TXT.
+          </p>
+
+          {msgMedidas && (
+            <div style={{ background: '#e8f5e9', color: '#2e7d32', padding: '9px 12px', borderRadius: '6px', marginBottom: '12px', fontSize: '13px' }}>
+              {msgMedidas}
+            </div>
+          )}
+
+          <form onSubmit={handleSalvarMedidas}>
+            <div className="medidas-grid-inputs" style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '10px', marginBottom: '12px' }}>
+              <div>
+                <label style={{ display: 'block', fontSize: '12px', fontWeight: 'bold', color: '#3E2445', marginBottom: '4px' }}>Busto (cm)</label>
+                <input
+                  type="text"
+                  placeholder="Ex: 92"
+                  value={medidas.busto}
+                  onChange={(e) => setMedidas({ ...medidas, busto: e.target.value })}
+                  style={{ width: '100%', padding: '9px', borderRadius: '6px', border: '1px solid #ccc', fontSize: '13.5px' }}
+                />
+              </div>
+              <div>
+                <label style={{ display: 'block', fontSize: '12px', fontWeight: 'bold', color: '#3E2445', marginBottom: '4px' }}>Cintura (cm)</label>
+                <input
+                  type="text"
+                  placeholder="Ex: 74"
+                  value={medidas.cintura}
+                  onChange={(e) => setMedidas({ ...medidas, cintura: e.target.value })}
+                  style={{ width: '100%', padding: '9px', borderRadius: '6px', border: '1px solid #ccc', fontSize: '13.5px' }}
+                />
+              </div>
+              <div>
+                <label style={{ display: 'block', fontSize: '12px', fontWeight: 'bold', color: '#3E2445', marginBottom: '4px' }}>Quadril (cm)</label>
+                <input
+                  type="text"
+                  placeholder="Ex: 100"
+                  value={medidas.quadril}
+                  onChange={(e) => setMedidas({ ...medidas, quadril: e.target.value })}
+                  style={{ width: '100%', padding: '9px', borderRadius: '6px', border: '1px solid #ccc', fontSize: '13.5px' }}
+                />
+              </div>
+              <div>
+                <label style={{ display: 'block', fontSize: '12px', fontWeight: 'bold', color: '#3E2445', marginBottom: '4px' }}>Altura (cm)</label>
+                <input
+                  type="text"
+                  placeholder="Ex: 165"
+                  value={medidas.altura}
+                  onChange={(e) => setMedidas({ ...medidas, altura: e.target.value })}
+                  style={{ width: '100%', padding: '9px', borderRadius: '6px', border: '1px solid #ccc', fontSize: '13.5px' }}
+                />
+              </div>
+              <div>
+                <label style={{ display: 'block', fontSize: '12px', fontWeight: 'bold', color: '#3E2445', marginBottom: '4px' }}>Comprimento (cm)</label>
+                <input
+                  type="text"
+                  placeholder="Ex: 98"
+                  value={medidas.comprimento}
+                  onChange={(e) => setMedidas({ ...medidas, comprimento: e.target.value })}
+                  style={{ width: '100%', padding: '9px', borderRadius: '6px', border: '1px solid #ccc', fontSize: '13.5px' }}
+                />
+              </div>
+            </div>
+
+            <div style={{ marginBottom: '12px' }}>
+              <label style={{ display: 'block', fontSize: '12px', fontWeight: 'bold', color: '#3E2445', marginBottom: '4px' }}>Observações / Outras Medidas</label>
+              <textarea
+                rows="2"
+                placeholder="Ex: Ombro a ombro 40cm, preferência por caimento mais solto..."
+                value={medidas.observacoes_medidas}
+                onChange={(e) => setMedidas({ ...medidas, observacoes_medidas: e.target.value })}
+                style={{ width: '100%', padding: '9px', borderRadius: '6px', border: '1px solid #ccc', fontSize: '13.5px' }}
+              />
+            </div>
+
+            <div className="botoes-exportar-medidas" style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+              <button
+                type="submit"
+                disabled={salvandoMedidas}
+                style={{ flex: 1, minWidth: '140px', padding: '10px 14px', background: '#3E2445', color: '#fff', border: 'none', borderRadius: '6px', fontWeight: 'bold', fontSize: '13px', cursor: 'pointer' }}
+              >
+                {salvandoMedidas ? 'Salvando...' : 'Salvar Medidas'}
+              </button>
+              <button
+                type="button"
+                onClick={handleExportarMedidasPDF}
+                style={{ padding: '10px 14px', background: '#FAF6FA', color: '#3E2445', border: '1px solid #3E2445', borderRadius: '6px', fontWeight: 'bold', fontSize: '13px', cursor: 'pointer' }}
+              >
+                📄 Exportar PDF
+              </button>
+              <button
+                type="button"
+                onClick={handleExportarMedidasTXT}
+                style={{ padding: '10px 14px', background: '#FAF6FA', color: '#3E2445', border: '1px solid #3E2445', borderRadius: '6px', fontWeight: 'bold', fontSize: '13px', cursor: 'pointer' }}
+              >
+                📝 Baixar TXT
+              </button>
+            </div>
+          </form>
+        </div>
+      )}
+
       {/* Agenda de Entregas e Provas */}
       <Agenda idUsuario={idUsuario} isCliente={isCliente} />
 
@@ -429,8 +703,8 @@ function Perfil({ usuario, onNavigate, onUpdateUsuario }) {
         </>
       )}
 
-      {/* Botão de Sair no rodapé do Perfil */}
-      <div style={{ marginTop: '35px', borderTop: '2px solid #F4EFF5', paddingTop: '20px' }}>
+      {/* Botões de Sair e Excluir Conta no rodapé do Perfil (RF04 & RF06) */}
+      <div style={{ marginTop: '35px', borderTop: '2px solid #F4EFF5', paddingTop: '20px', display: 'flex', flexDirection: 'column', gap: '10px' }}>
         <button
           type="button"
           onClick={handleLogout}
@@ -447,6 +721,23 @@ function Perfil({ usuario, onNavigate, onUpdateUsuario }) {
           }}
         >
           Sair da Conta
+        </button>
+
+        <button
+          type="button"
+          onClick={handleExcluirConta}
+          style={{
+            width: '100%',
+            padding: '10px',
+            background: 'transparent',
+            color: '#888',
+            border: '1px solid #DDD',
+            borderRadius: '6px',
+            fontSize: '12.5px',
+            cursor: 'pointer'
+          }}
+        >
+          Excluir Minha Conta Permanentemente
         </button>
       </div>
 

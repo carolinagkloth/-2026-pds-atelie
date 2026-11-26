@@ -1,48 +1,68 @@
 const pool = require('../config/database');
 
-let colunaLidaVerificada = false;
+let colunasChatVerificadas = false;
 
-async function garantirColunaLida() {
-  if (colunaLidaVerificada) return;
+async function garantirColunasChat() {
+  if (colunasChatVerificadas) return;
   try {
     await pool.query(`ALTER TABLE mensagens_chat ADD COLUMN IF NOT EXISTS lida BOOLEAN DEFAULT FALSE;`);
-    colunaLidaVerificada = true;
+    await pool.query(`ALTER TABLE mensagens_chat ADD COLUMN IF NOT EXISTS anexo_imagem TEXT;`);
+    colunasChatVerificadas = true;
   } catch (err) {
-    console.error('Erro ao verificar coluna lida:', err);
+    console.error('Erro ao verificar colunas de mensagens_chat:', err);
   }
 }
 
 class MensagemChatModel {
-  static async criar({ id_pedido, id_remetente, conteudo, tipo_mensagem, dados_proposta, valor_proposta, prazo_proposta, valor_entrada }) {
-    await garantirColunaLida();
+  static async criar({
+    id_pedido,
+    id_remetente,
+    conteudo,
+    tipo_mensagem,
+    dados_proposta,
+    valor_proposta,
+    prazo_proposta,
+    valor_entrada,
+    anexo_imagem
+  }) {
+    await garantirColunasChat();
     const query = `
-      INSERT INTO mensagens_chat (id_pedido, id_remetente, conteudo, tipo_mensagem, dados_proposta, valor_proposta, prazo_proposta, valor_entrada, data_hora_envio, lida)
-      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, NOW(), false)
+      INSERT INTO mensagens_chat (
+        id_pedido, id_remetente, conteudo, tipo_mensagem, dados_proposta,
+        valor_proposta, prazo_proposta, valor_entrada, anexo_imagem, data_hora_envio, lida
+      )
+      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, NOW(), false)
       RETURNING *;
     `;
-    const dadosJson = dados_proposta ? (typeof dados_proposta === 'string' ? dados_proposta : JSON.stringify(dados_proposta)) : null;
+    const dadosJson = dados_proposta
+      ? (typeof dados_proposta === 'string' ? dados_proposta : JSON.stringify(dados_proposta))
+      : null;
 
     const result = await pool.query(query, [
-      id_pedido, 
-      id_remetente, 
-      conteudo, 
-      tipo_mensagem || 'texto',
-      dadosJson, 
-      valor_proposta || null, 
-      prazo_proposta || null, 
-      valor_entrada || 0
+      id_pedido,
+      id_remetente,
+      conteudo || (anexo_imagem ? '📷 Foto enviada' : ''),
+      tipo_mensagem || (anexo_imagem ? 'imagem' : 'texto'),
+      dadosJson,
+      valor_proposta || null,
+      prazo_proposta || null,
+      valor_entrada || 0,
+      anexo_imagem || null
     ]);
     return result.rows[0];
   }
 
   static async listarPorPedido(id_pedido) {
-    await garantirColunaLida();
+    await garantirColunasChat();
     const query = `
       SELECT m.id_mensagem AS id, m.id_mensagem, m.id_pedido AS "idPedido", m.id_pedido, 
              m.id_remetente AS "idRemetente", m.id_remetente, u.nome AS "remetente_nome", 
              u.nome AS "nomeRemetente", u.nome AS nome_remetente, u.foto_perfil AS "fotoRemetente",
-             m.conteudo, m.tipo_mensagem, m.dados_proposta, m.valor_proposta AS "valorProposta",
-             m.prazo_proposta AS "prazoProposta", m.valor_entrada AS "valorEntrada", m.data_hora_envio AS "dataHoraEnvio",
+             (u.senha = 'CONTA_EXCLUIDA') AS "remetenteExcluido",
+             m.conteudo, m.tipo_mensagem, m.dados_proposta, m.anexo_imagem,
+             m.valor_proposta AS "valorProposta",
+             m.prazo_proposta AS "prazoProposta", m.valor_entrada AS "valorEntrada",
+             m.data_hora_envio AS "dataHoraEnvio",
              COALESCE(m.lida, false) AS lida
       FROM mensagens_chat m 
       JOIN usuarios u ON m.id_remetente = u.id_usuario
@@ -55,7 +75,7 @@ class MensagemChatModel {
 
   static async marcarComoLidas(id_pedido, id_usuario_leitor) {
     if (!id_pedido || !id_usuario_leitor) return;
-    await garantirColunaLida();
+    await garantirColunasChat();
     await pool.query(
       `UPDATE mensagens_chat
        SET lida = true
@@ -67,11 +87,12 @@ class MensagemChatModel {
   }
 
   static async buscarConversasUsuario(idUsuario) {
-    await garantirColunaLida();
+    await garantirColunasChat();
     const query = `
       SELECT p.id_pedido AS "idPedido", p.id_pedido AS id, p.descricao, 
              COALESCE(os.status_kanban, p.status_pedido) AS status, p.prazo_desejado AS "prazoDesejado",
-             cli.id_usuario AS "clienteId", cli.nome AS "clienteNome", cost.id_usuario AS "costureiraId", cost.nome AS "costureiraNome",
+             cli.id_usuario AS "clienteId", cli.nome AS "clienteNome", (cli.senha = 'CONTA_EXCLUIDA') AS "clienteExcluido",
+             cost.id_usuario AS "costureiraId", cost.nome AS "costureiraNome", (COALESCE(cost.senha, '') = 'CONTA_EXCLUIDA') AS "costureiraExcluida",
              (SELECT conteudo FROM mensagens_chat WHERE id_pedido = p.id_pedido ORDER BY data_hora_envio DESC LIMIT 1) AS "ultimaMensagem",
              (SELECT data_hora_envio FROM mensagens_chat WHERE id_pedido = p.id_pedido ORDER BY data_hora_envio DESC LIMIT 1) AS "dataUltimaAtividade",
              (SELECT COUNT(*)::int FROM mensagens_chat WHERE id_pedido = p.id_pedido AND id_remetente != $1 AND COALESCE(lida, false) = false) AS "naoLidas"

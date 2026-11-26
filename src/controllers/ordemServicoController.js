@@ -564,6 +564,82 @@ class OrdemServicoController {
       client.release();
     }
   }
+
+  static async atualizarPagamento(req, res) {
+    const idOrdem = req.params.idOrdem || req.params.id;
+    const { status_pagamento } = req.body;
+
+    const statusValidos = ['Aguardando Sinal', 'Sinal Pago', 'Pago Integralmente', 'Em Débito'];
+    if (!status_pagamento || !statusValidos.includes(status_pagamento)) {
+      return res.status(400).json({ erro: 'Status de pagamento inválido.' });
+    }
+
+    try {
+      const ordem = await OrdemServicoModel.atualizarPagamento(idOrdem, status_pagamento);
+      if (!ordem) {
+        return res.status(404).json({ erro: 'Ordem de serviço não encontrada.' });
+      }
+      return res.json({ mensagem: 'Status de pagamento atualizado!', status_pagamento, ordem });
+    } catch (err) {
+      console.error('Erro ao atualizar status de pagamento:', err);
+      return res.status(500).json({ erro: 'Erro interno ao atualizar status de pagamento.' });
+    }
+  }
+
+  static async adicionarFotoAndamento(req, res) {
+    const idOrdem = req.params.idOrdem || req.params.id;
+    const { url_imagem, legenda } = req.body;
+
+    if (!url_imagem) {
+      return res.status(400).json({ erro: 'Selecione uma imagem do andamento da peça.' });
+    }
+
+    try {
+      const resultado = await OrdemServicoModel.adicionarFotoAndamento(idOrdem, { url_imagem, legenda });
+      if (!resultado) {
+        return res.status(404).json({ erro: 'Ordem de serviço não encontrada.' });
+      }
+
+      const idCliente = await OrdemServicoModel.buscarClientePorPedido(resultado.ordem.id_pedido);
+      if (idCliente) {
+        await dispararNotificacao({
+          idUsuario: idCliente,
+          titulo: 'Nova Foto do Andamento da Peça 📸',
+          mensagem: `A costureira adicionou uma atualização visual no Pedido #${resultado.ordem.id_pedido}.`,
+          tipo: 'status',
+          idPedido: resultado.ordem.id_pedido,
+          forcarWhatsapp: false
+        });
+      }
+
+      return res.status(201).json({
+        mensagem: 'Foto do andamento adicionada com sucesso!',
+        fotosAndamento: resultado.fotosAndamento
+      });
+    } catch (err) {
+      console.error('Erro ao salvar foto do andamento:', err);
+      return res.status(500).json({ erro: 'Erro interno ao salvar foto do andamento.' });
+    }
+  }
+
+  static async removerFotoAndamento(req, res) {
+    const idOrdem = req.params.idOrdem || req.params.id;
+    const { idFoto } = req.params;
+
+    try {
+      const resultado = await OrdemServicoModel.removerFotoAndamento(idOrdem, idFoto);
+      if (!resultado) {
+        return res.status(404).json({ erro: 'Ordem de serviço não encontrada.' });
+      }
+      return res.json({
+        mensagem: 'Foto removida com sucesso!',
+        fotosAndamento: resultado.fotosAndamento
+      });
+    } catch (err) {
+      console.error('Erro ao remover foto do andamento:', err);
+      return res.status(500).json({ erro: 'Erro interno ao remover foto.' });
+    }
+  }
 }
 
 // Verifica a cada 30 segundos se alguma prova chegou na data/horário agendado

@@ -1,13 +1,26 @@
 const pool = require('../config/database');
+const { criptografar, descriptografar } = require('../services/criptografia');
 
 let colunaDataEntregaVerificada = false;
+let colunasUsuariosVerificadas = false;
+
+async function garantirColunasCriptografiaUsuarios() {
+  if (colunasUsuariosVerificadas) return;
+  try {
+    await pool.query(`ALTER TABLE usuarios ALTER COLUMN cpf_cnpj TYPE TEXT;`);
+    await pool.query(`ALTER TABLE usuarios ALTER COLUMN endereco TYPE TEXT;`);
+    await pool.query(`ALTER TABLE usuarios ALTER COLUMN telefone TYPE TEXT;`);
+    colunasUsuariosVerificadas = true;
+  } catch (err) {
+    console.error('Aviso ao ajustar colunas criptografadas de usuarios:', err.message);
+  }
+}
 
 async function garantirColunaDataEntrega() {
   if (colunaDataEntregaVerificada) return;
   try {
     await pool.query(`ALTER TABLE ordens_servico ADD COLUMN IF NOT EXISTS data_entrega DATE;`);
 
-    // Preenche data_entrega para pedidos já marcados como Entregue que ainda estavam NULL
     await pool.query(`
       UPDATE ordens_servico os
       SET data_entrega = COALESCE(
@@ -32,11 +45,34 @@ async function garantirColunaDataEntrega() {
   }
 }
 
+function decifrarDadosUsuario(usuario) {
+  if (!usuario) return usuario;
+  return {
+    ...usuario,
+    cpf_cnpj: descriptografar(usuario.cpf_cnpj),
+    endereco: descriptografar(usuario.endereco)
+  };
+}
+
 class UsuarioModel {
   static async buscarPorEmail(email) {
-    const query = 'SELECT * FROM usuarios WHERE email = $1';
+    const query = 'SELECT * FROM usuarios WHERE LOWER(email) = LOWER($1)';
     const result = await pool.query(query, [email ? email.trim() : '']);
-    return result.rows[0];
+    return decifrarDadosUsuario(result.rows[0]);
+  }
+
+  static async buscarPorEmailOuTelefone(identificador) {
+    const limpo = (identificador || '').trim();
+    const apenasDigitos = limpo.replace(/\D/g, '');
+
+    const query = `
+      SELECT * FROM usuarios 
+      WHERE LOWER(email) = LOWER($1)
+         OR ($2 <> '' AND regexp_replace(COALESCE(telefone, ''), '\\D', '', 'g') = $2)
+      LIMIT 1;
+    `;
+    const result = await pool.query(query, [limpo, apenasDigitos]);
+    return decifrarDadosUsuario(result.rows[0]);
   }
 
   static async buscarPorId(id_usuario) {
@@ -47,17 +83,27 @@ class UsuarioModel {
       WHERE id_usuario = $1
     `;
     const result = await pool.query(query, [id_usuario]);
-    return result.rows[0];
+    return decifrarDadosUsuario(result.rows[0]);
   }
 
-  static async criarUsuario({ nome, email, senhaHash, telefone, cpf_cnpj, perfil }) {
+  static async criarUsuario({ nome, email, senhaHash, telefone, cpf_cnpj, perfil, endereco }) {
+    await garantirColunasCriptografiaUsuarios();
+
     const query = `
-      INSERT INTO usuarios (nome, email, senha, telefone, cpf_cnpj, tipo_usuario) 
-      VALUES ($1, $2, $3, $4, $5, $6) 
-      RETURNING id_usuario AS id, id_usuario, nome, email, tipo_usuario, telefone
+      INSERT INTO usuarios (nome, email, senha, telefone, cpf_cnpj, tipo_usuario, endereco) 
+      VALUES ($1, $2, $3, $4, $5, $6, $7) 
+      RETURNING id_usuario AS id, id_usuario, nome, email, tipo_usuario, telefone, endereco
     `;
-    const result = await pool.query(query, [nome, email.trim(), senhaHash, telefone.trim(), cpf_cnpj || null, perfil]);
-    const novoUser = result.rows[0];
+    const result = await pool.query(query, [
+      nome,
+      email.trim().toLowerCase(),
+      senhaHash,
+      telefone ? telefone.trim() : null,
+      criptografar(cpf_cnpj),
+      perfil,
+      criptografar(endereco)
+    ]);
+    const novoUser = decifrarDadosUsuario(result.rows[0]);
 
     await pool.query(
       'INSERT INTO configuracoes_notificacoes (id_usuario) VALUES ($1) ON CONFLICT DO NOTHING', 
@@ -75,7 +121,7 @@ class UsuarioModel {
   static async buscarPorTokenRedefinicao(token) {
     const query = 'SELECT * FROM usuarios WHERE token_redefinicao = $1';
     const result = await pool.query(query, [token ? token.trim() : '']);
-    return result.rows[0];
+    return decifrarDadosUsuario(result.rows[0]);
   }
 
   static async atualizarSenha(idUsuario, senhaHash) {
@@ -87,31 +133,32 @@ class UsuarioModel {
     await pool.query(query, [senhaHash, idUsuario]);
   }
 
-  // --- ATUALIZAR PERFIL ---
-  static async atualizarPerfil(idUsuario, { nome, telefone, bio, especialidades, foto_perfil }) {
+  static async atualizarPerfil(idUsuario, { nome, telefone, endereco, bio, especialidades, foto_perfil }) {
+    await garantirColunasCriptografiaUsuarios();
+
     const query = `
       UPDATE usuarios 
-      SET nome = $1, telefone = $2, bio = $3, especialidades = $4, foto_perfil = $5
-      WHERE id_usuario = $6
-      RETURNING id_usuario AS id, id_usuario, nome, email, telefone, bio, especialidades, foto_perfil, tipo_usuario;
+      SET nome = $1, telefone = $2, endereco = $3, bio = $4, especialidades = $5, foto_perfil = $6
+      WHERE id_usuario = $7
+      RETURNING id_usuario AS id, id_usuario, nome, email, telefone, endereco, bio, especialidades, foto_perfil, tipo_usuario;
     `;
     const result = await pool.query(query, [
-      nome, 
-      telefone || null, 
-      bio || null, 
-      especialidades || null, 
-      foto_perfil || null, 
+      nome,
+      telefone || null,
+      criptografar(endereco),
+      bio || null,
+      especialidades || null,
+      foto_perfil || null,
       idUsuario
     ]);
-    return result.rows[0];
+    return decifrarDadosUsuario(result.rows[0]);
   }
 
-  // --- AGENDA UNIFICADA (TODAS AS PROVAS + ENTREGAS PREVISTAS/REAIS) ---
+  // --- AGENDA UNIFICADA ---
   static async buscarAgendaUsuario(idUsuario) {
     await garantirColunaDataEntrega();
     const query = `
       SELECT * FROM (
-        -- 1. Todas as provas agendadas
         SELECT 
           ('prova-' || ap.id_prova) AS id_evento,
           'prova' AS tipo_evento,
@@ -137,7 +184,6 @@ class UsuarioModel {
 
         UNION ALL
 
-        -- 2. Entregas (prioriza data_entrega real quando já entregue)
         SELECT 
           ('entrega-' || os.id_ordem_servico) AS id_evento,
           'entrega' AS tipo_evento,

@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import "../styles/Cadastro.css";
 
-// Ícones Vetoriais SVG para exibir/ocultar senha
 const IconOlhoAberto = () => (
   <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#3E2445" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
     <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
@@ -16,7 +15,6 @@ const IconOlhoFechado = () => (
   </svg>
 );
 
-// Funções utilitárias de máscara
 const aplicarMascaraTelefone = (valor) => {
   const apenasNumeros = valor.replace(/\D/g, '').slice(0, 11);
   if (apenasNumeros.length <= 10) {
@@ -41,13 +39,13 @@ const aplicarMascaraCpfCnpj = (valor) => {
 };
 
 function Cadastro({ onNavigate, onCadastroSucesso, dadosPreenchidos }) {
+  const [tipoUsuario, setTipoUsuario] = useState('Cliente');
   const [nome, setNome] = useState('');
   const [email, setEmail] = useState('');
   const [senha, setSenha] = useState('');
   const [mostrarSenha, setMostrarSenha] = useState(false);
   const [telefone, setTelefone] = useState('');
   const [cpfCnpj, setCpfCnpj] = useState('');
-  const [tipoUsuario, setTipoUsuario] = useState('Cliente');
   const [endereco, setEndereco] = useState('');
   const [erro, setErro] = useState('');
   const [sucesso, setSucesso] = useState('');
@@ -131,13 +129,57 @@ function Cadastro({ onNavigate, onCadastroSucesso, dadosPreenchidos }) {
   };
 
   return (
-    <div style={{ maxWidth: '420px', margin: '40px auto', background: '#fff', padding: '30px', borderRadius: '12px', boxShadow: '0 4px 16px rgba(62, 36, 69, 0.12)', fontFamily: "'Segoe UI', Tahoma, Geneva, Verdana, sans-serif" }}>
+    <div style={{ maxWidth: '440px', margin: '30px auto', background: '#fff', padding: '28px', borderRadius: '12px', boxShadow: '0 4px 16px rgba(62, 36, 69, 0.12)', fontFamily: "'Segoe UI', Tahoma, Geneva, Verdana, sans-serif" }}>
       <h2 style={{ color: '#3E2445', marginTop: 0, textAlign: 'center', fontSize: '22px' }}>Criar Conta</h2>
 
       {erro && <div style={{ background: '#ffebee', color: '#c62828', padding: '10px 14px', borderRadius: '6px', marginBottom: '15px', fontSize: '14px' }}>{erro}</div>}
       {sucesso && <div style={{ background: '#e8f5e9', color: '#2e7d32', padding: '10px 14px', borderRadius: '6px', marginBottom: '15px', fontSize: '14px' }}>{sucesso}</div>}
 
       <form onSubmit={handleSubmit}>
+        {/* 1ª OPÇÃO: Escolha imediata entre Cliente ou Costureira */}
+        <div style={{ marginBottom: '18px' }}>
+          <label style={{ display: 'block', marginBottom: '8px', fontSize: '14px', fontWeight: 'bold', color: '#3E2445' }}>
+            Como você deseja usar a plataforma? *
+          </label>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
+            <button
+              type="button"
+              onClick={() => setTipoUsuario('Cliente')}
+              style={{
+                padding: '12px 10px',
+                borderRadius: '8px',
+                border: !isCostureira ? '2px solid #3E2445' : '1px solid #ccc',
+                background: !isCostureira ? '#FAF6FA' : '#fff',
+                color: '#3E2445',
+                cursor: 'pointer',
+                textAlign: 'center',
+                transition: 'all 0.15s'
+              }}
+            >
+              <div style={{ fontWeight: 'bold', fontSize: '13.5px' }}>Sou Cliente</div>
+              <div style={{ fontSize: '11px', color: '#666', marginTop: '2px' }}>Quero contratar serviços</div>
+            </button>
+
+            <button
+              type="button"
+              onClick={() => setTipoUsuario('Costureira')}
+              style={{
+                padding: '12px 10px',
+                borderRadius: '8px',
+                border: isCostureira ? '2px solid #3E2445' : '1px solid #ccc',
+                background: isCostureira ? '#FAF6FA' : '#fff',
+                color: '#3E2445',
+                cursor: 'pointer',
+                textAlign: 'center',
+                transition: 'all 0.15s'
+              }}
+            >
+              <div style={{ fontWeight: 'bold', fontSize: '13.5px' }}>Sou Costureira</div>
+              <div style={{ fontSize: '11px', color: '#666', marginTop: '2px' }}>Quero oferecer serviços</div>
+            </button>
+          </div>
+        </div>
+
         <div style={{ marginBottom: '15px' }}>
           <label style={{ display: 'block', marginBottom: '5px', fontSize: '14px', fontWeight: 'bold', color: '#3E2445' }}>Nome Completo *</label>
           <input type="text" value={nome} onChange={(e) => setNome(e.target.value)} required style={{ width: '100%', padding: '10px', borderRadius: '6px', border: '1px solid #ccc', boxSizing: 'border-box', fontSize: '14px', outline: 'none' }} />
@@ -187,7 +229,9 @@ function Cadastro({ onNavigate, onCadastroSucesso, dadosPreenchidos }) {
           </div>
 
           <div>
-            <label style={{ display: 'block', marginBottom: '5px', fontSize: '14px', fontWeight: 'bold', color: '#3E2445' }}>CPF / CNPJ</label>
+            <label style={{ display: 'block', marginBottom: '5px', fontSize: '14px', fontWeight: 'bold', color: '#3E2445' }}>
+              {isCostureira ? 'CPF / CNPJ' : 'CPF (Opcional)'}
+            </label>
             <input
               type="text"
               value={cpfCnpj}
@@ -196,14 +240,6 @@ function Cadastro({ onNavigate, onCadastroSucesso, dadosPreenchidos }) {
               style={{ width: '100%', padding: '10px', borderRadius: '6px', border: '1px solid #ccc', boxSizing: 'border-box', fontSize: '14px', outline: 'none' }}
             />
           </div>
-        </div>
-
-        <div style={{ marginBottom: isCostureira ? '15px' : '20px' }}>
-          <label style={{ display: 'block', marginBottom: '5px', fontSize: '14px', fontWeight: 'bold', color: '#3E2445' }}>Tipo de Perfil *</label>
-          <select value={tipoUsuario} onChange={(e) => setTipoUsuario(e.target.value)} style={{ width: '100%', padding: '10px', borderRadius: '6px', border: '1px solid #ccc', fontSize: '14px', outline: 'none' }}>
-            <option value="Cliente">Cliente (Quero contratar serviços)</option>
-            <option value="Costureira">Costureira (Quero oferecer serviços)</option>
-          </select>
         </div>
 
         {isCostureira && (
@@ -238,12 +274,12 @@ function Cadastro({ onNavigate, onCadastroSucesso, dadosPreenchidos }) {
               <strong style={{ display: 'block', color: '#3E2445', marginBottom: '3px' }}>
                 Privacidade dos seus dados
               </strong>
-              Seus dados de contato e endereço (<strong>com exceção do CPF/CNPJ</strong>, que é confidencial e nunca é compartilhado) só ficarão visíveis para as clientes com quem você firmar pedido.
+              Seus dados de contato e endereço são criptografados e só ficarão visíveis para as clientes com quem você firmar pedido.
             </div>
           </>
         )}
 
-        <button type="submit" disabled={carregando} style={{ width: '100%', padding: '12px', background: '#3E2445', color: '#fff', border: 'none', borderRadius: '6px', fontWeight: 'bold', fontSize: '14px', cursor: carregando ? 'not-allowed' : 'pointer' }}>
+        <button type="submit" disabled={carregando} style={{ width: '100%', padding: '12px', background: '#3E2445', color: '#fff', border: 'none', borderRadius: '6px', fontWeight: 'bold', fontSize: '14px', cursor: carregando ? 'not-allowed' : 'pointer', marginTop: isCostureira ? '0' : '6px' }}>
           {carregando ? 'Cadastrando...' : 'Cadastrar'}
         </button>
       </form>

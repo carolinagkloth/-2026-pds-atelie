@@ -13,6 +13,7 @@ router.post('/redefinir-senha', UsuarioController.redefinirSenha);
 // Perfil & Medidas
 router.get('/usuarios/:id', UsuarioController.obterPerfil);
 router.put('/usuarios/:id', UsuarioController.atualizarPerfil);
+router.delete('/usuarios/:id', UsuarioController.excluirConta);
 router.get('/usuarios/:id/agenda', UsuarioController.obterAgenda);
 
 router.get('/usuarios/:id/medidas', UsuarioController.obterMedidas);

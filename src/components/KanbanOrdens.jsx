@@ -1,4 +1,5 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
+import { comprimirImagem } from '../../services/comprimirImagem';
 
 const COLUNAS_KANBAN = [
   { id: 'A Fazer', titulo: '📌 A Fazer', cor: '#757575' },
@@ -7,10 +8,30 @@ const COLUNAS_KANBAN = [
   { id: 'Concluído', titulo: '✅ Concluído', cor: '#66BB6A' }
 ];
 
+const OPCOES_PAGAMENTO = [
+  'Aguardando Sinal',
+  'Sinal Pago',
+  'Pago Integralmente',
+  'Em Débito'
+];
+
+const estiloBadgePagamento = (status) => {
+  if (status === 'Pago Integralmente') return { background: '#E8F5E9', color: '#2E7D32', border: '1px solid #A5D6A7' };
+  if (status === 'Sinal Pago') return { background: '#E3F2FD', color: '#1565C0', border: '1px solid #90CAF9' };
+  if (status === 'Em Débito') return { background: '#FFEBEE', color: '#C62828', border: '1px solid #EF9A9A' };
+  return { background: '#FFF8E1', color: '#EF6C00', border: '1px solid #FFE082' };
+};
+
 function KanbanOrdens({ idCostureira, onNavigate }) {
   const [ordens, setOrdens] = useState([]);
   const [carregando, setCarregando] = useState(true);
   const [erro, setErro] = useState('');
+
+  const [ordemFotosModal, setOrdemFotosModal] = useState(null);
+  const [legendaFoto, setLegendaFoto] = useState('');
+  const [enviandoFoto, setEnviandoFoto] = useState(false);
+  const [fotoZoom, setFotoZoom] = useState(null);
+  const inputFotoOSRef = useRef(null);
 
   const carregarOrdens = async () => {
     setCarregando(true);
@@ -18,7 +39,13 @@ function KanbanOrdens({ idCostureira, onNavigate }) {
       const response = await fetch(`/api/ordens-servico/usuario/${idCostureira}`);
       const data = await response.json();
       if (!response.ok) throw new Error(data.erro || 'Erro ao carregar ordens de serviço.');
-      setOrdens(Array.isArray(data) ? data : []);
+      const lista = Array.isArray(data) ? data : [];
+      setOrdens(lista);
+
+      if (ordemFotosModal) {
+        const atualizada = lista.find((o) => o.id === ordemFotosModal.id);
+        if (atualizada) setOrdemFotosModal(atualizada);
+      }
     } catch (err) {
       setErro(err.message);
     } finally {
@@ -41,7 +68,6 @@ function KanbanOrdens({ idCostureira, onNavigate }) {
       const data = await response.json();
       if (!response.ok) throw new Error(data.erro || 'Erro ao mudar status.');
 
-      // Atualiza o estado localmente sem precisar recarregar toda a lista
       setOrdens((prev) =>
         prev.map((ordem) =>
           ordem.id === idOrdem ? { ...ordem, statusKanban: novoStatus } : ordem
@@ -52,9 +78,80 @@ function KanbanOrdens({ idCostureira, onNavigate }) {
     }
   };
 
+  const handleAlterarPagamento = async (idOrdem, novoPagamento) => {
+    try {
+      const response = await fetch(`/api/ordens-servico/${idOrdem}/pagamento`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ status_pagamento: novoPagamento })
+      });
+      const data = await response.json();
+      if (!response.ok) throw new Error(data.erro || 'Erro ao atualizar pagamento.');
+
+      setOrdens((prev) =>
+        prev.map((ordem) =>
+          ordem.id === idOrdem
+            ? { ...ordem, statusPagamento: novoPagamento, status_pagamento: novoPagamento }
+            : ordem
+        )
+      );
+    } catch (err) {
+      alert(`Erro: ${err.message}`);
+    }
+  };
+
+  const handleUploadFotoOS = async (e) => {
+    const arquivo = e.target.files?.[0];
+    if (!arquivo || !ordemFotosModal) return;
+
+    setEnviandoFoto(true);
+    try {
+      const base64Comprimido = await comprimirImagem(arquivo, { maxLargura: 1080, qualidade: 0.75 });
+      const response = await fetch(`/api/ordens-servico/${ordemFotosModal.id}/fotos`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          url_imagem: base64Comprimido,
+          legenda: legendaFoto
+        })
+      });
+      const data = await response.json();
+      if (!response.ok) throw new Error(data.erro || 'Erro ao enviar foto.');
+
+      setLegendaFoto('');
+      setOrdens((prev) =>
+        prev.map((o) => (o.id === ordemFotosModal.id ? { ...o, fotosAndamento: data.fotosAndamento } : o))
+      );
+      setOrdemFotosModal((prev) => (prev ? { ...prev, fotosAndamento: data.fotosAndamento } : null));
+    } catch (err) {
+      alert(err.message);
+    } finally {
+      setEnviandoFoto(false);
+      e.target.value = '';
+    }
+  };
+
+  const handleRemoverFotoOS = async (idFoto) => {
+    if (!ordemFotosModal || !window.confirm('Remover esta foto do andamento da OS?')) return;
+    try {
+      const response = await fetch(`/api/ordens-servico/${ordemFotosModal.id}/fotos/${idFoto}`, {
+        method: 'DELETE'
+      });
+      const data = await response.json();
+      if (!response.ok) throw new Error(data.erro || 'Erro ao remover foto.');
+
+      setOrdens((prev) =>
+        prev.map((o) => (o.id === ordemFotosModal.id ? { ...o, fotosAndamento: data.fotosAndamento } : o))
+      );
+      setOrdemFotosModal((prev) => (prev ? { ...prev, fotosAndamento: data.fotosAndamento } : null));
+    } catch (err) {
+      alert(err.message);
+    }
+  };
+
   return (
-    <div style={{ maxWidth: '1100px', margin: '30px auto', padding: '20px', fontFamily: "'Segoe UI', Tahoma, Geneva, Verdana, sans-serif" }}>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
+    <div style={{ maxWidth: '1150px', margin: '30px auto', padding: '20px', fontFamily: "'Segoe UI', Tahoma, Geneva, Verdana, sans-serif" }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px', flexWrap: 'wrap', gap: '10px' }}>
         <h2 style={{ color: '#3E2445', margin: 0 }}>Quadro Kanban - Ordens de Serviço</h2>
         {onNavigate && (
           <button
@@ -70,7 +167,7 @@ function KanbanOrdens({ idCostureira, onNavigate }) {
       {erro && <div style={{ background: '#ffebee', color: '#c62828', padding: '10px', borderRadius: '6px' }}>{erro}</div>}
 
       {!carregando && (
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: '15px' }}>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))', gap: '15px' }}>
           {COLUNAS_KANBAN.map((coluna) => {
             const ordensDaColuna = ordens.filter(
               (o) => (o.statusKanban || 'A Fazer') === coluna.id
@@ -95,60 +192,223 @@ function KanbanOrdens({ idCostureira, onNavigate }) {
                   </span>
                 </div>
 
-                {ordensDaColuna.map((item) => (
-                  <div
-                    key={item.id}
-                    style={{
-                      background: '#FFFFFF',
-                      borderRadius: '8px',
-                      padding: '12px',
-                      marginBottom: '12px',
-                      border: '1px solid #E8D5C4',
-                      boxShadow: '0 2px 4px rgba(0,0,0,0.03)'
-                    }}
-                  >
-                    <strong style={{ display: 'block', color: '#3E2445', fontSize: '14px', marginBottom: '4px' }}>
-                      Cliente: {item.clienteNome}
-                    </strong>
-                    <p style={{ margin: '0 0 8px 0', fontSize: '13px', color: '#555', lineHeight: '1.4' }}>
-                      {item.pedidoDescricao}
-                    </p>
-                    <div style={{ fontSize: '12px', color: '#888', marginBottom: '8px' }}>
-                      <strong>Valor:</strong> R$ {Number(item.valorTotal).toFixed(2)}<br />
-                      <strong>Entrega:</strong> {item.previsaoEntrega ? new Date(item.previsaoEntrega).toLocaleDateString('pt-BR') : 'Não informada'}
+                {ordensDaColuna.map((item) => {
+                  const statusPag = item.statusPagamento || item.status_pagamento || 'Aguardando Sinal';
+                  const fotos = Array.isArray(item.fotosAndamento) ? item.fotosAndamento : [];
+                  const badgePag = estiloBadgePagamento(statusPag);
+
+                  return (
+                    <div
+                      key={item.id}
+                      style={{
+                        background: '#FFFFFF',
+                        borderRadius: '8px',
+                        padding: '12px',
+                        marginBottom: '12px',
+                        border: '1px solid #E8D5C4',
+                        boxShadow: '0 2px 4px rgba(0,0,0,0.03)'
+                      }}
+                    >
+                      <strong style={{ display: 'block', color: '#3E2445', fontSize: '14px', marginBottom: '4px' }}>
+                        Cliente: {item.clienteNome}
+                      </strong>
+                      <p style={{ margin: '0 0 8px 0', fontSize: '13px', color: '#555', lineHeight: '1.4' }}>
+                        {item.pedidoDescricao}
+                      </p>
+
+                      <div style={{ fontSize: '12px', color: '#666', marginBottom: '8px', lineHeight: '1.5' }}>
+                        <strong>Valor Total:</strong> R$ {Number(item.valorTotal || 0).toFixed(2)}
+                        {Number(item.valorEntrada || 0) > 0 && (
+                          <span> (Sinal: R$ {Number(item.valorEntrada).toFixed(2)})</span>
+                        )}
+                        <br />
+                        <strong>Entrega:</strong> {item.previsaoEntrega ? new Date(item.previsaoEntrega).toLocaleDateString('pt-BR') : 'Não informada'}
+                      </div>
+
+                      {/* Controle de Pagamento (RF10) */}
+                      <div style={{ marginBottom: '10px', padding: '8px', background: '#FAF7FA', borderRadius: '6px', border: '1px solid #EADCEB' }}>
+                        <label style={{ display: 'block', fontSize: '11px', fontWeight: 'bold', color: '#3E2445', marginBottom: '4px' }}>
+                          Status do Pagamento:
+                        </label>
+                        <select
+                          value={statusPag}
+                          onChange={(e) => handleAlterarPagamento(item.id, e.target.value)}
+                          style={{
+                            width: '100%',
+                            padding: '5px 8px',
+                            borderRadius: '5px',
+                            fontSize: '12px',
+                            fontWeight: 'bold',
+                            cursor: 'pointer',
+                            ...badgePag
+                          }}
+                        >
+                          {OPCOES_PAGAMENTO.map((op) => (
+                            <option key={op} value={op}>{op}</option>
+                          ))}
+                        </select>
+                      </div>
+
+                      {/* Fotos do Andamento da Peça (RF21) */}
+                      <div style={{ marginBottom: '10px' }}>
+                        <button
+                          type="button"
+                          onClick={() => setOrdemFotosModal(item)}
+                          style={{
+                            width: '100%',
+                            padding: '6px 10px',
+                            background: '#F4EFF5',
+                            color: '#3E2445',
+                            border: '1px solid #D8C7DA',
+                            borderRadius: '6px',
+                            fontSize: '12px',
+                            fontWeight: 'bold',
+                            cursor: 'pointer'
+                          }}
+                        >
+                          📸 Fotos do Andamento ({fotos.length})
+                        </button>
+                      </div>
+
+                      {/* Botões para transição de status */}
+                      <div style={{ display: 'flex', flexWrap: 'wrap', gap: '5px', borderTop: '1px solid #f0f0f0', paddingTop: '8px' }}>
+                        {coluna.id !== 'A Fazer' && (
+                          <button
+                            onClick={() => {
+                              const prevIndex = COLUNAS_KANBAN.findIndex((c) => c.id === coluna.id) - 1;
+                              handleMoverStatus(item.id, COLUNAS_KANBAN[prevIndex].id);
+                            }}
+                            style={{ padding: '4px 8px', fontSize: '11px', background: '#eee', border: 'none', borderRadius: '4px', cursor: 'pointer' }}
+                          >
+                            ← Voltar
+                          </button>
+                        )}
+
+                        {coluna.id !== 'Concluído' && (
+                          <button
+                            onClick={() => {
+                              const nextIndex = COLUNAS_KANBAN.findIndex((c) => c.id === coluna.id) + 1;
+                              handleMoverStatus(item.id, COLUNAS_KANBAN[nextIndex].id);
+                            }}
+                            style={{ padding: '4px 8px', fontSize: '11px', background: '#3E2445', color: '#fff', border: 'none', borderRadius: '4px', cursor: 'pointer', marginLeft: 'auto' }}
+                          >
+                            Avançar →
+                          </button>
+                        )}
+                      </div>
                     </div>
+                  );
+                })}
+              </div>
+            );
+          })}
+        </div>
+      )}
 
-                    {/* Botões para transição de status */}
-                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: '5px', borderTop: '1px solid #f0f0f0', paddingTop: '8px' }}>
-                      {coluna.id !== 'A Fazer' && (
-                        <button
-                          onClick={() => {
-                            const prevIndex = COLUNAS_KANBAN.findIndex((c) => c.id === coluna.id) - 1;
-                            handleMoverStatus(item.id, COLUNAS_KANBAN[prevIndex].id);
-                          }}
-                          style={{ padding: '4px 8px', fontSize: '11px', background: '#eee', border: 'none', borderRadius: '4px', cursor: 'pointer' }}
-                        >
-                          ← Voltar
-                        </button>
-                      )}
+      {/* Modal de Fotos do Andamento da OS (RF21) */}
+      {ordemFotosModal && (
+        <div
+          onClick={() => setOrdemFotosModal(null)}
+          style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.65)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1500, padding: '16px' }}
+        >
+          <div
+            onClick={(e) => e.stopPropagation()}
+            style={{ background: '#fff', borderRadius: '12px', maxWidth: '560px', width: '100%', maxHeight: '90vh', overflowY: 'auto', padding: '22px', boxShadow: '0 8px 30px rgba(0,0,0,0.3)' }}
+          >
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' }}>
+              <h3 style={{ margin: 0, color: '#3E2445', fontSize: '18px' }}>
+                Andamento da Peça — Pedido #{ordemFotosModal.idPedido}
+              </h3>
+              <button
+                onClick={() => setOrdemFotosModal(null)}
+                style={{ background: 'none', border: 'none', fontSize: '20px', cursor: 'pointer', color: '#666' }}
+              >
+                ✕
+              </button>
+            </div>
 
-                      {coluna.id !== 'Concluído' && (
-                        <button
-                          onClick={() => {
-                            const nextIndex = COLUNAS_KANBAN.findIndex((c) => c.id === coluna.id) + 1;
-                            handleMoverStatus(item.id, COLUNAS_KANBAN[nextIndex].id);
-                          }}
-                          style={{ padding: '4px 8px', fontSize: '11px', background: '#3E2445', color: '#fff', border: 'none', borderRadius: '4px', cursor: 'pointer', marginLeft: 'auto' }}
-                        >
-                          Avançar →
-                        </button>
-                      )}
+            <p style={{ fontSize: '13px', color: '#666', marginTop: 0, marginBottom: '15px' }}>
+              Cliente: <strong>{ordemFotosModal.clienteNome}</strong> • {ordemFotosModal.pedidoDescricao}
+            </p>
+
+            {/* Formulário de envio de nova foto */}
+            <div style={{ background: '#FAF7FA', padding: '12px', borderRadius: '8px', border: '1px solid #EADCEB', marginBottom: '16px' }}>
+              <input
+                type="text"
+                placeholder="Legenda opcional (ex.: Corte do tecido, Prova de ajuste...)"
+                value={legendaFoto}
+                onChange={(e) => setLegendaFoto(e.target.value)}
+                style={{ width: '100%', padding: '8px 10px', borderRadius: '6px', border: '1px solid #ccc', marginBottom: '8px', boxSizing: 'border-box', fontSize: '13px' }}
+              />
+              <input
+                ref={inputFotoOSRef}
+                type="file"
+                accept="image/*"
+                onChange={handleUploadFotoOS}
+                style={{ display: 'none' }}
+              />
+              <button
+                type="button"
+                disabled={enviandoFoto}
+                onClick={() => inputFotoOSRef.current?.click()}
+                style={{
+                  width: '100%',
+                  padding: '10px',
+                  background: '#3E2445',
+                  color: '#fff',
+                  border: 'none',
+                  borderRadius: '6px',
+                  fontWeight: 'bold',
+                  fontSize: '13px',
+                  cursor: 'pointer'
+                }}
+              >
+                {enviandoFoto ? 'Comprimindo e enviando...' : '📷 Tirar Foto ou Anexar Imagem do Andamento'}
+              </button>
+            </div>
+
+            {/* Galeria de fotos já enviadas */}
+            {(!ordemFotosModal.fotosAndamento || ordemFotosModal.fotosAndamento.length === 0) ? (
+              <p style={{ textAlign: 'center', color: '#888', fontSize: '13px', padding: '20px 0' }}>
+                Nenhuma foto do andamento registrada nesta Ordem de Serviço ainda.
+              </p>
+            ) : (
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(150px, 1fr))', gap: '12px' }}>
+                {ordemFotosModal.fotosAndamento.map((foto) => (
+                  <div key={foto.id} style={{ border: '1px solid #E0D0E0', borderRadius: '8px', overflow: 'hidden', background: '#fff' }}>
+                    <img
+                      src={foto.url}
+                      alt={foto.legenda || 'Andamento da peça'}
+                      onClick={() => setFotoZoom(foto.url)}
+                      style={{ width: '100%', height: '130px', objectFit: 'cover', cursor: 'zoom-in', display: 'block' }}
+                    />
+                    <div style={{ padding: '8px', fontSize: '11.5px', color: '#444' }}>
+                      {foto.legenda && <div style={{ fontWeight: 'bold', marginBottom: '3px' }}>{foto.legenda}</div>}
+                      <div style={{ color: '#888', fontSize: '10.5px', marginBottom: '6px' }}>
+                        {foto.data ? new Date(foto.data).toLocaleDateString('pt-BR') : ''}
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => handleRemoverFotoOS(foto.id)}
+                        style={{ width: '100%', padding: '4px', background: '#FFEBEE', color: '#C62828', border: '1px solid #EF9A9A', borderRadius: '4px', fontSize: '11px', cursor: 'pointer' }}
+                      >
+                        Excluir
+                      </button>
                     </div>
                   </div>
                 ))}
               </div>
-            );
-          })}
+            )}
+          </div>
+        </div>
+      )}
+
+      {fotoZoom && (
+        <div
+          onClick={() => setFotoZoom(null)}
+          style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.85)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 2000, padding: '20px', cursor: 'zoom-out' }}
+        >
+          <img src={fotoZoom} alt="Foto ampliada" style={{ maxWidth: '92%', maxHeight: '90vh', borderRadius: '10px' }} />
         </div>
       )}
     </div>
