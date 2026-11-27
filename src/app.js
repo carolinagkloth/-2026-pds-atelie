@@ -1,6 +1,7 @@
 const express = require('express');
 const cors = require('cors');
 const path = require('path');
+const QRCode = require('qrcode');
 require('dotenv').config();
 
 const app = express();
@@ -34,7 +35,7 @@ const notificacaoRoutes = require('./routes/notificacaoRoutes');
 // Importação do Middleware Global de Erro
 const errorMiddleware = require('./middlewares/errorMiddleware');
 
-require('./config/whatsapp');
+const whatsappClient = require('./config/whatsapp');
 const { iniciarCronJobs } = require('./jobs/lembretesJob');
 iniciarCronJobs();
 
@@ -69,21 +70,6 @@ app.use('/api/notificacao', notificacaoRoutes);
 // Tratamento global de erros das rotas da API
 app.use(errorMiddleware);
 
-// Garante resposta JSON 404 para qualquer rota /api inexistente
-app.use('/api', (req, res) => {
-  res.status(404).json({ error: `Rota da API não encontrada: ${req.method} ${req.originalUrl}` });
-});
-
-// Servir o Front-end React (build do Vite) em produção
-const distPath = path.join(__dirname, '..', 'dist');
-app.use(express.static(distPath));
-app.get(/^(?!\/api).*/, (req, res) => {
-  res.sendFile(path.join(distPath, 'index.html'));
-});
-
-const QRCode = require('qrcode');
-const whatsappClient = require('./config/whatsapp');
-
 app.get('/qr-whatsapp', async (req, res) => {
   if (!whatsappClient.ultimoQr) {
     return res.send('<h2>WhatsApp já está conectado ou o QR Code ainda está carregando. Atualize a página em 5 segundos.</h2>');
@@ -96,6 +82,18 @@ app.get('/qr-whatsapp', async (req, res) => {
       <p>Se expirar, atualize esta página (F5).</p>
     </div>
   `);
+});
+
+// Garante resposta JSON 404 para qualquer rota /api inexistente
+app.use('/api', (req, res) => {
+  res.status(404).json({ error: `Rota da API não encontrada: ${req.method} ${req.originalUrl}` });
+});
+
+// Servir o Front-end React (build do Vite) em produção
+const distPath = path.join(__dirname, '..', 'dist');
+app.use(express.static(distPath));
+app.get(/^(?!\/api).*/, (req, res) => {
+  res.sendFile(path.join(distPath, 'index.html'));
 });
 
 const PORT = process.env.PORT || 3000;
