@@ -40,6 +40,8 @@ app.use('/api/ordens', ordemServicoRoutes);
 app.use('/api/portfolio', portfolioRoutes);
 app.use('/api/portfolios', portfolioRoutes);
 
+app.use('/api/mensagens-chat', mensagemChatRoutes);
+app.use('/api/mensagem-chat', mensagemChatRoutes);
 app.use('/api/mensagens', mensagemChatRoutes);
 app.use('/api/mensagem', mensagemChatRoutes);
 app.use('/api/chat', mensagemChatRoutes);
