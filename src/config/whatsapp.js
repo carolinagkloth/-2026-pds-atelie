@@ -18,14 +18,15 @@ const whatsappClient = new Client({
   }
 });
 
+whatsappClient.ultimoQr = null;
+
 whatsappClient.on('qr', (qr) => {
-  console.log('\n==================================================');
-  console.log('📲 ESCANEE O QR CODE ABAIXO PARA CONECTAR O WHATSAPP:');
-  console.log('==================================================\n');
-  qrcode.generate(qr, { small: true });
+  whatsappClient.ultimoQr = qr;
+  console.log('📲 Novo QR Code gerado! Acesse /qr-whatsapp no navegador para escanear.');
 });
 
 whatsappClient.on('ready', () => {
+  whatsappClient.ultimoQr = null;
   console.log('✅ WhatsApp do Ateliê conectado com sucesso e pronto para envio!');
 });
 

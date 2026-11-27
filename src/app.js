@@ -81,5 +81,22 @@ app.get(/^(?!\/api).*/, (req, res) => {
   res.sendFile(path.join(distPath, 'index.html'));
 });
 
+const QRCode = require('qrcode');
+const whatsappClient = require('./config/whatsapp');
+
+app.get('/qr-whatsapp', async (req, res) => {
+  if (!whatsappClient.ultimoQr) {
+    return res.send('<h2>WhatsApp já está conectado ou o QR Code ainda está carregando. Atualize a página em 5 segundos.</h2>');
+  }
+  const qrImagem = await QRCode.toDataURL(whatsappClient.ultimoQr);
+  res.send(`
+    <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;height:100vh;font-family:sans-serif;">
+      <h2>Escaneie com o WhatsApp do Ateliê</h2>
+      <img src="${qrImagem}" style="width:300px;height:300px;" />
+      <p>Se expirar, atualize esta página (F5).</p>
+    </div>
+  `);
+});
+
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => console.log(`Servidor rodando na porta ${PORT}`));
