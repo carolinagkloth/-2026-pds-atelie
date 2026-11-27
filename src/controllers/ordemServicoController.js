@@ -127,24 +127,67 @@ class OrdemServicoController {
     try {
       await client.query('BEGIN');
 
-      if (!previsao_entrega) {
-        const msgQuery = id_mensagem
-          ? `SELECT prazo_proposta, dados_proposta FROM mensagens_chat WHERE id_mensagem = $1`
-          : `SELECT prazo_proposta, dados_proposta FROM mensagens_chat WHERE id_pedido = $1 AND tipo_mensagem = 'proposta' ORDER BY id_mensagem DESC LIMIT 1`;
-        const msgRes = await client.query(msgQuery, [id_mensagem || id_pedido]);
-        const row = msgRes.rows[0];
-        if (row) {
-          const dados = typeof row.dados_proposta === 'string' ? JSON.parse(row.dados_proposta) : (row.dados_proposta || {});
+      // Localiza exatamente a proposta sendo aceita (pelo id_mensagem ou a mais recente pendente)
+      const msgQuery = id_mensagem
+        ? `SELECT id_mensagem, valor_proposta, valor_entrada, prazo_proposta, dados_proposta FROM mensagens_chat WHERE id_mensagem = $1`
+        : `SELECT id_mensagem, valor_proposta, valor_entrada, prazo_proposta, dados_proposta
+           FROM mensagens_chat
+           WHERE id_pedido = $1
+             AND tipo_mensagem = 'proposta'
+             AND LOWER(COALESCE(dados_proposta::jsonb->>'status', 'pendente')) = 'pendente'
+           ORDER BY id_mensagem DESC
+           LIMIT 1`;
+      const msgRes = await client.query(msgQuery, [id_mensagem || id_pedido]);
+      const row = msgRes.rows[0];
+
+      const idMensagemAceita = id_mensagem || row?.id_mensagem || null;
+      let valorTotalFinal = valor_total;
+      let valorEntradaFinal = valor_entrada;
+
+      if (row) {
+        const dados = typeof row.dados_proposta === 'string' ? JSON.parse(row.dados_proposta) : (row.dados_proposta || {});
+        if (LOWER_STATUS(dados.status) === 'recusada') {
+          await client.query('ROLLBACK');
+          return res.status(400).json({ erro: 'Esta proposta já foi recusada e não pode ser aceita.' });
+        }
+        if (!previsao_entrega) {
           previsao_entrega = row.prazo_proposta || dados.previsaoEntrega || dados.previsao_entrega || dados.prazo || null;
+        }
+        if (valorTotalFinal === undefined || valorTotalFinal === null) {
+          valorTotalFinal = row.valor_proposta ?? dados.valorTotal ?? dados.valor_total ?? 0;
+        }
+        if (valorEntradaFinal === undefined || valorEntradaFinal === null) {
+          valorEntradaFinal = row.valor_entrada ?? dados.valorEntrada ?? dados.valor_entrada ?? 0;
         }
       }
 
+      // 1. Marca APENAS a proposta escolhida como 'aceita' e recusa automaticamente quaisquer outras pendentes do pedido
+      if (idMensagemAceita) {
+        await client.query(
+          `UPDATE mensagens_chat
+           SET dados_proposta = jsonb_set(COALESCE(dados_proposta::jsonb, '{}'::jsonb), '{status}', '"aceita"')
+           WHERE id_mensagem = $1;`,
+          [idMensagemAceita]
+        );
+
+        await client.query(
+          `UPDATE mensagens_chat
+           SET dados_proposta = jsonb_set(COALESCE(dados_proposta::jsonb, '{}'::jsonb), '{status}', '"recusada"')
+           WHERE id_pedido = $1
+             AND tipo_mensagem = 'proposta'
+             AND id_mensagem <> $2
+             AND LOWER(COALESCE(dados_proposta::jsonb->>'status', 'pendente')) = 'pendente';`,
+          [id_pedido, idMensagemAceita]
+        );
+      }
+
+      // 2. Cria/atualiza a Ordem de Serviço com o valor exato da proposta aceita
       const ordemServico = await OrdemServicoModel.aceitarProposta(client, {
         id_pedido,
         id_costureira,
-        valor_total,
+        valor_total: valorTotalFinal,
         previsao_entrega,
-        valor_entrada
+        valor_entrada: valorEntradaFinal
       });
 
       await client.query('COMMIT');
@@ -753,6 +796,10 @@ class OrdemServicoController {
       return res.status(500).json({ erro: 'Erro interno ao remover foto.' });
     }
   }
+}
+
+function LOWER_STATUS(val) {
+  return String(val || '').trim().toLowerCase();
 }
 
 // Verifica a cada 30 segundos se alguma prova chegou na data/horário agendado

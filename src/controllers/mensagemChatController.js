@@ -1,3 +1,4 @@
+const pool = require('../config/database');
 const MensagemChatModel = require('../models/mensagemChatModel');
 const PedidoModel = require('../models/pedidoModel');
 const notificacaoModel = require('../models/notificacaoModel');
@@ -27,14 +28,53 @@ class MensagemChatController {
         return res.status(400).json({ error: 'Informe uma mensagem ou anexe uma foto.' });
       }
 
+      // Regra de negócio: só permite enviar um novo orçamento se o anterior foi recusado
+      if (tipo_mensagem === 'proposta') {
+        const propostaAtivaRes = await pool.query(
+          `SELECT id_mensagem,
+                  LOWER(COALESCE(dados_proposta::jsonb->>'status', 'pendente')) AS status_proposta
+           FROM mensagens_chat
+           WHERE id_pedido = $1
+             AND id_remetente = $2
+             AND tipo_mensagem = 'proposta'
+             AND LOWER(COALESCE(dados_proposta::jsonb->>'status', 'pendente')) NOT IN ('recusada', 'cancelada')
+           ORDER BY id_mensagem DESC
+           LIMIT 1;`,
+          [id_pedido, id_remetente]
+        );
+
+        if (propostaAtivaRes.rows.length > 0) {
+          const statusAtual = propostaAtivaRes.rows[0].status_proposta;
+          const msgErro =
+            statusAtual === 'aceita'
+              ? 'Já existe um orçamento aceito para este pedido.'
+              : 'Você já possui um orçamento aguardando resposta do cliente. Só é possível enviar um novo orçamento se o anterior for recusado.';
+
+          return res.status(400).json({ error: msgErro, erro: msgErro });
+        }
+      }
+
       const textoFinal = (conteudo || '').trim() || '📷 Foto enviada';
+
+      // Garante que toda nova proposta nasça explicitamente com status 'pendente'
+      let dadosPropostaTratados = dados_proposta;
+      if (tipo_mensagem === 'proposta') {
+        const objDados =
+          typeof dados_proposta === 'string'
+            ? JSON.parse(dados_proposta || '{}')
+            : (dados_proposta ? { ...dados_proposta } : {});
+        if (!objDados.status) {
+          objDados.status = 'pendente';
+        }
+        dadosPropostaTratados = objDados;
+      }
 
       const novaMensagem = await MensagemChatModel.criar({
         id_pedido,
         id_remetente,
         conteudo: textoFinal,
         tipo_mensagem: tipo_mensagem || (anexo_imagem ? 'imagem' : 'texto'),
-        dados_proposta,
+        dados_proposta: dadosPropostaTratados,
         valor_proposta: valor_proposta || null,
         prazo_proposta: prazo_proposta || null,
         valor_entrada: valor_entrada || 0,
