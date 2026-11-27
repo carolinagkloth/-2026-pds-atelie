@@ -26,6 +26,10 @@ RUN npm install
 
 # Copia o restante do código e gera o build do front-end (Vite/React)
 COPY . .
+
+ARG VITE_GOOGLE_CLIENT_ID
+ENV VITE_GOOGLE_CLIENT_ID=$VITE_GOOGLE_CLIENT_ID
+
 RUN npm run build
 
 EXPOSE 3000
