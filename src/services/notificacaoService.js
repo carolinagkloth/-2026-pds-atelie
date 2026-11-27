@@ -1,6 +1,6 @@
 const pool = require('../config/database');
 const whatsappClient = require('../config/whatsapp');
-const { transporter, EMAIL_OFICIAL } = require('./emailService');
+const { enviarEmail } = require('./emailService');
 const { gerarEmailNotificacao } = require('./emailTemplates');
 
 const FRONTEND_URL = (process.env.FRONTEND_URL || 'http://localhost:5173').replace(/\/$/, '');
@@ -71,13 +71,12 @@ async function dispararNotificacao({ idUsuario, titulo, mensagem, tipo, idPedido
         urlPortal
       });
 
-      transporter.sendMail({
-        from: `"Ateliê Entre Linhas" <${EMAIL_OFICIAL}>`,
-        to: usuario.email,
-        subject: `${titulo} - Ateliê Entre Linhas`,
-        text: `Olá, ${usuario.nome}!\n\n${titulo}\n${mensagem}\n\nAcesse: ${urlPortal}`,
-        html: htmlEmail
-      }).catch((err) => console.error('Erro ao enviar e-mail:', err));
+      enviarEmail(
+        usuario.email,
+        `${titulo} - Ateliê Entre Linhas`,
+        `Olá, ${usuario.nome}!\n\n${titulo}\n${mensagem}\n\nAcesse: ${urlPortal}`,
+        htmlEmail
+      );
     }
 
     // 4. Envio de WhatsApp (se for evento crítico + permissão)

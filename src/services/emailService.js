@@ -103,7 +103,20 @@ async function enviarEmailRecuperacao(emailUsuario, nomeUsuario, token) {
   console.log(`[E-mail] Recuperação enviada com sucesso para ${emailUsuario}`);
 }
 
+const transporter = {
+  async sendMail({ to, subject, text, html, replyTo }) {
+    return dispararViaBrevo({
+      para: to,
+      assunto: subject,
+      texto: text,
+      html: html || text,
+      replyTo
+    });
+  }
+};
+
 module.exports = {
+  transporter,
   EMAIL_OFICIAL,
   enviarEmail,
   enviarEmailNovoAcesso,
