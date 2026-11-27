@@ -34,6 +34,10 @@ const notificacaoRoutes = require('./routes/notificacaoRoutes');
 // Importação do Middleware Global de Erro
 const errorMiddleware = require('./middlewares/errorMiddleware');
 
+require('./config/whatsapp');
+const { iniciarCronJobs } = require('./jobs/lembretesJob');
+iniciarCronJobs();
+
 // Registro das Rotas da API (com aliases no singular, plural e raiz /api)
 app.use('/api/usuario', usuarioRoutes);
 app.use('/api/usuarios', usuarioRoutes);
