@@ -2,30 +2,79 @@ import React, { useState, useEffect, useRef } from 'react';
 import { comprimirImagem } from '../../services/comprimirImagem';
 
 const COLUNAS_KANBAN = [
-  { id: 'A Fazer', titulo: '📌 A Fazer', cor: '#757575' },
-  { id: 'Em Produção', titulo: '✂️ Em Produção', cor: '#29B6F6' },
-  { id: 'Aguardando Prova', titulo: '🔍 Aguardando Prova', cor: '#FFA726' },
-  { id: 'Concluído', titulo: '✅ Concluído', cor: '#66BB6A' }
+  { id: 'A Fazer', titulo: 'A Fazer', cor: '#757575' },
+  { id: 'Em Produção', titulo: 'Em Produção', cor: '#29B6F6' },
+  { id: 'Aguardando Prova', titulo: 'Aguardando Prova', cor: '#FFA726' },
+  { id: 'Concluído', titulo: 'Concluído', cor: '#66BB6A' }
 ];
 
-const OPCOES_PAGAMENTO = [
+const OPCOES_COM_SINAL = [
   'Aguardando Sinal',
   'Sinal Pago',
+  'Aguardando Restante',
   'Pago Integralmente',
   'Em Débito'
 ];
 
+const OPCOES_SEM_SINAL = [
+  'Aguardando Valor Total',
+  'Pago Integralmente',
+  'Em Débito'
+];
+
+const ORDEM_ETAPA = {
+  'Aguardando Sinal': 1,
+  'Aguardando Valor Total': 1,
+  'Sinal Pago': 2,
+  'Aguardando Restante': 2,
+  'Em Débito': 2,
+  'Pago Integralmente': 3
+};
+
+const podeAvancarPara = (statusAtual, destino) => {
+  if (destino === statusAtual) return true;
+  if (statusAtual === 'Pago Integralmente') return false;
+
+  const nivelAtual = ORDEM_ETAPA[statusAtual] || 1;
+  const nivelDestino = ORDEM_ETAPA[destino] || 1;
+
+  if (destino === 'Em Débito') return true;
+  if (statusAtual === 'Em Débito' && destino === 'Aguardando Sinal') return false;
+
+  return nivelDestino >= nivelAtual;
+};
+
 const estiloBadgePagamento = (status) => {
-  if (status === 'Pago Integralmente') return { background: '#E8F5E9', color: '#2E7D32', border: '1px solid #A5D6A7' };
-  if (status === 'Sinal Pago') return { background: '#E3F2FD', color: '#1565C0', border: '1px solid #90CAF9' };
-  if (status === 'Em Débito') return { background: '#FFEBEE', color: '#C62828', border: '1px solid #EF9A9A' };
+  if (status === 'Pago Integralmente') {
+    return { background: '#E8F5E9', color: '#2E7D32', border: '1px solid #A5D6A7' };
+  }
+  if (status === 'Sinal Pago' || status === 'Aguardando Restante') {
+    return { background: '#E3F2FD', color: '#1565C0', border: '1px solid #90CAF9' };
+  }
+  if (status === 'Em Débito') {
+    return { background: '#FFEBEE', color: '#C62828', border: '1px solid #EF9A9A' };
+  }
   return { background: '#FFF8E1', color: '#EF6C00', border: '1px solid #FFE082' };
+};
+
+const formatarMoeda = (valor) =>
+  Number(valor || 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+
+const calcularRestante = (total, entrada, statusAtual) => {
+  if (statusAtual === 'Pago Integralmente') return 0;
+  if (statusAtual === 'Sinal Pago' || statusAtual === 'Aguardando Restante') {
+    return Math.max(total - entrada, 0);
+  }
+  return total;
 };
 
 function KanbanOrdens({ idCostureira, onNavigate }) {
   const [ordens, setOrdens] = useState([]);
   const [carregando, setCarregando] = useState(true);
   const [erro, setErro] = useState('');
+
+  const [pagamentoConfirmar, setPagamentoConfirmar] = useState(null);
+  const [salvandoPagamento, setSalvandoPagamento] = useState(false);
 
   const [ordemFotosModal, setOrdemFotosModal] = useState(null);
   const [legendaFoto, setLegendaFoto] = useState('');
@@ -78,12 +127,23 @@ function KanbanOrdens({ idCostureira, onNavigate }) {
     }
   };
 
-  const handleAlterarPagamento = async (idOrdem, novoPagamento) => {
+  const handleConfirmarAlteracaoPagamento = async () => {
+    if (!pagamentoConfirmar || salvandoPagamento) return;
+    const { idOrdem, idPedido, novoPagamento } = pagamentoConfirmar;
+
+    setSalvandoPagamento(true);
     try {
-      const response = await fetch(`/api/ordens-servico/${idOrdem}/pagamento`, {
+      const url = idPedido
+        ? `/api/ordens-servico/pedido/${idPedido}/pagamento`
+        : `/api/ordens-servico/${idOrdem}/pagamento`;
+
+      const response = await fetch(url, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ status_pagamento: novoPagamento })
+        body: JSON.stringify({
+          status_pagamento: novoPagamento,
+          id_costureira: Number(idCostureira)
+        })
       });
       const data = await response.json();
       if (!response.ok) throw new Error(data.erro || 'Erro ao atualizar pagamento.');
@@ -95,8 +155,11 @@ function KanbanOrdens({ idCostureira, onNavigate }) {
             : ordem
         )
       );
+      setPagamentoConfirmar(null);
     } catch (err) {
       alert(`Erro: ${err.message}`);
+    } finally {
+      setSalvandoPagamento(false);
     }
   };
 
@@ -193,9 +256,20 @@ function KanbanOrdens({ idCostureira, onNavigate }) {
                 </div>
 
                 {ordensDaColuna.map((item) => {
-                  const statusPag = item.statusPagamento || item.status_pagamento || 'Aguardando Sinal';
+                  const total = Number(item.valorTotal || 0);
+                  const entrada = Number(item.valorEntrada || 0);
+                  const temSinal = entrada > 0;
+
+                  const opcoesPagamento = temSinal ? OPCOES_COM_SINAL : OPCOES_SEM_SINAL;
+                  const statusBruto = item.statusPagamento || item.status_pagamento || '';
+                  const statusPag = opcoesPagamento.includes(statusBruto)
+                    ? statusBruto
+                    : (temSinal ? 'Aguardando Sinal' : 'Aguardando Valor Total');
+
+                  const restante = calcularRestante(total, entrada, statusPag);
                   const fotos = Array.isArray(item.fotosAndamento) ? item.fotosAndamento : [];
                   const badgePag = estiloBadgePagamento(statusPag);
+                  const encerrado = statusPag === 'Pago Integralmente';
 
                   return (
                     <div
@@ -217,10 +291,15 @@ function KanbanOrdens({ idCostureira, onNavigate }) {
                       </p>
 
                       <div style={{ fontSize: '12px', color: '#666', marginBottom: '8px', lineHeight: '1.5' }}>
-                        <strong>Valor Total:</strong> R$ {Number(item.valorTotal || 0).toFixed(2)}
-                        {Number(item.valorEntrada || 0) > 0 && (
-                          <span> (Sinal: R$ {Number(item.valorEntrada).toFixed(2)})</span>
+                        <strong>Valor Total:</strong> {formatarMoeda(total)}
+                        {temSinal && (
+                          <span> (Sinal: {formatarMoeda(entrada)})</span>
                         )}
+                        <br />
+                        <strong>Restante a Pagar:</strong>{' '}
+                        <span style={{ color: restante === 0 ? '#2E7D32' : '#3E2445', fontWeight: 'bold' }}>
+                          {formatarMoeda(restante)}
+                        </span>
                         <br />
                         <strong>Entrega:</strong> {item.previsaoEntrega ? new Date(item.previsaoEntrega).toLocaleDateString('pt-BR') : 'Não informada'}
                       </div>
@@ -232,19 +311,36 @@ function KanbanOrdens({ idCostureira, onNavigate }) {
                         </label>
                         <select
                           value={statusPag}
-                          onChange={(e) => handleAlterarPagamento(item.id, e.target.value)}
+                          disabled={encerrado}
+                          onChange={(e) => {
+                            const escolhido = e.target.value;
+                            if (escolhido !== statusPag) {
+                              setPagamentoConfirmar({
+                                idOrdem: item.id,
+                                idPedido: item.idPedido,
+                                statusAtual: statusPag,
+                                novoPagamento: escolhido
+                              });
+                            }
+                          }}
                           style={{
                             width: '100%',
                             padding: '5px 8px',
                             borderRadius: '5px',
                             fontSize: '12px',
                             fontWeight: 'bold',
-                            cursor: 'pointer',
+                            cursor: encerrado ? 'not-allowed' : 'pointer',
                             ...badgePag
                           }}
                         >
-                          {OPCOES_PAGAMENTO.map((op) => (
-                            <option key={op} value={op}>{op}</option>
+                          {opcoesPagamento.map((op) => (
+                            <option
+                              key={op}
+                              value={op}
+                              disabled={!podeAvancarPara(statusPag, op)}
+                            >
+                              {op}
+                            </option>
                           ))}
                         </select>
                       </div>
@@ -266,7 +362,7 @@ function KanbanOrdens({ idCostureira, onNavigate }) {
                             cursor: 'pointer'
                           }}
                         >
-                          📸 Fotos do Andamento ({fotos.length})
+                          Fotos do Andamento ({fotos.length})
                         </button>
                       </div>
 
@@ -280,7 +376,7 @@ function KanbanOrdens({ idCostureira, onNavigate }) {
                             }}
                             style={{ padding: '4px 8px', fontSize: '11px', background: '#eee', border: 'none', borderRadius: '4px', cursor: 'pointer' }}
                           >
-                            ← Voltar
+                            Voltar
                           </button>
                         )}
 
@@ -292,7 +388,7 @@ function KanbanOrdens({ idCostureira, onNavigate }) {
                             }}
                             style={{ padding: '4px 8px', fontSize: '11px', background: '#3E2445', color: '#fff', border: 'none', borderRadius: '4px', cursor: 'pointer', marginLeft: 'auto' }}
                           >
-                            Avançar →
+                            Avançar
                           </button>
                         )}
                       </div>
@@ -302,6 +398,97 @@ function KanbanOrdens({ idCostureira, onNavigate }) {
               </div>
             );
           })}
+        </div>
+      )}
+
+      {/* Modal de Confirmação de Alteração de Pagamento */}
+      {pagamentoConfirmar && (
+        <div
+          onClick={() => !salvandoPagamento && setPagamentoConfirmar(null)}
+          style={{
+            position: 'fixed',
+            inset: 0,
+            background: 'rgba(0, 0, 0, 0.6)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            zIndex: 1600,
+            padding: '16px'
+          }}
+        >
+          <div
+            onClick={(e) => e.stopPropagation()}
+            style={{
+              background: '#fff',
+              borderRadius: '12px',
+              maxWidth: '430px',
+              width: '100%',
+              padding: '24px',
+              boxShadow: '0 8px 30px rgba(0, 0, 0, 0.25)'
+            }}
+          >
+            <h3 style={{ margin: '0 0 12px 0', color: '#3E2445', fontSize: '18px' }}>
+              Confirmar Atualização de Pagamento
+            </h3>
+
+            <p style={{ margin: '0 0 12px 0', fontSize: '13.5px', color: '#444', lineHeight: '1.5' }}>
+              Você está prestes a alterar o status financeiro deste pedido de{' '}
+              <strong>{pagamentoConfirmar.statusAtual}</strong> para{' '}
+              <strong style={{ color: '#3E2445' }}>{pagamentoConfirmar.novoPagamento}</strong>.
+            </p>
+
+            <div
+              style={{
+                background: '#FFF8E1',
+                border: '1px solid #FFE082',
+                borderRadius: '8px',
+                padding: '12px',
+                fontSize: '12.5px',
+                color: '#5D4037',
+                lineHeight: '1.5',
+                marginBottom: '18px'
+              }}
+            >
+              <strong>Aviso importante:</strong> Esta ferramenta é destinada apenas ao controle e organização de quem presta o serviço de costura, pois os pagamentos são combinados diretamente fora da plataforma. Após confirmar, não será possível retornar para etapas anteriores e o/a cliente será notificado(a) no chat.
+            </div>
+
+            <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '10px' }}>
+              <button
+                type="button"
+                disabled={salvandoPagamento}
+                onClick={() => setPagamentoConfirmar(null)}
+                style={{
+                  padding: '9px 16px',
+                  background: '#EEE',
+                  color: '#333',
+                  border: 'none',
+                  borderRadius: '6px',
+                  fontWeight: 'bold',
+                  fontSize: '13px',
+                  cursor: 'pointer'
+                }}
+              >
+                Cancelar
+              </button>
+              <button
+                type="button"
+                disabled={salvandoPagamento}
+                onClick={handleConfirmarAlteracaoPagamento}
+                style={{
+                  padding: '9px 16px',
+                  background: '#3E2445',
+                  color: '#fff',
+                  border: 'none',
+                  borderRadius: '6px',
+                  fontWeight: 'bold',
+                  fontSize: '13px',
+                  cursor: 'pointer'
+                }}
+              >
+                {salvandoPagamento ? 'Salvando...' : 'Confirmar Alteração'}
+              </button>
+            </div>
+          </div>
         </div>
       )}
 
@@ -323,7 +510,7 @@ function KanbanOrdens({ idCostureira, onNavigate }) {
                 onClick={() => setOrdemFotosModal(null)}
                 style={{ background: 'none', border: 'none', fontSize: '20px', cursor: 'pointer', color: '#666' }}
               >
-                ✕
+                Fechar
               </button>
             </div>
 
@@ -363,7 +550,7 @@ function KanbanOrdens({ idCostureira, onNavigate }) {
                   cursor: 'pointer'
                 }}
               >
-                {enviandoFoto ? 'Comprimindo e enviando...' : '📷 Tirar Foto ou Anexar Imagem do Andamento'}
+                {enviandoFoto ? 'Comprimindo e enviando...' : 'Tirar Foto ou Anexar Imagem do Andamento'}
               </button>
             </div>
 

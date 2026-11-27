@@ -104,7 +104,7 @@ function ModalAceitarProposta({
         >
           {costureiraNome && (
             <div style={{ marginBottom: '4px' }}>
-              <strong>Costureira:</strong> {costureiraNome}
+              <strong>Profissional Responsável:</strong> {costureiraNome}
             </div>
           )}
           <div style={{ marginBottom: '4px' }}>
@@ -136,11 +136,11 @@ function ModalAceitarProposta({
           <strong style={{ display: 'block', color: '#E65100', marginBottom: '5px' }}>
             Atenção antes de fechar o serviço
           </strong>
-          Ao aceitar este orçamento, você está firmando um acordo diretamente com a costureira. Verifique o{' '}
-          <strong>perfil, o portfólio e as avaliações</strong> dela para ter certeza de que é uma profissional de sua confiança.
+          Ao aceitar este orçamento, você está firmando um acordo diretamente com quem prestará o serviço. Verifique o{' '}
+          <strong>perfil, o portfólio e as avaliações</strong> para ter certeza de que é um(a) profissional de sua confiança.
           <br />
           <span style={{ display: 'block', marginTop: '6px' }}>
-            O <strong>Ateliê Entre Linhas</strong> atua apenas como ponte de contato entre clientes e costureiras,{' '}
+            O <strong>Ateliê Entre Linhas</strong> atua apenas como ponte de contato entre clientes e profissionais de costura,{' '}
             <strong>não se responsabilizando</strong> por prazos, qualidade do acabamento, pagamentos combinados ou entrega de peças e tecidos.
           </span>
 
@@ -161,7 +161,7 @@ function ModalAceitarProposta({
                 cursor: 'pointer'
               }}
             >
-              👤 Conferir Perfil e Avaliações da Costureira
+              Conferir Perfil e Avaliações
             </button>
           )}
         </div>
@@ -206,7 +206,7 @@ function ModalAceitarProposta({
               opacity: enviando ? 0.7 : 1
             }}
           >
-            {enviando ? 'Confirmando...' : '✓ Estou Ciente e Aceitar'}
+            {enviando ? 'Confirmando...' : 'Estou Ciente e Aceitar'}
           </button>
         </div>
       </div>

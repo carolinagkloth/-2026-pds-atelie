@@ -60,7 +60,7 @@ function ModalProva({ isOpen, onClose, onEnviar, enderecoCostureira, onIrParaPer
       <div style={{ background: '#fff', padding: '25px', borderRadius: '12px', width: '430px', maxWidth: '100%', boxShadow: '0 8px 30px rgba(62, 36, 69, 0.25)', fontFamily: "'Segoe UI', Tahoma, sans-serif" }}>
         <h3 style={{ marginTop: 0, marginBottom: '6px', color: '#3E2445' }}>Propor Data para Prova da Peça</h3>
         <p style={{ marginTop: 0, marginBottom: '14px', fontSize: '12.5px', color: '#666' }}>
-          A cliente receberá esta sugestão no chat para confirmar se pode comparecer no dia e horário.
+          O/a cliente receberá esta sugestão no chat para confirmar se pode comparecer no dia e horário.
         </p>
 
         <form onSubmit={handleSubmit}>
@@ -90,7 +90,7 @@ function ModalProva({ isOpen, onClose, onEnviar, enderecoCostureira, onIrParaPer
             </div>
           </div>
 
-          {/* Local automático puxado do endereço da costureira */}
+          {/* Local automático puxado do endereço cadastrado */}
           <div
             style={{
               background: enderecoLimpo ? '#FAF6FA' : '#FFF8E1',
@@ -103,7 +103,7 @@ function ModalProva({ isOpen, onClose, onEnviar, enderecoCostureira, onIrParaPer
             }}
           >
             <strong style={{ display: 'block', color: enderecoLimpo ? '#3E2445' : '#E65100', marginBottom: '3px' }}>
-              📍 Local da Prova (seu endereço cadastrado):
+              Local da Prova (seu endereço cadastrado):
             </strong>
             {enderecoLimpo ? (
               <span style={{ color: '#333' }}>{enderecoLimpo}</span>

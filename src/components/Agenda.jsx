@@ -180,11 +180,11 @@ function Agenda({ idUsuario, isCliente }) {
                 const corBorda = isEntregue ? '#6A1B9A' : isProva ? '#E67E22' : '#2E7D32';
                 const tituloEvento = isProva
                   ? isEntregue
-                    ? `Prova Realizada ✓ ${item.horario_evento ? `(${item.horario_evento})` : ''}`
-                    : `Prova Agendada 📅 ${item.horario_evento ? `(${item.horario_evento})` : ''}`
+                    ? `Prova Realizada ${item.horario_evento ? `(${item.horario_evento})` : ''}`
+                    : `Prova Agendada ${item.horario_evento ? `(${item.horario_evento})` : ''}`
                   : isEntregue
-                  ? 'Peça Entregue ✓'
-                  : 'Previsão de Entrega 📦';
+                  ? 'Peça Entregue'
+                  : 'Previsão de Entrega';
 
                 return (
                   <div
@@ -235,7 +235,7 @@ function Agenda({ idUsuario, isCliente }) {
                         <div style={{ whiteSpace: 'pre-line' }}><strong>Descrição:</strong> {detalhes.descricao}</div>
                       )}
                       <div>
-                        <strong>{isCliente ? 'Costureira:' : 'Cliente:'}</strong>{' '}
+                        <strong>{isCliente ? 'Profissional:' : 'Cliente:'}</strong>{' '}
                         {isCliente ? (item.costureira_nome || 'A definir') : (item.cliente_nome || 'Cliente')}
                       </div>
                     </div>

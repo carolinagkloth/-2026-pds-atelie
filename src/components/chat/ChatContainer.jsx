@@ -41,6 +41,7 @@ function ChatContainer({ pedido, usuario, idCostureiraProp, onNavigate }) {
   }, [pedido]);
 
   const [costureiraNome, setCostureiraNome] = useState('');
+  const [clienteNome, setClienteNome] = useState(!isCostureira ? (user?.nome || '') : '');
   const [costureiraEndereco, setCostureiraEndereco] = useState(isCostureira ? (user?.endereco || '') : '');
   const [idCostureiraChat, setIdCostureiraChat] = useState(
     isCostureira
@@ -74,6 +75,7 @@ function ChatContainer({ pedido, usuario, idCostureiraProp, onNavigate }) {
     status: pedido?.status_kanban || pedido?.status_pedido || pedido?.status || 'Aberto'
   });
 
+  const [statusPagamento, setStatusPagamento] = useState('Aguardando Sinal');
   const [medidas, setMedidas] = useState({ busto: '', cintura: '', quadril: '', observacoes_medidas: '' });
 
   useEffect(() => {
@@ -87,7 +89,7 @@ function ChatContainer({ pedido, usuario, idCostureiraProp, onNavigate }) {
     ? `${infoDesc.tipo}${infoDesc.descricao ? ` - ${infoDesc.descricao}` : ''}`
     : `Pedido #${idPedido}`;
 
-  // Busca endereço atualizado da costureira no banco
+  // Busca endereço atualizado do/a profissional no banco
   useEffect(() => {
     const idCost = isCostureira ? idUsuario : idCostureiraChat;
     if (!idCost) return;
@@ -105,10 +107,10 @@ function ChatContainer({ pedido, usuario, idCostureiraProp, onNavigate }) {
       .catch(() => {});
   }, [isCostureira, idUsuario, idCostureiraChat]);
 
-  // RESOLUÇÃO ROBUSTA DO NOME DA COSTUREIRA
+  // RESOLUÇÃO ROBUSTA DO NOME DO/A PROFISSIONAL
   const resolverNomeCostureira = useCallback(async (idCost, msgsList = []) => {
     if (isCostureira) {
-      setCostureiraNome(user?.nome || 'Costureira');
+      setCostureiraNome(user?.nome || 'Profissional de Costura');
       return;
     }
 
@@ -134,10 +136,65 @@ function ChatContainer({ pedido, usuario, idCostureiraProp, onNavigate }) {
           setCostureiraNome(data.nome);
         }
       } catch (err) {
-        console.error('Erro ao buscar nome da costureira:', err);
+        console.error('Erro ao buscar nome do/a profissional:', err);
       }
     }
   }, [isCostureira, user?.nome, pedidoDados?.costureiraNome, pedidoDados?.costureira_nome, pedido, idUsuario]);
+
+  // RESOLUÇÃO ROBUSTA DO NOME DO/A CLIENTE
+  const resolverNomeCliente = useCallback(async (pedInfo = {}, msgsList = []) => {
+    if (!isCostureira) {
+      if (user?.nome) setClienteNome(user.nome);
+      return;
+    }
+
+    const nomeSalvo =
+      pedInfo?.clienteNome ||
+      pedInfo?.cliente_nome ||
+      pedInfo?.nomeCliente ||
+      pedInfo?.nome_cliente ||
+      pedidoDados?.clienteNome ||
+      pedidoDados?.cliente_nome ||
+      pedido?.clienteNome ||
+      pedido?.cliente_nome;
+
+    if (nomeSalvo) {
+      setClienteNome(nomeSalvo);
+      setPedidoDados((prev) => ({ ...prev, clienteNome: nomeSalvo, cliente_nome: nomeSalvo }));
+      return;
+    }
+
+    const msgCliente = msgsList.find(
+      (m) => Number(m.id_remetente || m.idRemetente) !== Number(idUsuario)
+    );
+    const nomeMsg = msgCliente?.remetente_nome || msgCliente?.nomeRemetente;
+    if (nomeMsg) {
+      setClienteNome(nomeMsg);
+      setPedidoDados((prev) => ({ ...prev, clienteNome: nomeMsg, cliente_nome: nomeMsg }));
+      return;
+    }
+
+    const idCli =
+      pedInfo?.clienteId ||
+      pedInfo?.id_cliente ||
+      pedidoDados?.clienteId ||
+      pedidoDados?.id_cliente ||
+      pedido?.clienteId ||
+      pedido?.id_cliente;
+
+    if (idCli) {
+      try {
+        const res = await fetch(`/api/usuarios/${idCli}`);
+        const data = await res.json();
+        if (data && data.nome) {
+          setClienteNome(data.nome);
+          setPedidoDados((prev) => ({ ...prev, clienteNome: data.nome, cliente_nome: data.nome }));
+        }
+      } catch (err) {
+        console.error('Erro ao buscar nome do/a cliente:', err);
+      }
+    }
+  }, [isCostureira, user?.nome, pedidoDados, pedido, idUsuario]);
 
   // CARREGAMENTO DAS MENSAGENS E DADOS DO CHAT (INICIAL E SILENCIOSO)
   const carregarMensagens = useCallback(async (silencioso = false) => {
@@ -149,15 +206,19 @@ function ChatContainer({ pedido, usuario, idCostureiraProp, onNavigate }) {
       const queryString = params.toString();
       const url = `/api/mensagens-chat/${idPedido}${queryString ? `?${queryString}` : ''}`;
 
-      const [resMsgs, resPed, resAval] = await Promise.all([
+      const [resMsgs, resPed, resAval, resPag] = await Promise.all([
         fetch(url),
         fetch(`/api/pedidos/${idPedido}`).catch(() => null),
-        !isCostureira ? fetch(`/api/avaliacoes/pedido/${idPedido}`).catch(() => null) : Promise.resolve(null)
+        !isCostureira ? fetch(`/api/avaliacoes/pedido/${idPedido}`).catch(() => null) : Promise.resolve(null),
+        fetch(`/api/ordens-servico/pedido/${idPedido}/pagamento`).catch(() => null)
       ]);
+
+      let listaMensagensAtual = [];
 
       if (resMsgs.ok) {
         const data = await resMsgs.json();
         if (Array.isArray(data)) {
+          listaMensagensAtual = data;
           let houveMudanca = false;
           setMensagens((prev) => {
             if (JSON.stringify(prev) === JSON.stringify(data)) {
@@ -240,7 +301,6 @@ function ChatContainer({ pedido, usuario, idCostureiraProp, onNavigate }) {
       if (resPed && resPed.ok) {
         pedData = await resPed.json();
       } else {
-        // Fallback caso a rota GET /api/pedidos/:id não esteja mapeada
         const resTodos = await fetch('/api/pedidos').catch(() => null);
         if (resTodos && resTodos.ok) {
           const lista = await resTodos.json();
@@ -253,18 +313,25 @@ function ChatContainer({ pedido, usuario, idCostureiraProp, onNavigate }) {
       if (pedData) {
         const prazoEncontrado = pedData.prazo_desejado || pedData.prazoDesejado || '';
         const horarioEncontrado = pedData.horario_limite || pedData.horarioLimite || '';
+        const nomeCliEncontrado =
+          pedData.clienteNome || pedData.cliente_nome || pedData.nomeCliente || pedData.nome_cliente || '';
+
         setPedidoDados((prev) => ({
           ...prev,
           ...pedData,
+          ...(nomeCliEncontrado ? { clienteNome: nomeCliEncontrado, cliente_nome: nomeCliEncontrado } : {}),
           prazo_desejado: prazoEncontrado || prev?.prazo_desejado || '',
           prazoDesejado: prazoEncontrado || prev?.prazoDesejado || '',
           horario_limite: horarioEncontrado || prev?.horario_limite || '',
           horarioLimite: horarioEncontrado || prev?.horarioLimite || ''
         }));
+
         const statusReal = pedData.status_kanban || pedData.status_pedido || pedData.status;
         if (statusReal) setOrcamentoAtual((prev) => ({ ...prev, status: statusReal }));
         if (pedData.descricao) setDescricaoPedido((prev) => prev || pedData.descricao);
       }
+
+      resolverNomeCliente(pedData || {}, listaMensagensAtual);
 
       if (resAval && resAval.ok) {
         const avalData = await resAval.json();
@@ -273,10 +340,24 @@ function ChatContainer({ pedido, usuario, idCostureiraProp, onNavigate }) {
         }
         setJaAvaliado(Boolean(avalData.avaliado));
       }
+
+      if (resPag && resPag.ok) {
+        const pagData = await resPag.json();
+        if (pagData.possui_os) {
+          if (pagData.status_pagamento) {
+            setStatusPagamento(pagData.status_pagamento);
+          }
+          setOrcamentoAtual((prev) => ({
+            ...prev,
+            total: pagData.valor_total || prev.total,
+            entrada: pagData.valor_entrada ?? prev.entrada
+          }));
+        }
+      }
     } catch (err) {
       if (!silencioso) console.error('Erro ao carregar chat:', err);
     }
-  }, [idPedido, idCostureiraChat, idUsuario, isCostureira, resolverNomeCostureira]);
+  }, [idPedido, idCostureiraChat, idUsuario, isCostureira, resolverNomeCostureira, resolverNomeCliente]);
 
   // Carga inicial + polling silencioso a cada 5 segundos
   useEffect(() => {
@@ -289,7 +370,7 @@ function ChatContainer({ pedido, usuario, idCostureiraProp, onNavigate }) {
     return () => clearInterval(intervalo);
   }, [carregarMensagens]);
 
-  // Carrega Ficha de Medidas do Cliente
+  // Carrega Ficha de Medidas do/a Cliente
   useEffect(() => {
     const targetId = isCostureira ? (pedidoDados?.clienteId || pedidoDados?.id_cliente) : idUsuario;
     if (targetId) {
@@ -558,7 +639,7 @@ function ChatContainer({ pedido, usuario, idCostureiraProp, onNavigate }) {
         alert(data.erro || data.error || 'Não foi possível concluir a peça.');
         return;
       }
-      alert('Peça concluída! Cliente notificado.');
+      alert('Peça concluída! O/a cliente foi notificado(a).');
       setOrcamentoAtual((prev) => ({ ...prev, status: 'Concluído' }));
       carregarMensagens(false);
     } catch (err) { alert(err.message); }
@@ -633,6 +714,28 @@ function ChatContainer({ pedido, usuario, idCostureiraProp, onNavigate }) {
     ? { ...provaAgendada, local: provaAgendada.local || costureiraEndereco || '' }
     : null;
 
+  const handleAlterarPagamento = async (novoStatusPagamento) => {
+    try {
+      const res = await fetch(`/api/ordens-servico/pedido/${idPedido}/pagamento`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          status_pagamento: novoStatusPagamento,
+          id_costureira: Number(idCostureiraChat || idUsuario)
+        })
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        alert(data.erro || 'Não foi possível atualizar o status do pagamento.');
+        return;
+      }
+      setStatusPagamento(novoStatusPagamento);
+      carregarMensagens(false);
+    } catch (err) {
+      alert(err.message);
+    }
+  };
+
   return (
     <div style={{ maxWidth: '1100px', margin: '20px auto', padding: '0 12px', fontFamily: "'Segoe UI', Tahoma, sans-serif" }}>
       <ChatHeader
@@ -662,6 +765,7 @@ function ChatContainer({ pedido, usuario, idCostureiraProp, onNavigate }) {
           isCostureira={isCostureira}
           idCostureiraPedido={idCostureiraChat}
           costureiraNome={costureiraNome}
+          clienteNome={clienteNome}
           medidas={medidas}
           pedido={pedidoDados}
           idPedido={idPedido}
@@ -676,6 +780,8 @@ function ChatContainer({ pedido, usuario, idCostureiraProp, onNavigate }) {
           onOpenAvaliacao={() => setMostrarAvaliacao(true)}
           onCancelarPedido={() => setMostrarCancelar(true)}
           onOpenMedidas={() => setMostrarMedidas(true)}
+          statusPagamento={statusPagamento}
+          onAlterarPagamento={handleAlterarPagamento}
           onNavigate={onNavigate}
         />
       </div>

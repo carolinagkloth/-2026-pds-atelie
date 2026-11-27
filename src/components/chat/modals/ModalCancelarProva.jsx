@@ -121,9 +121,9 @@ function ModalCancelarProva({ isOpen, onClose, onConfirmar, provaAgendada, isCos
           <strong style={{ display: 'block', color: '#E65100', marginBottom: '5px' }}>
             Atenção ao cancelar o agendamento
           </strong>
-          Ao confirmar, esta prova será removida da agenda e {isCostureira ? 'a cliente' : 'a costureira'} será notificada para que vocês possam alinhar uma nova data pelo chat.
+          Ao confirmar, esta prova será removida da agenda e {isCostureira ? 'o/a cliente será notificado(a)' : 'o(a) profissional de costura será notificado(a)'} para que vocês possam alinhar uma nova data pelo chat.
           <span style={{ display: 'block', marginTop: '7px' }}>
-            O <strong>Ateliê Entre Linhas</strong> atua apenas como ponte de contato entre clientes e costureiras,{' '}
+            O <strong>Ateliê Entre Linhas</strong> atua apenas como ponte de contato entre clientes e profissionais de costura,{' '}
             <strong>não se responsabilizando</strong> por agendamentos, comparecimentos, atrasos ou acordos combinados entre as partes.
           </span>
         </div>

@@ -63,31 +63,40 @@ function BotaoNotificacoes({ usuario, onNavigate }) {
   const naoLidasCount = notificacoes.filter((n) => !n.lida).length;
 
   return (
-    <div ref={dropdownRef} style={{ position: 'relative', display: 'inline-block' }}>
+    <div
+      ref={dropdownRef}
+      className="notificacoes-dropdown-container"
+      style={{ position: 'relative', display: 'inline-flex', alignItems: 'center', justifyContent: 'center' }}
+    >
       <button
+        type="button"
+        className="btn-sininho-notificacoes"
         onClick={() => setMenuAberto(!menuAberto)}
         style={{
           position: 'relative',
           background: '#F4EFF5',
-          border: '1px solid #3E2445',
+          border: '1.5px solid #3E2445',
           borderRadius: '50%',
           width: '40px',
           height: '40px',
+          padding: 0,
+          margin: 0,
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
           cursor: 'pointer',
-          outline: 'none'
+          outline: 'none',
+          boxShadow: '0 2px 8px rgba(62, 36, 69, 0.16)'
         }}
         title="Notificações"
       >
-        <span style={{ fontSize: '18px' }}>🔔</span>
+        <span style={{ fontSize: '18px', lineHeight: 1 }}>🔔</span>
         {naoLidasCount > 0 && (
           <span
             style={{
               position: 'absolute',
-              top: '-3px',
-              right: '-3px',
+              top: '-4px',
+              right: '-4px',
               background: '#D32F2F',
               color: '#fff',
               fontSize: '11px',
@@ -95,7 +104,8 @@ function BotaoNotificacoes({ usuario, onNavigate }) {
               borderRadius: '10px',
               padding: '2px 6px',
               minWidth: '16px',
-              textAlign: 'center'
+              textAlign: 'center',
+              lineHeight: 1.1
             }}
           >
             {naoLidasCount > 9 ? '9+' : naoLidasCount}
@@ -105,12 +115,13 @@ function BotaoNotificacoes({ usuario, onNavigate }) {
 
       {menuAberto && (
         <div
+          className="menu-notificacoes-dropdown"
           style={{
             position: 'absolute',
             top: '48px',
             right: 0,
             width: '350px',
-            maxWidth: '90vw',
+            maxWidth: 'calc(100vw - 24px)',
             background: '#fff',
             borderRadius: '12px',
             boxShadow: '0 8px 25px rgba(0, 0, 0, 0.18)',
@@ -125,6 +136,7 @@ function BotaoNotificacoes({ usuario, onNavigate }) {
             <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
               {naoLidasCount > 0 && (
                 <button
+                  type="button"
                   onClick={handleMarcarTodasLidas}
                   style={{ background: 'none', border: 'none', color: '#EADCEB', fontSize: '11px', cursor: 'pointer', textDecoration: 'underline' }}
                 >
@@ -132,11 +144,12 @@ function BotaoNotificacoes({ usuario, onNavigate }) {
                 </button>
               )}
               <button
+                type="button"
                 onClick={() => {
                   setMenuAberto(false);
                   if (onNavigate) onNavigate('configuracoesNotificacoes');
                 }}
-                style={{ background: 'none', border: 'none', color: '#fff', fontSize: '16px', cursor: 'pointer' }}
+                style={{ background: 'none', border: 'none', color: '#fff', fontSize: '16px', cursor: 'pointer', padding: 0 }}
                 title="Configurações"
               >
                 ⚙️

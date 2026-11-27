@@ -159,7 +159,7 @@ class PedidoController {
         'SELECT nome FROM usuarios WHERE id_usuario = $1',
         [id_usuario]
       );
-      const nomeQuemCancelou = userRes.rows[0]?.nome || (canceladoPorCliente ? 'A cliente' : 'A costureira');
+      const nomeQuemCancelou = userRes.rows[0]?.nome || (canceladoPorCliente ? 'O/a cliente' : 'O(a) profissional de costura');
 
       // Localiza a costureira vinculada (pela OS, prova agendada ou histórico do chat)
       let idCostureira = null;
@@ -207,7 +207,7 @@ class PedidoController {
 
       // Registra o cancelamento e a observação opcional no chat
       const obsLimpa = (observacao || '').trim();
-      const autorTexto = canceladoPorCliente ? 'PELA CLIENTE' : 'PELA COSTUREIRA';
+      const autorTexto = canceladoPorCliente ? 'PELO(A) CLIENTE' : 'PELO(A) PROFISSIONAL DE COSTURA';
       const msgChat = obsLimpa
         ? `❌ PEDIDO CANCELADO ${autorTexto}.\nObservação enviada: "${obsLimpa}"`
         : `❌ PEDIDO CANCELADO ${autorTexto}.`;
@@ -226,8 +226,8 @@ class PedidoController {
           idUsuario: idCostureira,
           titulo: 'Pedido Cancelado ❌',
           mensagem: obsLimpa
-            ? `A cliente ${pedido.cliente_nome} cancelou o Pedido #${id_pedido}. Observação: "${obsLimpa}"`
-            : `A cliente ${pedido.cliente_nome} cancelou o Pedido #${id_pedido}.`,
+            ? `O/a cliente ${pedido.cliente_nome} cancelou o Pedido #${id_pedido}. Observação: "${obsLimpa}"`
+            : `O/a cliente ${pedido.cliente_nome} cancelou o Pedido #${id_pedido}.`,
           tipo: 'cancelamento',
           idPedido: id_pedido,
           forcarWhatsapp: true
@@ -235,7 +235,7 @@ class PedidoController {
       } else if (!canceladoPorCliente && pedido.id_cliente) {
         await dispararNotificacao({
           idUsuario: pedido.id_cliente,
-          titulo: 'Pedido Cancelado pela Costureira ❌',
+          titulo: 'Pedido Cancelado pelo(a) Profissional ❌',
           mensagem: obsLimpa
             ? `${nomeQuemCancelou} cancelou/desistiu do Pedido #${id_pedido}. Observação: "${obsLimpa}"`
             : `${nomeQuemCancelou} cancelou/desistiu do Pedido #${id_pedido}.`,
@@ -268,7 +268,7 @@ class PedidoController {
         await dispararNotificacao({
           idUsuario: idCostureira,
           titulo: 'Pedido Cancelado',
-          mensagem: `O pedido #${id} foi cancelado pelo cliente.`,
+          mensagem: `O pedido #${id} foi cancelado pelo(a) cliente.`,
           tipo: 'cancelamento',
           forcarWhatsapp: false
         });

@@ -58,7 +58,7 @@ function AvaliacaoPedido({ idOrdemServico, idCliente, onSucesso, onCancelar }) {
             rows="3"
             value={comentario}
             onChange={(e) => setComentario(e.target.value)}
-            placeholder="Como ficou a peça e o atendimento da costureira?"
+            placeholder="Como ficou a peça e o atendimento?"
             style={{ width: '100%', padding: '8px', borderRadius: '6px', border: '1px solid #ccc', boxSizing: 'border-box' }}
           />
         </div>

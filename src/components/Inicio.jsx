@@ -55,12 +55,12 @@ export default function Inicio({ onNavigate }) {
           <h3>Para Clientes</h3>
           <p>
             Publique solicitações com fotos de referência, detalhes de tecidos 
-            e prazos para receber propostas de artesãs qualificadas.
+            e prazos para receber propostas de profissionais qualificados.
           </p>
         </div>
 
         <div className="feature-card">
-          <h3>Para Costureiras</h3>
+          <h3>Para Profissionais de Costura</h3>
           <p>
             Explore pedidos na sua região, escolha projetos alinhados à sua especialidade 
             e expanda sua carteira de clientes.

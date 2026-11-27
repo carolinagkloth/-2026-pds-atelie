@@ -34,10 +34,27 @@ export const parsePedidoDescricao = (rawDesc, localizacaoPadrao = '') => {
   return { tipo, localizacao, descricao: limpa };
 };
 
-export const exportarTXT = ({ idPedido, orcamentoAtual, medidas, pedido, costureiraNome }) => {
+const obterNomeCliente = (pedido, clienteNome) =>
+  clienteNome ||
+  pedido?.clienteNome ||
+  pedido?.cliente_nome ||
+  pedido?.nomeCliente ||
+  pedido?.nome_cliente ||
+  'Não informado(a)';
+
+const obterNomeProfissional = (pedido, costureiraNome) =>
+  costureiraNome ||
+  pedido?.costureiraNome ||
+  pedido?.costureira_nome ||
+  pedido?.nomeCostureira ||
+  pedido?.nome_costureira ||
+  'Não informado(a)';
+
+export const exportarTXT = ({ idPedido, orcamentoAtual, medidas, pedido, costureiraNome, clienteNome }) => {
   const info = parsePedidoDescricao(pedido?.descricao, pedido?.localizacao);
   const dataEntrega = formatarDataBR(orcamentoAtual.prazo);
-  const nomeCostureiraExibir = costureiraNome || pedido?.costureiraNome || 'Não informada';
+  const nomeClienteExibir = obterNomeCliente(pedido, clienteNome);
+  const nomeProfissionalExibir = obterNomeProfissional(pedido, costureiraNome);
 
   const conteudo = `==================================================
 ATELIÊ ENTRE LINHAS - FICHA DO PEDIDO #${idPedido}
@@ -49,8 +66,8 @@ Status Atual: ${orcamentoAtual.status}
 --------------------------------------------------
 Tipo de Serviço: ${info.tipo}
 Descrição: ${info.descricao}
-Cliente: ${pedido?.clienteNome || 'Cliente'}
-Costureira Responsável: ${nomeCostureiraExibir}
+Cliente: ${nomeClienteExibir}
+Profissional Responsável: ${nomeProfissionalExibir}
 
 2. ORÇAMENTO & CONTRATO:
 --------------------------------------------------
@@ -75,13 +92,14 @@ Observações: ${medidas.observacoes_medidas || 'Nenhuma'}
   URL.revokeObjectURL(url);
 };
 
-export const exportarPDF = ({ idPedido, orcamentoAtual, medidas, pedido, costureiraNome }) => {
+export const exportarPDF = ({ idPedido, orcamentoAtual, medidas, pedido, costureiraNome, clienteNome }) => {
   const printWindow = window.open('', '_blank');
   if (!printWindow) return alert('Por favor, permita pop-ups no navegador para gerar o PDF.');
 
   const info = parsePedidoDescricao(pedido?.descricao, pedido?.localizacao);
   const dataEntregaFormatada = formatarDataBR(orcamentoAtual.prazo);
-  const nomeCostureiraExibir = costureiraNome || pedido?.costureiraNome || 'Não informada';
+  const nomeClienteExibir = obterNomeCliente(pedido, clienteNome);
+  const nomeProfissionalExibir = obterNomeProfissional(pedido, costureiraNome);
 
   const htmlContent = `
     <!DOCTYPE html>
@@ -113,8 +131,8 @@ export const exportarPDF = ({ idPedido, orcamentoAtual, medidas, pedido, costure
 
       <div class="box">
         <h3 class="box-title">Informações do Serviço</h3>
-        <p><strong>Cliente:</strong> ${pedido?.clienteNome || 'Cliente'}</p>
-        <p><strong>Costureira Responsável:</strong> <span class="highlight">${nomeCostureiraExibir}</span></p>
+        <p><strong>Cliente:</strong> <span class="highlight">${nomeClienteExibir}</span></p>
+        <p><strong>Profissional Responsável:</strong> <span class="highlight">${nomeProfissionalExibir}</span></p>
         <p><strong>Tipo de Serviço:</strong> ${info.tipo}</p>
         <p><strong>Detalhes:</strong> ${info.descricao}</p>
       </div>
@@ -122,7 +140,7 @@ export const exportarPDF = ({ idPedido, orcamentoAtual, medidas, pedido, costure
       <div class="box">
         <h3 class="box-title">Orçamento & Contrato Formalizado</h3>
         <table>
-          <tr><th>Costureira Responsável:</th><td class="highlight">${nomeCostureiraExibir}</td></tr>
+          <tr><th>Profissional Responsável:</th><td class="highlight">${nomeProfissionalExibir}</td></tr>
           <tr><th>Valor Total:</th><td>R$ ${Number(orcamentoAtual.total || 0).toFixed(2)}</td></tr>
           <tr><th>Entrada / Sinal:</th><td>R$ ${Number(orcamentoAtual.entrada || 0).toFixed(2)}</td></tr>
           <tr><th>Data Limite de Entrega:</th><td class="highlight">${dataEntregaFormatada} ${orcamentoAtual.horarioEntrega ? `às ${orcamentoAtual.horarioEntrega}` : ''}</td></tr>
@@ -130,7 +148,7 @@ export const exportarPDF = ({ idPedido, orcamentoAtual, medidas, pedido, costure
       </div>
 
       <div class="box">
-        <h3 class="box-title">Ficha de Medidas do Cliente</h3>
+        <h3 class="box-title">Ficha de Medidas do/a Cliente</h3>
         <table>
           <tr><th>Busto:</th><td>${medidas.busto || '-'} cm</td></tr>
           <tr><th>Cintura:</th><td>${medidas.cintura || '-'} cm</td></tr>

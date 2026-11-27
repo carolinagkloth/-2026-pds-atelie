@@ -19,6 +19,17 @@ img {
   height: auto;
 }
 
+/* Remove qualquer fundo/borda/sombra duplicada do container externo do sininho */
+.sino-notificacoes-fixo {
+  background: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
+  padding: 0 !important;
+  width: auto !important;
+  height: auto !important;
+  border-radius: 0 !important;
+}
+
 /* Grid principal do Chat (Desktop: 1fr + 340px | Mobile: empilhado) */
 .chat-layout-grid {
   display: grid;

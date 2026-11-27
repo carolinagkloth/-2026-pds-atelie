@@ -98,7 +98,7 @@ function MeusChats({ usuario, onNavigate }) {
         <div>
           <h2 style={{ color: '#3E2445', margin: 0, fontSize: '22px' }}>Conversas em Andamento</h2>
           <span style={{ fontSize: '13px', color: '#666', marginTop: '4px', display: 'block' }}>
-            Olá, <strong>{usuarioAtual?.nome || 'Usuário'}</strong> ({isCostureira ? 'Costureira' : 'Cliente'})
+            Olá, <strong>{usuarioAtual?.nome || 'Usuário'}</strong> ({isCostureira ? 'Profissional de Costura' : 'Cliente'})
           </span>
         </div>
 

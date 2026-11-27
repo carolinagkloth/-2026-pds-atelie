@@ -179,6 +179,32 @@ class OrdemServicoModel {
     return result.rows[0] || null;
   }
 
+  static async buscarPorPedido(idPedido) {
+    await garantirColunasOS();
+    const query = `
+      SELECT id_ordem_servico, id_pedido, valor_total, valor_entrada,
+             COALESCE(status_pagamento, 'Aguardando Sinal') AS status_pagamento,
+             status_kanban
+      FROM ordens_servico
+      WHERE id_pedido = $1
+      LIMIT 1;
+    `;
+    const result = await pool.query(query, [idPedido]);
+    return result.rows[0] || null;
+  }
+
+  static async atualizarPagamentoPorPedido(idPedido, status_pagamento) {
+    await garantirColunasOS();
+    const query = `
+      UPDATE ordens_servico
+      SET status_pagamento = $1
+      WHERE id_pedido = $2
+      RETURNING *;
+    `;
+    const result = await pool.query(query, [status_pagamento, idPedido]);
+    return result.rows[0] || null;
+  }
+
   static async adicionarFotoAndamento(idOrdem, { url_imagem, legenda }) {
     await garantirColunasOS();
     const atualRes = await pool.query(

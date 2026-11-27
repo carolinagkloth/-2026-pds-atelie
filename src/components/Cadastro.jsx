@@ -84,7 +84,7 @@ function Cadastro({ onNavigate, onCadastroSucesso, dadosPreenchidos }) {
     }
 
     if (isCostureira && !endereco.trim()) {
-      setErro('O endereço de atendimento é obrigatório para cadastro de costureira.');
+      setErro('O endereço de atendimento é obrigatório para cadastro profissional.');
       return;
     }
 
@@ -136,7 +136,7 @@ function Cadastro({ onNavigate, onCadastroSucesso, dadosPreenchidos }) {
       {sucesso && <div style={{ background: '#e8f5e9', color: '#2e7d32', padding: '10px 14px', borderRadius: '6px', marginBottom: '15px', fontSize: '14px' }}>{sucesso}</div>}
 
       <form onSubmit={handleSubmit}>
-        {/* 1ª OPÇÃO: Escolha imediata entre Cliente ou Costureira */}
+        {/* 1ª OPÇÃO: Escolha imediata entre Cliente ou Profissional de Costura */}
         <div style={{ marginBottom: '18px' }}>
           <label style={{ display: 'block', marginBottom: '8px', fontSize: '14px', fontWeight: 'bold', color: '#3E2445' }}>
             Como você deseja usar a plataforma? *
@@ -174,7 +174,7 @@ function Cadastro({ onNavigate, onCadastroSucesso, dadosPreenchidos }) {
                 transition: 'all 0.15s'
               }}
             >
-              <div style={{ fontWeight: 'bold', fontSize: '13.5px' }}>Sou Costureira</div>
+              <div style={{ fontWeight: 'bold', fontSize: '13.5px' }}>Profissional de Costura</div>
               <div style={{ fontSize: '11px', color: '#666', marginTop: '2px' }}>Quero oferecer serviços</div>
             </button>
           </div>
@@ -274,7 +274,7 @@ function Cadastro({ onNavigate, onCadastroSucesso, dadosPreenchidos }) {
               <strong style={{ display: 'block', color: '#3E2445', marginBottom: '3px' }}>
                 Privacidade dos seus dados
               </strong>
-              Seus dados de contato e endereço são criptografados e só ficarão visíveis para as clientes com quem você firmar pedido.
+              Seus dados de contato e endereço são criptografados e só ficarão visíveis para clientes com quem você firmar pedido.
             </div>
           </>
         )}

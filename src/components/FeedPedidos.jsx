@@ -164,7 +164,7 @@ function FeedPedidos({ usuario, usuarioLogado, onNavigate, onDemonstrarInteresse
           </h2>
           {usuarioAtual?.nome && (
             <span style={{ fontSize: '13px', color: '#666', marginTop: '4px', display: 'block' }}>
-              Olá, <strong>{usuarioAtual.nome}</strong> (Costureira)
+              Olá, <strong>{usuarioAtual.nome}</strong> (Profissional de Costura)
             </span>
           )}
         </div>
@@ -242,7 +242,7 @@ function FeedPedidos({ usuario, usuarioLogado, onNavigate, onDemonstrarInteresse
       {!carregando && pedidosFiltrados.length === 0 ? (
         <div style={{ padding: '40px', textAlign: 'center', background: '#fdfdfd', border: '2px dashed #e0d0e0', borderRadius: '8px' }}>
           <h3 style={{ color: '#3E2445', margin: '0 0 8px 0', fontSize: '16px' }}>Nenhum pedido encontrado com os filtros selecionados.</h3>
-          <p style={{ color: '#666', fontSize: '14px', margin: 0 }}>Tente alterar os termos de busca ou aguarde novas publicações dos clientes.</p>
+          <p style={{ color: '#666', fontSize: '14px', margin: 0 }}>Tente alterar os termos de busca ou aguarde novas publicações de clientes.</p>
         </div>
       ) : (
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(380px, 1fr))', gap: '20px' }}>
@@ -306,7 +306,7 @@ function FeedPedidos({ usuario, usuarioLogado, onNavigate, onDemonstrarInteresse
                   </button>
                 ) : (
                   <div style={{ fontSize: '12px', color: '#888', fontStyle: 'italic', textAlign: 'center' }}>
-                    Apenas contas de Costureira podem aceitar solicitações.
+                    Apenas contas de profissionais de costura podem aceitar solicitações.
                   </div>
                 )}
               </div>

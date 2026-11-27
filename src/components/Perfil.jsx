@@ -140,7 +140,7 @@ function Perfil({ usuario, onNavigate, onUpdateUsuario }) {
     setErro('');
 
     if (!isCliente && !formData.endereco.trim()) {
-      setErro('O endereço de atendimento é obrigatório para costureiras.');
+      setErro('O endereço de atendimento é obrigatório para profissionais de costura.');
       return;
     }
 
@@ -347,7 +347,7 @@ function Perfil({ usuario, onNavigate, onUpdateUsuario }) {
       
       <div className="perfil-header-topo" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px', borderBottom: '1px solid #f0f0f0', paddingBottom: '12px' }}>
         <h2 style={{ color: '#3E2445', margin: 0, fontSize: '22px' }}>
-          {isCliente ? 'Meu Perfil' : 'Perfil Profissional da Costureira'}
+          {isCliente ? 'Meu Perfil' : 'Perfil Profissional'}
         </h2>
         <button
           type="button"
@@ -466,7 +466,7 @@ function Perfil({ usuario, onNavigate, onUpdateUsuario }) {
           />
         </div>
 
-        {/* Endereço (Cliente opcional / Costureira obrigatório — protegido por AES-256) */}
+        {/* Endereço (Cliente opcional / Profissional obrigatório — protegido por AES-256) */}
         <div style={{ marginBottom: '15px' }}>
           <label style={{ display: 'block', fontWeight: 'bold', fontSize: '14px', marginBottom: '5px', color: '#3E2445' }}>
             {isCliente ? 'Endereço (Opcional)' : 'Endereço de Atendimento / Ateliê *'}
@@ -483,7 +483,7 @@ function Perfil({ usuario, onNavigate, onUpdateUsuario }) {
           />
         </div>
 
-        {/* Campos adicionais para Costureira */}
+        {/* Campos adicionais para Profissional de Costura */}
         {!isCliente && (
           <>
             <div style={{ marginBottom: '15px' }}>
@@ -529,7 +529,7 @@ function Perfil({ usuario, onNavigate, onUpdateUsuario }) {
                 <strong style={{ display: 'block', color: '#3E2445', marginBottom: '3px' }}>
                   Privacidade & LGPD
                 </strong>
-                Seu endereço e CPF/CNPJ são criptografados no banco de dados. Seus dados de contato (<strong>exceto CPF/CNPJ</strong>) só ficam visíveis para as clientes com quem você firmar pedido.
+                Seu endereço e CPF/CNPJ são criptografados no banco de dados. Seus dados de contato (<strong>exceto CPF/CNPJ</strong>) só ficam visíveis para clientes com quem você firmar pedido.
               </div>
             )}
           </>
@@ -571,7 +571,7 @@ function Perfil({ usuario, onNavigate, onUpdateUsuario }) {
       {isCliente && (
         <div style={{ marginTop: '30px', borderTop: '2px solid #F4EFF5', paddingTop: '20px' }}>
           <h3 style={{ color: '#3E2445', marginTop: 0, marginBottom: '6px', fontSize: '18px' }}>
-            📏 Minha Ficha de Medidas
+            Minha Ficha de Medidas
           </h3>
           <p style={{ marginTop: 0, marginBottom: '14px', fontSize: '13px', color: '#666' }}>
             Mantenha suas medidas salvas para agilizar orçamentos ou exporte em PDF / TXT.
@@ -661,14 +661,14 @@ function Perfil({ usuario, onNavigate, onUpdateUsuario }) {
                 onClick={handleExportarMedidasPDF}
                 style={{ padding: '10px 14px', background: '#FAF6FA', color: '#3E2445', border: '1px solid #3E2445', borderRadius: '6px', fontWeight: 'bold', fontSize: '13px', cursor: 'pointer' }}
               >
-                📄 Exportar PDF
+                Exportar PDF
               </button>
               <button
                 type="button"
                 onClick={handleExportarMedidasTXT}
                 style={{ padding: '10px 14px', background: '#FAF6FA', color: '#3E2445', border: '1px solid #3E2445', borderRadius: '6px', fontWeight: 'bold', fontSize: '13px', cursor: 'pointer' }}
               >
-                📝 Baixar TXT
+                Baixar TXT
               </button>
             </div>
           </form>
@@ -695,7 +695,7 @@ function Perfil({ usuario, onNavigate, onUpdateUsuario }) {
         </div>
       )}
 
-      {/* Tabela de Preços e Portfólio (Costureira) */}
+      {/* Tabela de Preços e Portfólio */}
       {!isCliente && (
         <>
           <TabelaPrecos modoEdicao={editando} idCostureira={idUsuario} />

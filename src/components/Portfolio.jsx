@@ -153,8 +153,8 @@ function Portfolio({ idCostureira, modoEdicao = false, onNavigate }) {
     return '★'.repeat(valor) + '☆'.repeat(5 - valor);
   };
 
-  const nomeCostureira = costureiraInfo?.nome || 'Costureira';
-  const primeiraLetra = nomeCostureira.trim().charAt(0).toUpperCase();
+  const nomeProfissional = costureiraInfo?.nome || 'Profissional de Costura';
+  const primeiraLetra = nomeProfissional.trim().charAt(0).toUpperCase();
 
   return (
     <div
@@ -166,7 +166,7 @@ function Portfolio({ idCostureira, modoEdicao = false, onNavigate }) {
         fontFamily: "'Segoe UI', Tahoma, sans-serif"
       }}
     >
-      {/* Botão de Voltar (Visível na tela pública da Costureira) */}
+      {/* Botão de Voltar (Visível na tela pública do Perfil Profissional) */}
       {onNavigate && (
         <button
           onClick={() => onNavigate('meusChats')}
@@ -176,11 +176,11 @@ function Portfolio({ idCostureira, modoEdicao = false, onNavigate }) {
         </button>
       )}
 
-      {carregando && <p style={{ color: '#666', fontSize: '14px' }}>Carregando informações da costureira...</p>}
+      {carregando && <p style={{ color: '#666', fontSize: '14px' }}>Carregando informações profissionais...</p>}
       {erro && <div style={{ background: '#ffebee', color: '#c62828', padding: '10px 14px', borderRadius: '6px', fontSize: '14px', marginBottom: '15px' }}>{erro}</div>}
 
       {/* ===================================================================== */}
-      {/* 1. CARTÃO COMPLETO DO PERFIL DA COSTUREIRA (VISÃO DA CLIENTE)         */}
+      {/* 1. CARTÃO COMPLETO DO PERFIL PROFISSIONAL                             */}
       {/* ===================================================================== */}
       {!carregando && exibirPerfilCompleto && (
         <>
@@ -191,7 +191,7 @@ function Portfolio({ idCostureira, modoEdicao = false, onNavigate }) {
                 {costureiraInfo?.foto_perfil && !erroFotoPerfil ? (
                   <img
                     src={costureiraInfo.foto_perfil}
-                    alt={nomeCostureira}
+                    alt={nomeProfissional}
                     referrerPolicy="no-referrer"
                     onError={() => setErroFotoPerfil(true)}
                     style={{ width: '100%', height: '100%', objectFit: 'cover' }}
@@ -206,24 +206,24 @@ function Portfolio({ idCostureira, modoEdicao = false, onNavigate }) {
               {/* Nome, Especialidade, Telefone e Aviso de Local */}
               <div style={{ flex: 1, minWidth: '240px' }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flexWrap: 'wrap', marginBottom: '6px' }}>
-                  <h2 style={{ color: '#3E2445', margin: 0, fontSize: '24px' }}>{nomeCostureira}</h2>
+                  <h2 style={{ color: '#3E2445', margin: 0, fontSize: '24px' }}>{nomeProfissional}</h2>
                   <span style={{ background: '#E8D8E8', color: '#3E2445', padding: '3px 10px', borderRadius: '12px', fontSize: '12px', fontWeight: 'bold' }}>
-                    Costureira Profissional
+                    Profissional de Costura
                   </span>
                 </div>
 
                 {costureiraInfo?.especialidades && (
                   <p style={{ margin: '6px 0', fontSize: '14px', color: '#3E2445' }}>
-                    <strong>✂️ Especialidades:</strong> {costureiraInfo.especialidades}
+                    <strong>Especialidades:</strong> {costureiraInfo.especialidades}
                   </p>
                 )}
 
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '5px', marginTop: '10px', fontSize: '14px', color: '#555' }}>
                   <div>
-                    <strong>📞 Telefone / WhatsApp:</strong> {costureiraInfo?.telefone || 'Não informado'}
+                    <strong>Telefone / WhatsApp:</strong> {costureiraInfo?.telefone || 'Não informado'}
                   </div>
                   <div style={{ fontSize: '13px', color: '#666' }}>
-                    <strong>📍 Local de Atendimento:</strong> Compartilhado no chat ao agendar prova da peça
+                    <strong>Local de Atendimento:</strong> Compartilhado no chat ao agendar prova da peça
                   </div>
                 </div>
               </div>
@@ -246,7 +246,7 @@ function Portfolio({ idCostureira, modoEdicao = false, onNavigate }) {
                 Tabela de Preços Referenciais
               </h3>
               <p style={{ color: '#666', fontSize: '13px', marginTop: 0, marginBottom: '15px' }}>
-                Valores base estimados informados pela costureira.
+                Valores base estimados informados no perfil profissional.
               </p>
 
               <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '13px' }}>
@@ -293,7 +293,7 @@ function Portfolio({ idCostureira, modoEdicao = false, onNavigate }) {
 
             {!reputacao.depoimentos || reputacao.depoimentos.length === 0 ? (
               <p style={{ color: '#888', fontSize: '13px', fontStyle: 'italic', margin: 0 }}>
-                Esta costureira ainda não recebeu avaliações.
+                Este perfil ainda não recebeu avaliações.
               </p>
             ) : (
               <div>

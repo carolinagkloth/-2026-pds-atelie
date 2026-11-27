@@ -22,6 +22,8 @@ router.get('/usuario/:idUsuario', OrdemServicoController.listarPorUsuario);
 router.patch('/:id/status', OrdemServicoController.atualizarStatus);
 router.put('/:idOrdem/status', OrdemServicoController.atualizarStatus);
 router.put('/:idOrdem/pagamento', OrdemServicoController.atualizarPagamento);
+router.get('/pedido/:idPedido/pagamento', OrdemServicoController.buscarPagamentoPorPedido);
+router.put('/pedido/:idPedido/pagamento', OrdemServicoController.atualizarPagamentoPorPedido);
 router.post('/:idOrdem/fotos', OrdemServicoController.adicionarFotoAndamento);
 router.delete('/:idOrdem/fotos/:idFoto', OrdemServicoController.removerFotoAndamento);
 

@@ -2,6 +2,23 @@ const pool = require('../config/database');
 const OrdemServicoModel = require('../models/ordemServicoModel');
 const { dispararNotificacao } = require('../services/notificacaoService');
 
+const ORDEM_PAGAMENTO = {
+  'Aguardando Sinal': 1,
+  'Aguardando Valor Total': 1,
+  'Sinal Pago': 2,
+  'Aguardando Restante': 2,
+  'Em Débito': 2,
+  'Pago Integralmente': 3
+};
+
+function validarTransicaoPagamento(statusAtual, novoStatus) {
+  if (!statusAtual || statusAtual === novoStatus) return true;
+  if (statusAtual === 'Pago Integralmente') return false;
+  if (novoStatus === 'Em Débito') return true;
+  if (statusAtual === 'Em Débito' && novoStatus === 'Aguardando Sinal') return false;
+  return (ORDEM_PAGAMENTO[novoStatus] || 1) >= (ORDEM_PAGAMENTO[statusAtual] || 1);
+}
+
 class OrdemServicoController {
   // --- TRANSIÇÃO AUTOMÁTICA: 'Aguardando Prova' -> 'Em Produção' NO HORÁRIO DA PROVA ---
   static async sincronizarProvasVencidas() {
@@ -134,8 +151,8 @@ class OrdemServicoController {
 
       await dispararNotificacao({
         idUsuario: id_costureira,
-        titulo: 'Proposta Aceita! 🎉',
-        mensagem: `A cliente aprovou sua proposta para o Pedido #${id_pedido}. O serviço está marcado como Em Produção!`,
+        titulo: 'Proposta Aceita!',
+        mensagem: `O/a cliente aprovou sua proposta para o Pedido #${id_pedido}. O serviço está marcado como Em Produção!`,
         tipo: 'status',
         idPedido: id_pedido,
         forcarWhatsapp: true
@@ -168,8 +185,8 @@ class OrdemServicoController {
       if (id_costureira) {
         await dispararNotificacao({
           idUsuario: id_costureira,
-          titulo: 'Proposta Recusada ❌',
-          mensagem: `O cliente recusou a proposta enviada para o Pedido #${id_pedido}. Você pode enviar uma nova proposta revisada pelo chat.`,
+          titulo: 'Proposta Recusada',
+          mensagem: `O/a cliente recusou a proposta enviada para o Pedido #${id_pedido}. Você pode enviar uma nova proposta revisada pelo chat.`,
           tipo: 'proposta',
           idPedido: id_pedido,
           forcarWhatsapp: true
@@ -183,7 +200,7 @@ class OrdemServicoController {
     }
   }
 
-  // --- ACEITE DE PROPOSTA DE PROVA PELA CLIENTE (HORÁRIO OBRIGATÓRIO) ---
+  // --- ACEITE DE PROPOSTA DE PROVA PELO/A CLIENTE (HORÁRIO OBRIGATÓRIO) ---
   static async aceitarProva(req, res) {
     const {
       id_pedido,
@@ -244,7 +261,7 @@ class OrdemServicoController {
       const [ano, mes, dia] = dataProva.split('-');
       const dataFormatada = `${dia}/${mes}/${ano}`;
       const localTexto = local ? `\nLocal: ${local}` : '';
-      const msgTexto = `📅 PROVA CONFIRMADA!\nA cliente aceitou o agendamento para o dia ${dataFormatada} às ${horarioTexto}.${localTexto}`;
+      const msgTexto = `PROVA CONFIRMADA!\nO/a cliente aceitou o agendamento para o dia ${dataFormatada} às ${horarioTexto}.${localTexto}`;
 
       await client.query(
         `INSERT INTO mensagens_chat (id_pedido, id_remetente, conteudo, tipo_mensagem) VALUES ($1, $2, $3, 'texto')`,
@@ -256,8 +273,8 @@ class OrdemServicoController {
       if (id_costureira) {
         await dispararNotificacao({
           idUsuario: id_costureira,
-          titulo: 'Prova Confirmada pela Cliente! 🗓️',
-          mensagem: `A cliente confirmou a prova do Pedido #${id_pedido} para ${dataFormatada} às ${horarioTexto}.`,
+          titulo: 'Prova Confirmada!',
+          mensagem: `O/a cliente confirmou a prova do Pedido #${id_pedido} para ${dataFormatada} às ${horarioTexto}.`,
           tipo: 'prova',
           idPedido: id_pedido,
           forcarWhatsapp: true
@@ -274,7 +291,7 @@ class OrdemServicoController {
     }
   }
 
-  // --- RECUSA DE PROPOSTA DE PROVA PELA CLIENTE ---
+  // --- RECUSA DE PROPOSTA DE PROVA PELO/A CLIENTE ---
   static async recusarProva(req, res) {
     const { id_pedido, id_mensagem, id_costureira } = req.body;
     if (!id_pedido || !id_mensagem) {
@@ -292,8 +309,8 @@ class OrdemServicoController {
       if (id_costureira) {
         await dispararNotificacao({
           idUsuario: id_costureira,
-          titulo: 'Sugestão de Prova Recusada ❌',
-          mensagem: `A cliente não pôde confirmar o horário sugerido para a prova do Pedido #${id_pedido}. Combine outra data pelo chat.`,
+          titulo: 'Sugestão de Prova Recusada',
+          mensagem: `O/a cliente não pôde confirmar o horário sugerido para a prova do Pedido #${id_pedido}. Combine outra data pelo chat.`,
           tipo: 'prova',
           idPedido: id_pedido,
           forcarWhatsapp: true
@@ -352,8 +369,8 @@ class OrdemServicoController {
 
       const obsLimpa = (observacao || '').trim();
       const msgTexto = obsLimpa
-        ? `⚠️ PROVA CANCELADA!\nO agendamento da prova do Pedido #${id_pedido} foi cancelado.\nObservação: "${obsLimpa}"\nAlinhe uma nova data no chat.`
-        : `⚠️ PROVA CANCELADA!\nO agendamento da prova do Pedido #${id_pedido} foi cancelado. Alinhe uma nova data no chat.`;
+        ? `PROVA CANCELADA!\nO agendamento da prova do Pedido #${id_pedido} foi cancelado.\nObservação: "${obsLimpa}"\nAlinhe uma nova data no chat.`
+        : `PROVA CANCELADA!\nO agendamento da prova do Pedido #${id_pedido} foi cancelado. Alinhe uma nova data no chat.`;
 
       await client.query(
         `INSERT INTO mensagens_chat (id_pedido, id_remetente, conteudo, tipo_mensagem) VALUES ($1, $2, $3, 'texto')`,
@@ -372,7 +389,7 @@ class OrdemServicoController {
       if (idDestinatario) {
         await dispararNotificacao({
           idUsuario: idDestinatario,
-          titulo: 'Prova Cancelada ⚠️',
+          titulo: 'Prova Cancelada',
           mensagem: obsLimpa
             ? `A prova do Pedido #${id_pedido} foi cancelada. Observação: "${obsLimpa}"`
             : `A prova do Pedido #${id_pedido} foi cancelada. Verifique as mensagens no chat.`,
@@ -392,7 +409,6 @@ class OrdemServicoController {
     }
   }
 
-  // --- FLUXO DE CONCLUSÃO E ENTREGA ---
   // --- FLUXO DE CONCLUSÃO E ENTREGA ---
   static async concluirServico(req, res) {
     const { id_pedido, id_costureira } = req.body;
@@ -421,7 +437,7 @@ class OrdemServicoController {
       await client.query(`UPDATE ordens_servico SET status_kanban = 'Concluído' WHERE id_pedido = $1;`, [id_pedido]);
       await client.query(`UPDATE pedidos SET status_pedido = 'Concluído' WHERE id_pedido = $1;`, [id_pedido]);
 
-      const msgTexto = `🎉 PEÇA CONCLUÍDA!\nA costureira finalizou o seu pedido. Entre em contato para alinhar a retirada/entrega e confirme o recebimento assim que estiver com a peça em mãos.`;
+      const msgTexto = `PEÇA CONCLUÍDA!\nO serviço do seu pedido foi finalizado. Entre em contato para alinhar a retirada/entrega e confirme o recebimento assim que estiver com a peça em mãos.`;
       await client.query(
         `INSERT INTO mensagens_chat (id_pedido, id_remetente, conteudo, tipo_mensagem) VALUES ($1, $2, $3, 'texto')`,
         [id_pedido, id_costureira || null, msgTexto]
@@ -435,8 +451,8 @@ class OrdemServicoController {
       if (idCliente) {
         await dispararNotificacao({
           idUsuario: idCliente,
-          titulo: 'Sua Peça está Pronta! 🎉',
-          mensagem: `A costureira concluiu o Pedido #${id_pedido}. Alinhe a entrega e confirme o recebimento no aplicativo.`,
+          titulo: 'Sua Peça está Pronta!',
+          mensagem: `O serviço do Pedido #${id_pedido} foi concluído. Alinhe a entrega e confirme o recebimento no aplicativo.`,
           tipo: 'status',
           idPedido: id_pedido,
           forcarWhatsapp: true
@@ -477,7 +493,7 @@ class OrdemServicoController {
 
       const ordemServico = osResult.rows[0];
 
-      const msgTexto = `✅ ENTREGA CONFIRMADA!\nO cliente confirmou o recebimento da peça. O pedido foi finalizado com sucesso!`;
+      const msgTexto = `ENTREGA CONFIRMADA!\nO/a cliente confirmou o recebimento da peça. O pedido foi finalizado com sucesso!`;
       await client.query(
         `INSERT INTO mensagens_chat (id_pedido, id_remetente, conteudo, tipo_mensagem) VALUES ($1, $2, $3, 'texto')`,
         [id_pedido, id_cliente || null, msgTexto]
@@ -488,8 +504,8 @@ class OrdemServicoController {
       if (ordemServico?.id_costureira) {
         await dispararNotificacao({
           idUsuario: ordemServico.id_costureira,
-          titulo: 'Entrega Confirmada! ⭐',
-          mensagem: `O cliente confirmou o recebimento do Pedido #${id_pedido}. O serviço foi finalizado com sucesso!`,
+          titulo: 'Entrega Confirmada!',
+          mensagem: `O/a cliente confirmou o recebimento do Pedido #${id_pedido}. O serviço foi finalizado com sucesso!`,
           tipo: 'status',
           idPedido: id_pedido,
           forcarWhatsapp: true
@@ -547,7 +563,7 @@ class OrdemServicoController {
       if (status_kanban === 'Concluído' && idCliente) {
         await dispararNotificacao({
           idUsuario: idCliente,
-          titulo: 'Seu Pedido está Pronto! ⭐',
+          titulo: 'Seu Pedido está Pronto!',
           mensagem: `Sua peça do Pedido #${ordem.id_pedido} foi concluída. Confirme a entrega e deixe sua avaliação!`,
           tipo: 'avaliacao',
           idPedido: ordem.id_pedido,
@@ -569,20 +585,117 @@ class OrdemServicoController {
     const idOrdem = req.params.idOrdem || req.params.id;
     const { status_pagamento } = req.body;
 
-    const statusValidos = ['Aguardando Sinal', 'Sinal Pago', 'Pago Integralmente', 'Em Débito'];
+    const statusValidos = [
+      'Aguardando Sinal',
+      'Sinal Pago',
+      'Aguardando Restante',
+      'Aguardando Valor Total',
+      'Pago Integralmente',
+      'Em Débito'
+    ];
     if (!status_pagamento || !statusValidos.includes(status_pagamento)) {
       return res.status(400).json({ erro: 'Status de pagamento inválido.' });
     }
 
     try {
-      const ordem = await OrdemServicoModel.atualizarPagamento(idOrdem, status_pagamento);
-      if (!ordem) {
+      const ordemAtual = await OrdemServicoModel.buscarPorId(idOrdem);
+      if (!ordemAtual) {
         return res.status(404).json({ erro: 'Ordem de serviço não encontrada.' });
       }
+
+      if (!validarTransicaoPagamento(ordemAtual.status_pagamento, status_pagamento)) {
+        return res.status(400).json({ erro: 'Não é permitido retornar o pagamento para uma etapa anterior.' });
+      }
+
+      const ordem = await OrdemServicoModel.atualizarPagamento(idOrdem, status_pagamento);
       return res.json({ mensagem: 'Status de pagamento atualizado!', status_pagamento, ordem });
     } catch (err) {
       console.error('Erro ao atualizar status de pagamento:', err);
       return res.status(500).json({ erro: 'Erro interno ao atualizar status de pagamento.' });
+    }
+  }
+
+  static async buscarPagamentoPorPedido(req, res) {
+    const { idPedido } = req.params;
+    try {
+      const os = await OrdemServicoModel.buscarPorPedido(idPedido);
+      if (!os) {
+        return res.json({ possui_os: false, status_pagamento: null });
+      }
+      return res.json({
+        possui_os: true,
+        id_ordem_servico: os.id_ordem_servico,
+        valor_total: Number(os.valor_total || 0),
+        valor_entrada: Number(os.valor_entrada || 0),
+        status_pagamento: os.status_pagamento
+      });
+    } catch (err) {
+      console.error('Erro ao buscar pagamento por pedido:', err);
+      return res.status(500).json({ erro: 'Erro ao consultar pagamento do pedido.' });
+    }
+  }
+
+  static async atualizarPagamentoPorPedido(req, res) {
+    const { idPedido } = req.params;
+    const { status_pagamento, id_costureira } = req.body;
+
+    const statusValidos = [
+      'Aguardando Sinal',
+      'Sinal Pago',
+      'Aguardando Restante',
+      'Aguardando Valor Total',
+      'Pago Integralmente',
+      'Em Débito'
+    ];
+    if (!status_pagamento || !statusValidos.includes(status_pagamento)) {
+      return res.status(400).json({ erro: 'Status de pagamento inválido.' });
+    }
+
+    const client = await pool.connect();
+    try {
+      await client.query('BEGIN');
+
+      const osAtual = await OrdemServicoModel.buscarPorPedido(idPedido);
+      if (!osAtual) {
+        await client.query('ROLLBACK');
+        return res.status(404).json({ erro: 'Ordem de serviço não encontrada para este pedido.' });
+      }
+
+      if (!validarTransicaoPagamento(osAtual.status_pagamento, status_pagamento)) {
+        await client.query('ROLLBACK');
+        return res.status(400).json({ erro: 'Não é permitido retornar o pagamento para uma etapa anterior.' });
+      }
+
+      const ordem = await OrdemServicoModel.atualizarPagamentoPorPedido(idPedido, status_pagamento);
+
+      // Registra no histórico do chat para que o/a cliente acompanhe a atualização
+      await client.query(
+        `INSERT INTO mensagens_chat (id_pedido, id_remetente, conteudo, tipo_mensagem)
+         VALUES ($1, $2, $3, 'texto')`,
+        [idPedido, id_costureira || ordem.id_costureira || null, `STATUS DO PAGAMENTO ATUALIZADO: ${status_pagamento}.`]
+      );
+
+      await client.query('COMMIT');
+
+      const idCliente = await OrdemServicoModel.buscarClientePorPedido(idPedido);
+      if (idCliente) {
+        await dispararNotificacao({
+          idUsuario: idCliente,
+          titulo: 'Status de Pagamento Atualizado',
+          mensagem: `O status de pagamento do Pedido #${idPedido} foi atualizado para: "${status_pagamento}".`,
+          tipo: 'status',
+          idPedido: idPedido,
+          forcarWhatsapp: false
+        });
+      }
+
+      return res.json({ mensagem: 'Status de pagamento atualizado!', status_pagamento, ordem });
+    } catch (err) {
+      await client.query('ROLLBACK');
+      console.error('Erro ao atualizar pagamento por pedido:', err);
+      return res.status(500).json({ erro: 'Erro interno ao atualizar status de pagamento.' });
+    } finally {
+      client.release();
     }
   }
 
@@ -604,8 +717,8 @@ class OrdemServicoController {
       if (idCliente) {
         await dispararNotificacao({
           idUsuario: idCliente,
-          titulo: 'Nova Foto do Andamento da Peça 📸',
-          mensagem: `A costureira adicionou uma atualização visual no Pedido #${resultado.ordem.id_pedido}.`,
+          titulo: 'Nova Foto do Andamento da Peça',
+          mensagem: `Uma nova atualização visual foi adicionada ao Pedido #${resultado.ordem.id_pedido}.`,
           tipo: 'status',
           idPedido: resultado.ordem.id_pedido,
           forcarWhatsapp: false

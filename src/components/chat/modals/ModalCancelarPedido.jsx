@@ -81,7 +81,7 @@ function ModalCancelarPedido({ isOpen, onClose, onConfirmar, isCostureira, envia
           <strong style={{ display: 'block', color: '#E65100', marginBottom: '4px' }}>
             Aviso Importante da Plataforma
           </strong>
-          O <strong>Ateliê Entre Linhas</strong> atua apenas como ponte de contato entre clientes e costureiras,{' '}
+          O <strong>Ateliê Entre Linhas</strong> atua apenas como ponte de contato entre clientes e profissionais de costura,{' '}
           <strong>não se responsabilizando</strong> por acordos combinados diretamente entre as partes, entregas de materiais, prazos, valores ou eventuais imprevistos decorrentes do cancelamento.
         </div>
 
@@ -121,7 +121,7 @@ function ModalCancelarPedido({ isOpen, onClose, onConfirmar, isCostureira, envia
           />
           <span style={{ display: 'block', fontSize: '11.5px', color: '#666', marginTop: '5px', marginBottom: '16px' }}>
             Se você preencher este campo, a mensagem será enviada diretamente para{' '}
-            <strong>{isCostureira ? 'a cliente' : 'a costureira'}</strong> no chat e na notificação.
+            <strong>{isCostureira ? 'o/a cliente' : 'o(a) profissional de costura'}</strong> no chat e na notificação.
           </span>
 
           {erro && (

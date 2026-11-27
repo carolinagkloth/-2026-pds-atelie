@@ -1,4 +1,5 @@
 import React from 'react';
+import CardStatusPagamento from './CardStatusPagamento';
 import { exportarPDF, exportarTXT, formatarDataBR } from './utils/chatExport';
 
 const obterEstiloStatus = (status) => {
@@ -28,6 +29,7 @@ const obterEstiloStatus = (status) => {
 
 function ChatSidebar({
   orcamentoAtual,
+  statusPagamento,
   isCostureira,
   idCostureiraPedido,
   costureiraNome,
@@ -46,6 +48,7 @@ function ChatSidebar({
   onOpenAvaliacao,
   onCancelarPedido,
   onOpenMedidas,
+  onAlterarPagamento,
   onNavigate
 }) {
   const emAndamento = ['Em Produção', 'Aguardando Prova', 'Concluído'].includes(orcamentoAtual.status);
@@ -74,7 +77,7 @@ function ChatSidebar({
           <strong style={{ color: estiloStatus.color, fontSize: '14px' }}>{orcamentoAtual.status}</strong>
         </div>
 
-        {/* EXIBIÇÃO CONDICIONAL: NOME DO CLIENTE (para costureira) OU COSTUREIRA (para cliente) */}
+        {/* EXIBIÇÃO CONDICIONAL: NOME DO CLIENTE OU PROFISSIONAL RESPONSÁVEL */}
         {isCostureira ? (
           <div style={{ background: '#FAF6FA', border: '1px solid #EADCEB', borderRadius: '8px', padding: '12px', marginBottom: '15px' }}>
             <span style={{ fontSize: '11px', color: '#666', textTransform: 'uppercase', letterSpacing: '0.5px', fontWeight: 'bold', display: 'block' }}>
@@ -87,7 +90,7 @@ function ChatSidebar({
         ) : (
           <div style={{ background: '#FAF6FA', border: '1px solid #EADCEB', borderRadius: '8px', padding: '12px', marginBottom: '15px' }}>
             <span style={{ fontSize: '11px', color: '#666', textTransform: 'uppercase', letterSpacing: '0.5px', fontWeight: 'bold', display: 'block' }}>
-              Costureira Responsável:
+              Profissional Responsável:
             </span>
             <strong style={{ color: '#3E2445', fontSize: '14px', display: 'block', marginTop: '2px' }}>
               {nomeCostureiraExibir}
@@ -95,13 +98,13 @@ function ChatSidebar({
           </div>
         )}
 
-        {/* Botão de Perfil Público da Costureira (Visível apenas para a Cliente) */}
+        {/* Botão de Perfil Público (Visível apenas para o/a cliente) */}
         {!isCostureira && idCostureiraPedido && (
           <button
             onClick={() => onNavigate && onNavigate('portfolio', idCostureiraPedido)}
             style={{ width: '100%', padding: '9px', background: '#F4EFF5', color: '#3E2445', border: '1px solid #3E2445', borderRadius: '6px', fontWeight: 'bold', fontSize: '12px', marginBottom: '10px', cursor: 'pointer' }}
           >
-            👤 Ver Perfil da Costureira
+            Ver Perfil Profissional
           </button>
         )}
 
@@ -112,7 +115,7 @@ function ChatSidebar({
           </div>
         )}
 
-        {/* Cartão de Prova Agendada + Botão Cancelar Prova (Visível para Costureira e Cliente) */}
+        {/* Cartão de Prova Agendada + Botão Cancelar Prova */}
         {emAndamento && temProvaAgendada && (
           <div
             style={{
@@ -127,7 +130,7 @@ function ChatSidebar({
             }}
           >
             <strong style={{ display: 'block', color: '#E65100', marginBottom: '4px', fontSize: '13px' }}>
-              🗓️ Prova Agendada
+              Prova Agendada
             </strong>
             <div style={{ lineHeight: '1.4' }}>
               {dataProvaFormatada ? (
@@ -140,7 +143,7 @@ function ChatSidebar({
             </div>
             {provaAgendada?.local && (
               <div style={{ marginTop: '4px', fontSize: '12px', color: '#5D4037' }}>
-                <strong>📍 Local:</strong> {provaAgendada.local}
+                <strong>Local:</strong> {provaAgendada.local}
               </div>
             )}
             <button
@@ -170,7 +173,7 @@ function ChatSidebar({
           </button>
         )}
 
-        {/* Botões da Costureira (visíveis apenas após proposta aceita / contrato em andamento) */}
+        {/* Botões da área de costura (visíveis apenas após proposta aceita / contrato em andamento) */}
         {isCostureira && emAndamento && (
           <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
             {!temProvaAgendada && !temProvaPendente && (
@@ -191,52 +194,62 @@ function ChatSidebar({
                   textAlign: 'center'
                 }}
               >
-                ⏳ Sugestão de prova enviada — aguardando resposta da cliente.
+                Sugestão de prova enviada — aguardando resposta do/a cliente.
               </div>
             )}
 
             {orcamentoAtual.status === 'Em Produção' && (
               <button onClick={onConcluirServico} style={{ width: '100%', padding: '9px', background: '#1565C0', color: '#fff', border: 'none', borderRadius: '6px', fontWeight: 'bold', fontSize: '13px', cursor: 'pointer' }}>
-                ✅ Concluir Peça (Pronto p/ Entrega)
+                Concluir Peça (Pronto p/ Entrega)
               </button>
             )}
           </div>
         )}
 
-        {/* Confirmação de Recebimento pela Cliente */}
+        {/* Confirmação de Recebimento pelo/a Cliente */}
         {!isCostureira && orcamentoAtual.status === 'Concluído' && (
           <button onClick={onConfirmarEntrega} style={{ width: '100%', padding: '10px', background: '#2E7D32', color: '#fff', border: 'none', borderRadius: '6px', fontWeight: 'bold', fontSize: '13px', marginTop: '10px', cursor: 'pointer' }}>
-            🎉 Confirmar Recebimento da Peça
+            Confirmar Recebimento da Peça
           </button>
         )}
 
-        {/* Botão de Avaliação Posterior (Visível para a Cliente se Entregue e ainda não avaliado) */}
+        {/* Botão de Avaliação Posterior */}
         {!isCostureira && orcamentoAtual.status === 'Entregue' && !jaAvaliado && (
           <button
             onClick={onOpenAvaliacao}
             style={{ width: '100%', padding: '10px', background: '#FFB400', color: '#3E2445', border: 'none', borderRadius: '6px', fontWeight: 'bold', fontSize: '13px', marginTop: '10px', cursor: 'pointer' }}
           >
-            ⭐ Avaliar Serviço da Costureira
+            Avaliar Serviço
           </button>
         )}
 
         {/* Cancelamento disponível apenas enquanto o contrato estiver em andamento */}
         {emAndamento && (
           <button onClick={onCancelarPedido} style={{ width: '100%', padding: '9px', background: '#C62828', color: '#fff', border: 'none', borderRadius: '6px', fontWeight: 'bold', fontSize: '13px', marginTop: '10px', cursor: 'pointer' }}>
-            ❌ {isCostureira ? 'Cancelar / Desistir do Pedido' : 'Cancelar Pedido'}
+            {isCostureira ? 'Cancelar / Desistir do Pedido' : 'Cancelar Pedido'}
           </button>
         )}
 
         {/* Exportações */}
         <div style={{ marginTop: '15px', borderTop: '1px solid #eee', paddingTop: '15px', display: 'flex', flexDirection: 'column', gap: '8px' }}>
           <button onClick={() => exportarPDF({ idPedido, orcamentoAtual, medidas, pedido, costureiraNome: nomeCostureiraExibir })} style={{ width: '100%', padding: '8px', background: '#F4EFF5', color: '#3E2445', border: '1px solid #3E2445', borderRadius: '6px', fontWeight: 'bold', fontSize: '12px', cursor: 'pointer' }}>
-            📄 Exportar PDF (Contrato/Comprovante)
+            Exportar PDF (Contrato/Comprovante)
           </button>
           <button onClick={() => exportarTXT({ idPedido, orcamentoAtual, medidas, pedido, costureiraNome: nomeCostureiraExibir })} style={{ width: '100%', padding: '8px', background: '#fff', color: '#555', border: '1px solid #ccc', borderRadius: '6px', fontWeight: 'bold', fontSize: '12px', cursor: 'pointer' }}>
-            📝 Baixar Ficha e Orçamento (TXT)
+            Baixar Ficha e Orçamento (TXT)
           </button>
         </div>
       </div>
+
+      {/* Status do Pagamento */}
+      <CardStatusPagamento
+        statusPedido={orcamentoAtual.status}
+        statusPagamento={statusPagamento}
+        valorTotal={orcamentoAtual.total}
+        valorEntrada={orcamentoAtual.entrada}
+        isCostureira={isCostureira}
+        onAlterarPagamento={onAlterarPagamento}
+      />
 
       {/* Ficha de Medidas */}
       <div style={{ background: '#fff', borderRadius: '12px', padding: '20px', boxShadow: '0 4px 16px rgba(62, 36, 69, 0.12)' }}>
