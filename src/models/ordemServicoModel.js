@@ -10,7 +10,11 @@ async function garantirColunasOS(dbClient) {
     await db.query(`ALTER TABLE ordens_servico ADD COLUMN IF NOT EXISTS data_entrega DATE;`);
     await db.query(`ALTER TABLE ordens_servico ADD COLUMN IF NOT EXISTS status_pagamento VARCHAR(40) DEFAULT 'Aguardando Sinal';`);
     await db.query(`ALTER TABLE ordens_servico ADD COLUMN IF NOT EXISTS fotos_andamento TEXT DEFAULT '[]';`);
-    if (!dbClient) colunasOSVerificadas = true;
+
+    if (!dbClient) {
+      await pool.query(`CREATE UNIQUE INDEX IF NOT EXISTS idx_ordens_servico_id_pedido_unique ON ordens_servico (id_pedido);`);
+      colunasOSVerificadas = true;
+    }
   } catch (err) {
     console.error('Erro ao verificar colunas de ordens_servico:', err);
   }
@@ -45,30 +49,48 @@ class OrdemServicoModel {
     await garantirColunasOS(client);
     const statusPagInicial = Number(valor_entrada) > 0 ? 'Aguardando Sinal' : 'Em Débito';
 
-    const queryOS = `
-      INSERT INTO ordens_servico (id_pedido, id_costureira, valor_total, previsao_entrega, valor_entrada, status_kanban, status_pagamento, fotos_andamento)
-      VALUES ($1, $2, $3, $4, $5, 'Em Produção', $6, '[]')
-      ON CONFLICT (id_pedido) DO UPDATE SET 
-        id_costureira = $2,
-        valor_total = $3, 
-        previsao_entrega = $4, 
-        valor_entrada = $5, 
-        status_kanban = 'Em Produção',
-        status_pagamento = COALESCE(ordens_servico.status_pagamento, $6)
-      RETURNING *;
-    `;
-    const osResult = await client.query(queryOS, [
-      id_pedido,
-      id_costureira,
-      valor_total || 0,
-      previsao_entrega || null,
-      valor_entrada || 0,
-      statusPagInicial
-    ]);
+    const updateRes = await client.query(
+      `UPDATE ordens_servico
+       SET id_costureira = $2,
+           valor_total = $3,
+           previsao_entrega = $4,
+           valor_entrada = $5,
+           status_kanban = 'Em Produção',
+           status_pagamento = COALESCE(status_pagamento, $6)
+       WHERE id_pedido = $1
+       RETURNING *;`,
+      [
+        id_pedido,
+        id_costureira,
+        valor_total || 0,
+        previsao_entrega || null,
+        valor_entrada || 0,
+        statusPagInicial
+      ]
+    );
+
+    let osRow = updateRes.rows[0];
+
+    if (!osRow) {
+      const insertRes = await client.query(
+        `INSERT INTO ordens_servico (id_pedido, id_costureira, valor_total, previsao_entrega, valor_entrada, status_kanban, status_pagamento, fotos_andamento)
+         VALUES ($1, $2, $3, $4, $5, 'Em Produção', $6, '[]')
+         RETURNING *;`,
+        [
+          id_pedido,
+          id_costureira,
+          valor_total || 0,
+          previsao_entrega || null,
+          valor_entrada || 0,
+          statusPagInicial
+        ]
+      );
+      osRow = insertRes.rows[0];
+    }
 
     await client.query(`UPDATE pedidos SET status_pedido = 'Em Produção' WHERE id_pedido = $1`, [id_pedido]);
 
-    return osResult.rows[0];
+    return osRow;
   }
 
   static async listarTodos() {
