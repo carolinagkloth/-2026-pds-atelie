@@ -13,7 +13,7 @@ import MeusChats from './components/MeusChats.jsx';
 import Portfolio from './components/Portfolio.jsx';
 import BotaoNotificacoes from './components/BotaoNotificacoes.jsx';
 import ConfiguracoesNotificacoes from './components/ConfiguracoesNotificacoes.jsx';
-import './styles/Responsivo.css';
+import "./styles/responsivo.css";
 
 function App() {
   const [usuarioLogado, setUsuarioLogado] = useState(() => {
