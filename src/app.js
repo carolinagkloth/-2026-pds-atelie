@@ -26,6 +26,7 @@ const errorMiddleware = require('./middlewares/errorMiddleware');
 
 // Registro das Rotas da API
 app.use('/api/usuario', usuarioRoutes);
+app.use('/api', usuarioRoutes);
 app.use('/api/pedidos', pedidoRoutes);
 app.use('/api/ordens-servico', ordemServicoRoutes);
 app.use('/api/portfolio', portfolioRoutes);
