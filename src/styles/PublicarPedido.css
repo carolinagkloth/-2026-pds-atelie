@@ -1,0 +1,161 @@
+.publicar-card {
+  width: 100%;
+  max-width: 720px;
+  margin: 35px auto;
+  padding: 36px;
+  background: #ffffff;
+  border-radius: 18px;
+  box-shadow: 0 8px 28px rgba(62, 36, 69, 0.12);
+}
+
+.publicar-card h2 {
+  margin: 0 0 8px;
+  color: #3e2445;
+  font-size: 28px;
+  text-align: center;
+}
+
+.publicar-subtitle {
+  margin-bottom: 26px;
+  color: #666;
+  font-size: 14px;
+  line-height: 1.5;
+  text-align: center;
+}
+
+.publicar-erro {
+  margin-bottom: 16px;
+  padding: 11px 14px;
+  border-radius: 8px;
+  background: #fff1f1;
+  color: #b3261e;
+  font-size: 14px;
+}
+
+.publicar-form-group {
+  margin-bottom: 18px;
+}
+
+.publicar-form-group label {
+  display: block;
+  margin-bottom: 6px;
+  color: #3e2445;
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.publicar-form-group input,
+.publicar-form-group select,
+.publicar-form-group textarea {
+  width: 100%;
+  padding: 12px 14px;
+  box-sizing: border-box;
+  border: 1px solid #d8cfd5;
+  border-radius: 8px;
+  background: #fff;
+  font-family: inherit;
+  font-size: 14px;
+  outline: none;
+}
+
+.publicar-form-group textarea {
+  resize: vertical;
+  min-height: 120px;
+}
+
+.publicar-form-group input:focus,
+.publicar-form-group select:focus,
+.publicar-form-group textarea:focus {
+  border-color: #917687;
+  box-shadow: 0 0 0 3px rgba(145, 118, 135, 0.12);
+}
+
+.publicar-duas-colunas {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+}
+
+.publicar-upload input[type="file"] {
+  background: #f8f6f7;
+  cursor: pointer;
+}
+
+.publicar-preview {
+  margin-top: 14px;
+  text-align: center;
+}
+
+.publicar-preview p {
+  margin: 0 0 8px;
+  color: #777;
+  font-size: 12px;
+}
+
+.publicar-preview img {
+  max-width: 100%;
+  max-height: 220px;
+  border: 1px solid #ddd4da;
+  border-radius: 10px;
+  object-fit: contain;
+}
+
+.publicar-botoes {
+  display: flex;
+  gap: 12px;
+  margin-top: 25px;
+}
+
+.publicar-button-principal {
+  flex: 1;
+  padding: 13px 18px;
+  border: none;
+  border-radius: 8px;
+  background: #917687;
+  color: #fff;
+  font-size: 15px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: 0.2s;
+}
+
+.publicar-button-principal:hover {
+  background: #7a5b72;
+}
+
+.publicar-button-principal:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+}
+
+.publicar-button-cancelar {
+  padding: 13px 22px;
+  border: none;
+  border-radius: 8px;
+  background: #eee9ec;
+  color: #5f4c59;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.publicar-button-cancelar:hover {
+  background: #ddd4da;
+}
+
+@media (max-width: 650px) {
+  .publicar-card {
+    padding: 26px 20px;
+  }
+
+  .publicar-duas-colunas {
+    grid-template-columns: 1fr;
+  }
+
+  .publicar-botoes {
+    flex-direction: column;
+  }
+
+  .publicar-button-cancelar {
+    width: 100%;
+  }
+}

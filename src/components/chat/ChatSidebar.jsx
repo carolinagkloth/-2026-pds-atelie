@@ -1,0 +1,271 @@
+import React from 'react';
+import CardStatusPagamento from './CardStatusPagamento';
+import { exportarPDF, exportarTXT, formatarDataBR } from './utils/chatExport';
+
+const obterEstiloStatus = (status) => {
+  const s = (status || '').toLowerCase();
+
+  if (s === 'aberto' || s === 'disponível') {
+    return { background: '#E8F5E9', border: '1px solid #A5D6A7', color: '#2E7D32' };
+  }
+  if (s === 'aguardando prova') {
+    return { background: '#FFF3E0', border: '1px solid #FFCC80', color: '#E65100' };
+  }
+  if (s === 'em produção' || s === 'a fazer') {
+    return { background: '#E3F2FD', border: '1px solid #90CAF9', color: '#1565C0' };
+  }
+  if (s === 'concluído') {
+    return { background: '#E0F2F1', border: '1px solid #80CBC4', color: '#00695C' };
+  }
+  if (s === 'entregue') {
+    return { background: '#F3E5F5', border: '1px solid #CE93D8', color: '#6A1B9A' };
+  }
+  if (s === 'cancelado') {
+    return { background: '#FFEBEE', border: '1px solid #EF9A9A', color: '#C62828' };
+  }
+
+  return { background: '#F5F5F5', border: '1px solid #E0E0E0', color: '#616161' };
+};
+
+function ChatSidebar({
+  orcamentoAtual,
+  statusPagamento,
+  isCostureira,
+  idCostureiraPedido,
+  costureiraNome,
+  clienteNome,
+  medidas,
+  pedido,
+  idPedido,
+  jaAvaliado,
+  provaAgendada,
+  temProvaPendente,
+  onOpenProposta,
+  onOpenProva,
+  onCancelarProva,
+  onConcluirServico,
+  onConfirmarEntrega,
+  onOpenAvaliacao,
+  onCancelarPedido,
+  onOpenMedidas,
+  onAlterarPagamento,
+  onNavigate
+}) {
+  const emAndamento = ['Em Produção', 'Aguardando Prova', 'Concluído'].includes(orcamentoAtual.status);
+  const pedidoFinalizado = ['Cancelado', 'Entregue'].includes(orcamentoAtual.status);
+  const podeEnviarProposta = isCostureira && !emAndamento && !pedidoFinalizado;
+  const temProvaAgendada = orcamentoAtual.status === 'Aguardando Prova';
+
+  const nomeCostureiraExibir = costureiraNome || pedido?.costureiraNome || 'Não informada';
+  const nomeClienteExibir = clienteNome || pedido?.clienteNome || pedido?.nomeCliente || 'Cliente';
+  const estiloStatus = obterEstiloStatus(orcamentoAtual.status);
+
+  const dataProvaFormatada = provaAgendada?.dataProva ? formatarDataBR(provaAgendada.dataProva) : '';
+  const horarioProvaTexto = provaAgendada?.semPreferenciaHorario
+    ? 'horário a combinar'
+    : (provaAgendada?.horarioProva ? `às ${provaAgendada.horarioProva}` : '');
+
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+      
+      {/* Status & Detalhes do Pedido */}
+      <div style={{ background: '#fff', borderRadius: '12px', padding: '20px', boxShadow: '0 4px 16px rgba(62, 36, 69, 0.12)' }}>
+        <h3 style={{ margin: '0 0 15px 0', color: '#3E2445', fontSize: '17px' }}>Status do Pedido</h3>
+        
+        <div style={{ background: estiloStatus.background, border: estiloStatus.border, borderRadius: '8px', padding: '12px', marginBottom: '12px' }}>
+          <span style={{ fontSize: '12px', color: '#666', display: 'block', marginBottom: '2px' }}>Status Atual:</span>
+          <strong style={{ color: estiloStatus.color, fontSize: '14px' }}>{orcamentoAtual.status}</strong>
+        </div>
+
+        {/* EXIBIÇÃO CONDICIONAL: NOME DO CLIENTE OU PROFISSIONAL RESPONSÁVEL */}
+        {isCostureira ? (
+          <div style={{ background: '#FAF6FA', border: '1px solid #EADCEB', borderRadius: '8px', padding: '12px', marginBottom: '15px' }}>
+            <span style={{ fontSize: '11px', color: '#666', textTransform: 'uppercase', letterSpacing: '0.5px', fontWeight: 'bold', display: 'block' }}>
+              Cliente:
+            </span>
+            <strong style={{ color: '#3E2445', fontSize: '14px', display: 'block', marginTop: '2px' }}>
+              {nomeClienteExibir}
+            </strong>
+          </div>
+        ) : (
+          <div style={{ background: '#FAF6FA', border: '1px solid #EADCEB', borderRadius: '8px', padding: '12px', marginBottom: '15px' }}>
+            <span style={{ fontSize: '11px', color: '#666', textTransform: 'uppercase', letterSpacing: '0.5px', fontWeight: 'bold', display: 'block' }}>
+              Profissional Responsável:
+            </span>
+            <strong style={{ color: '#3E2445', fontSize: '14px', display: 'block', marginTop: '2px' }}>
+              {nomeCostureiraExibir}
+            </strong>
+          </div>
+        )}
+
+        {/* Botão de Perfil Público (Visível apenas para o/a cliente) */}
+        {!isCostureira && idCostureiraPedido && (
+          <button
+            onClick={() => onNavigate && onNavigate('portfolio', idCostureiraPedido)}
+            style={{ width: '100%', padding: '9px', background: '#F4EFF5', color: '#3E2445', border: '1px solid #3E2445', borderRadius: '6px', fontWeight: 'bold', fontSize: '12px', marginBottom: '10px', cursor: 'pointer' }}
+          >
+            Ver Perfil Profissional
+          </button>
+        )}
+
+        {/* Previsão de Entrega */}
+        {orcamentoAtual.prazo && (
+          <div style={{ marginBottom: '15px', fontSize: '12px', color: '#555' }}>
+            <strong>Prazo de Entrega:</strong> {formatarDataBR(orcamentoAtual.prazo)} {orcamentoAtual.horarioEntrega ? `às ${orcamentoAtual.horarioEntrega}` : ''}
+          </div>
+        )}
+
+        {/* Cartão de Prova Agendada + Botão Cancelar Prova */}
+        {emAndamento && temProvaAgendada && (
+          <div
+            style={{
+              background: '#FFF8E1',
+              border: '1px solid #FFCC80',
+              borderLeft: '4px solid #E65100',
+              borderRadius: '8px',
+              padding: '12px',
+              marginBottom: '12px',
+              fontSize: '12.5px',
+              color: '#4E342E'
+            }}
+          >
+            <strong style={{ display: 'block', color: '#E65100', marginBottom: '4px', fontSize: '13px' }}>
+              Prova Agendada
+            </strong>
+            <div style={{ lineHeight: '1.4' }}>
+              {dataProvaFormatada ? (
+                <>
+                  Em <strong>{dataProvaFormatada}</strong> {horarioProvaTexto ? `(${horarioProvaTexto})` : ''} você tem uma prova agendada.
+                </>
+              ) : (
+                <>Você possui uma prova agendada para este pedido.</>
+              )}
+            </div>
+            {provaAgendada?.local && (
+              <div style={{ marginTop: '4px', fontSize: '12px', color: '#5D4037' }}>
+                <strong>Local:</strong> {provaAgendada.local}
+              </div>
+            )}
+            <button
+              type="button"
+              onClick={onCancelarProva}
+              style={{
+                width: '100%',
+                marginTop: '10px',
+                padding: '8px',
+                background: '#fff',
+                color: '#C62828',
+                border: '1px solid #C62828',
+                borderRadius: '6px',
+                fontWeight: 'bold',
+                fontSize: '12px',
+                cursor: 'pointer'
+              }}
+            >
+              Cancelar Prova
+            </button>
+          </div>
+        )}
+
+        {podeEnviarProposta && (
+          <button onClick={onOpenProposta} style={{ width: '100%', padding: '10px', background: '#3E2445', color: '#fff', border: 'none', borderRadius: '6px', fontWeight: 'bold', fontSize: '13px', marginBottom: '10px', cursor: 'pointer' }}>
+            + Enviar Orçamento
+          </button>
+        )}
+
+        {/* Botões da área de costura (visíveis apenas após proposta aceita / contrato em andamento) */}
+        {isCostureira && emAndamento && (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+            {!temProvaAgendada && !temProvaPendente && (
+              <button onClick={onOpenProva} style={{ width: '100%', padding: '9px', background: '#2E7D32', color: '#fff', border: 'none', borderRadius: '6px', fontWeight: 'bold', fontSize: '13px', cursor: 'pointer' }}>
+                Agendar Prova da Peça
+              </button>
+            )}
+
+            {!temProvaAgendada && temProvaPendente && (
+              <div
+                style={{
+                  background: '#FAF6FA',
+                  border: '1px solid #EADCEB',
+                  borderRadius: '6px',
+                  padding: '8px 10px',
+                  fontSize: '12px',
+                  color: '#5A3E63',
+                  textAlign: 'center'
+                }}
+              >
+                Sugestão de prova enviada — aguardando resposta do/a cliente.
+              </div>
+            )}
+
+            {orcamentoAtual.status === 'Em Produção' && (
+              <button onClick={onConcluirServico} style={{ width: '100%', padding: '9px', background: '#1565C0', color: '#fff', border: 'none', borderRadius: '6px', fontWeight: 'bold', fontSize: '13px', cursor: 'pointer' }}>
+                Concluir Peça (Pronto p/ Entrega)
+              </button>
+            )}
+          </div>
+        )}
+
+        {/* Confirmação de Recebimento pelo/a Cliente */}
+        {!isCostureira && orcamentoAtual.status === 'Concluído' && (
+          <button onClick={onConfirmarEntrega} style={{ width: '100%', padding: '10px', background: '#2E7D32', color: '#fff', border: 'none', borderRadius: '6px', fontWeight: 'bold', fontSize: '13px', marginTop: '10px', cursor: 'pointer' }}>
+            Confirmar Recebimento da Peça
+          </button>
+        )}
+
+        {/* Botão de Avaliação Posterior */}
+        {!isCostureira && orcamentoAtual.status === 'Entregue' && !jaAvaliado && (
+          <button
+            onClick={onOpenAvaliacao}
+            style={{ width: '100%', padding: '10px', background: '#FFB400', color: '#3E2445', border: 'none', borderRadius: '6px', fontWeight: 'bold', fontSize: '13px', marginTop: '10px', cursor: 'pointer' }}
+          >
+            Avaliar Serviço
+          </button>
+        )}
+
+        {/* Cancelamento disponível apenas enquanto o contrato estiver em andamento */}
+        {emAndamento && (
+          <button onClick={onCancelarPedido} style={{ width: '100%', padding: '9px', background: '#C62828', color: '#fff', border: 'none', borderRadius: '6px', fontWeight: 'bold', fontSize: '13px', marginTop: '10px', cursor: 'pointer' }}>
+            {isCostureira ? 'Cancelar / Desistir do Pedido' : 'Cancelar Pedido'}
+          </button>
+        )}
+
+        {/* Exportações */}
+        <div style={{ marginTop: '15px', borderTop: '1px solid #eee', paddingTop: '15px', display: 'flex', flexDirection: 'column', gap: '8px' }}>
+          <button onClick={() => exportarPDF({ idPedido, orcamentoAtual, medidas, pedido, costureiraNome: nomeCostureiraExibir })} style={{ width: '100%', padding: '8px', background: '#F4EFF5', color: '#3E2445', border: '1px solid #3E2445', borderRadius: '6px', fontWeight: 'bold', fontSize: '12px', cursor: 'pointer' }}>
+            Exportar PDF (Contrato/Comprovante)
+          </button>
+          <button onClick={() => exportarTXT({ idPedido, orcamentoAtual, medidas, pedido, costureiraNome: nomeCostureiraExibir })} style={{ width: '100%', padding: '8px', background: '#fff', color: '#555', border: '1px solid #ccc', borderRadius: '6px', fontWeight: 'bold', fontSize: '12px', cursor: 'pointer' }}>
+            Baixar Ficha e Orçamento (TXT)
+          </button>
+        </div>
+      </div>
+
+      {/* Status do Pagamento */}
+      <CardStatusPagamento
+        statusPedido={orcamentoAtual.status}
+        statusPagamento={statusPagamento}
+        valorTotal={orcamentoAtual.total}
+        valorEntrada={orcamentoAtual.entrada}
+        isCostureira={isCostureira}
+        onAlterarPagamento={onAlterarPagamento}
+      />
+
+      {/* Ficha de Medidas */}
+      <div style={{ background: '#fff', borderRadius: '12px', padding: '20px', boxShadow: '0 4px 16px rgba(62, 36, 69, 0.12)' }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px' }}>
+          <h3 style={{ margin: 0, color: '#3E2445', fontSize: '16px' }}>Ficha de Medidas</h3>
+          <button onClick={onOpenMedidas} style={{ background: 'none', border: 'none', color: '#3E2445', textDecoration: 'underline', cursor: 'pointer', fontSize: '12px', fontWeight: 'bold' }}>Editar</button>
+        </div>
+        <ul style={{ listStyle: 'disc', paddingLeft: '20px', margin: 0, fontSize: '13px', color: '#555' }}>
+          <li>Busto: {medidas.busto || '-'} cm</li>
+          <li>Cintura: {medidas.cintura || '-'} cm</li>
+          <li>Quadril: {medidas.quadril || '-'} cm</li>
+        </ul>
+      </div>
+
+    </div>
+  );
+}
+
+export default ChatSidebar;

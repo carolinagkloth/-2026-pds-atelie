@@ -1,0 +1,189 @@
+.perfil-card {
+  width: 100%;
+  max-width: 650px;
+  margin: 35px auto;
+  padding: 36px;
+  background: #ffffff;
+  border-radius: 18px;
+  box-shadow: 0 8px 28px rgba(62, 36, 69, 0.12);
+}
+
+.perfil-card h2 {
+  margin: 0 0 28px;
+  text-align: center;
+  color: #3e2445;
+  font-size: 28px;
+}
+
+.perfil-mensagem {
+  margin-bottom: 16px;
+  padding: 11px 14px;
+  border-radius: 8px;
+  background: #edf7ee;
+  color: #3f6f43;
+  font-size: 14px;
+}
+
+.perfil-erro {
+  margin-bottom: 16px;
+  padding: 11px 14px;
+  border-radius: 8px;
+  background: #fff1f1;
+  color: #b3261e;
+  font-size: 14px;
+}
+
+.perfil-foto-area {
+  margin-bottom: 28px;
+  text-align: center;
+}
+
+.perfil-foto {
+  width: 120px;
+  height: 120px;
+  margin: 0 auto 12px;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  border: 3px solid #917687;
+  border-radius: 50%;
+  background: #f3f2ed;
+}
+
+.perfil-foto img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.perfil-sem-foto {
+  color: #888;
+  font-size: 13px;
+}
+
+.perfil-alterar-foto {
+  display: inline-block;
+  padding: 8px 15px;
+  border-radius: 7px;
+  background: #917687;
+  color: white;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.perfil-alterar-foto:hover {
+  background: #7a5b72;
+}
+
+.perfil-form-group {
+  margin-bottom: 17px;
+}
+
+.perfil-form-group label {
+  display: block;
+  margin-bottom: 6px;
+  color: #3e2445;
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.perfil-form-group input,
+.perfil-form-group textarea {
+  width: 100%;
+  padding: 12px 14px;
+  box-sizing: border-box;
+
+  border: 1px solid #d8cfd5;
+  border-radius: 8px;
+
+  font-family: inherit;
+  font-size: 14px;
+  outline: none;
+}
+
+.perfil-form-group textarea {
+  resize: vertical;
+  min-height: 100px;
+}
+
+.perfil-form-group input:not(:disabled):focus,
+.perfil-form-group textarea:not(:disabled):focus {
+  border-color: #917687;
+  box-shadow: 0 0 0 3px rgba(145, 118, 135, 0.12);
+}
+
+.perfil-form-group input:disabled,
+.perfil-form-group textarea:disabled {
+  background: #f6f4f5;
+  color: #666;
+  cursor: default;
+}
+
+.perfil-email input:disabled {
+  background: #eee9ec;
+}
+
+.perfil-botoes {
+  display: flex;
+  gap: 12px;
+  margin-top: 25px;
+}
+
+.perfil-button-principal {
+  flex: 1;
+  padding: 12px 18px;
+  border: none;
+  border-radius: 8px;
+
+  background: #917687;
+  color: #fff;
+
+  font-size: 15px;
+  font-weight: 600;
+  cursor: pointer;
+
+  transition: 0.2s;
+}
+
+.perfil-button-principal:hover {
+  background: #7a5b72;
+}
+
+.perfil-button-principal:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+}
+
+.perfil-button-cancelar {
+  padding: 12px 20px;
+  border: none;
+  border-radius: 8px;
+
+  background: #eee9ec;
+  color: #5f4c59;
+
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.perfil-button-cancelar:hover {
+  background: #ddd4da;
+}
+
+@media (max-width: 600px) {
+  .perfil-card {
+    padding: 26px 20px;
+  }
+
+  .perfil-botoes {
+    flex-direction: column;
+  }
+
+  .perfil-button-cancelar {
+    width: 100%;
+  }
+}

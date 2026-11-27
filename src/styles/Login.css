@@ -1,0 +1,141 @@
+.login-page {
+  min-height: calc(100vh - 80px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 40px 20px;
+  background: #f3f2ed;
+}
+
+.login-card {
+  width: 100%;
+  max-width: 430px;
+  background: #ffffff;
+  padding: 36px;
+  border-radius: 18px;
+  box-shadow: 0 8px 28px rgba(62, 36, 69, 0.12);
+}
+
+.login-card h2 {
+  margin: 0 0 8px;
+  text-align: center;
+  color: #3e2445;
+  font-size: 28px;
+}
+
+.login-subtitle {
+  text-align: center;
+  color: #777;
+  margin-bottom: 24px;
+  font-size: 14px;
+}
+
+.login-google {
+  display: flex;
+  justify-content: center;
+  margin-bottom: 20px;
+}
+
+.login-separador {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin: 18px 0;
+  color: #999;
+  font-size: 12px;
+}
+
+.login-separador::before,
+.login-separador::after {
+  content: "";
+  flex: 1;
+  height: 1px;
+  background: #ddd;
+}
+
+.login-form-group {
+  margin-bottom: 16px;
+}
+
+.login-form-group label {
+  display: block;
+  margin-bottom: 6px;
+  color: #3e2445;
+  font-weight: 600;
+  font-size: 14px;
+}
+
+.login-form-group input {
+  width: 100%;
+  padding: 12px 14px;
+  border: 1px solid #d8cfd5;
+  border-radius: 8px;
+  box-sizing: border-box;
+  font-size: 14px;
+  outline: none;
+}
+
+.login-form-group input:focus {
+  border-color: #917687;
+  box-shadow: 0 0 0 3px rgba(145, 118, 135, 0.12);
+}
+
+.login-button {
+  width: 100%;
+  padding: 12px;
+  border: none;
+  border-radius: 8px;
+  background: #917687;
+  color: white;
+  font-size: 15px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: 0.2s;
+}
+
+.login-button:hover {
+  background: #7a5b72;
+}
+
+.login-button:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+}
+
+.login-erro {
+  background: #fff1f1;
+  color: #b3261e;
+  padding: 10px 12px;
+  border-radius: 8px;
+  margin-bottom: 16px;
+  font-size: 13px;
+}
+
+.login-links {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 18px;
+  font-size: 13px;
+}
+
+.login-links span {
+  cursor: pointer;
+  color: #7a5b72;
+}
+
+.login-links .criar-conta {
+  color: #3e2445;
+  font-weight: 600;
+}
+
+@media (max-width: 500px) {
+  .login-card {
+    padding: 26px 20px;
+  }
+
+  .login-links {
+    flex-direction: column;
+    gap: 12px;
+    text-align: center;
+  }
+}
