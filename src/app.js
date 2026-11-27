@@ -5,6 +5,15 @@ require('dotenv').config();
 
 const app = express();
 
+// Impede que falhas assíncronas (SMTP, WhatsApp, rede) derrubem o servidor
+process.on('uncaughtException', (err) => {
+  console.error('Exceção não capturada (servidor mantido ativo):', err.message);
+});
+
+process.on('unhandledRejection', (reason) => {
+  console.error('Promessa rejeitada não tratada (servidor mantido ativo):', reason);
+});
+
 // Middlewares globais
 app.use(cors());
 app.use(express.json({ limit: '10mb' }));
@@ -55,6 +64,11 @@ app.use('/api/notificacao', notificacaoRoutes);
 
 // Tratamento global de erros das rotas da API
 app.use(errorMiddleware);
+
+// Garante resposta JSON 404 para qualquer rota /api inexistente
+app.use('/api', (req, res) => {
+  res.status(404).json({ error: `Rota da API não encontrada: ${req.method} ${req.originalUrl}` });
+});
 
 // Servir o Front-end React (build do Vite) em produção
 const distPath = path.join(__dirname, '..', 'dist');
