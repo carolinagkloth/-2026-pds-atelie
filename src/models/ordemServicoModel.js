@@ -4,7 +4,7 @@ const UsuarioModel = require('./usuarioModel');
 let colunasOSVerificadas = false;
 
 async function garantirColunasOS(dbClient) {
-  if (colunasOSVerificadas && !dbClient) return;
+  if (colunasOSVerificadas) return;
   const db = dbClient || pool;
   try {
     await db.query(`ALTER TABLE ordens_servico ADD COLUMN IF NOT EXISTS data_entrega DATE;`);
@@ -13,6 +13,8 @@ async function garantirColunasOS(dbClient) {
 
     if (!dbClient) {
       await pool.query(`CREATE UNIQUE INDEX IF NOT EXISTS idx_ordens_servico_id_pedido_unique ON ordens_servico (id_pedido);`);
+      await pool.query(`CREATE INDEX IF NOT EXISTS idx_ordens_servico_id_costureira ON ordens_servico (id_costureira);`);
+      await pool.query(`CREATE INDEX IF NOT EXISTS idx_pedidos_id_cliente ON pedidos (id_cliente);`);
       colunasOSVerificadas = true;
     }
   } catch (err) {
@@ -97,7 +99,9 @@ class OrdemServicoModel {
     await garantirColunasOS();
     const query = `
       SELECT 
-        os.*,
+        os.id_ordem_servico, os.id_pedido, os.id_costureira, os.valor_total, os.valor_entrada,
+        os.data_inicio, os.previsao_entrega, os.data_entrega, os.data_prova, os.horario_prova,
+        os.status_kanban, os.status_pagamento,
         p.descricao AS pedido_descricao,
         u_cli.nome AS cliente_nome,
         u_cos.nome AS costureira_nome

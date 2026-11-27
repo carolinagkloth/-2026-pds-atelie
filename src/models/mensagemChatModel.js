@@ -7,6 +7,8 @@ async function garantirColunasChat() {
   try {
     await pool.query(`ALTER TABLE mensagens_chat ADD COLUMN IF NOT EXISTS lida BOOLEAN DEFAULT FALSE;`);
     await pool.query(`ALTER TABLE mensagens_chat ADD COLUMN IF NOT EXISTS anexo_imagem TEXT;`);
+    await pool.query(`CREATE INDEX IF NOT EXISTS idx_mensagens_chat_pedido_data ON mensagens_chat (id_pedido, data_hora_envio DESC);`);
+    await pool.query(`CREATE INDEX IF NOT EXISTS idx_mensagens_chat_nao_lidas ON mensagens_chat (id_pedido, id_remetente) WHERE COALESCE(lida, false) = false;`);
     colunasChatVerificadas = true;
   } catch (err) {
     console.error('Erro ao verificar colunas de mensagens_chat:', err);
@@ -93,16 +95,34 @@ class MensagemChatModel {
              COALESCE(os.status_kanban, p.status_pedido) AS status, p.prazo_desejado AS "prazoDesejado",
              cli.id_usuario AS "clienteId", cli.nome AS "clienteNome", (cli.senha = 'CONTA_EXCLUIDA') AS "clienteExcluido",
              cost.id_usuario AS "costureiraId", cost.nome AS "costureiraNome", (COALESCE(cost.senha, '') = 'CONTA_EXCLUIDA') AS "costureiraExcluida",
-             (SELECT conteudo FROM mensagens_chat WHERE id_pedido = p.id_pedido ORDER BY data_hora_envio DESC LIMIT 1) AS "ultimaMensagem",
-             (SELECT data_hora_envio FROM mensagens_chat WHERE id_pedido = p.id_pedido ORDER BY data_hora_envio DESC LIMIT 1) AS "dataUltimaAtividade",
-             (SELECT COUNT(*)::int FROM mensagens_chat WHERE id_pedido = p.id_pedido AND id_remetente != $1 AND COALESCE(lida, false) = false) AS "naoLidas"
+             ult.conteudo AS "ultimaMensagem",
+             ult.data_hora_envio AS "dataUltimaAtividade",
+             COALESCE(nl.qtd, 0)::int AS "naoLidas"
       FROM pedidos p
       JOIN usuarios cli ON p.id_cliente = cli.id_usuario
       LEFT JOIN ordens_servico os ON os.id_pedido = p.id_pedido
       LEFT JOIN usuarios cost ON os.id_costureira = cost.id_usuario
-      WHERE (p.id_cliente = $1 OR os.id_costureira = $1 OR EXISTS (SELECT 1 FROM mensagens_chat m WHERE m.id_pedido = p.id_pedido AND m.id_remetente = $1))
-        AND EXISTS (SELECT 1 FROM mensagens_chat m WHERE m.id_pedido = p.id_pedido)
-      ORDER BY "dataUltimaAtividade" DESC;
+      JOIN LATERAL (
+        SELECT conteudo, data_hora_envio
+        FROM mensagens_chat
+        WHERE id_pedido = p.id_pedido
+        ORDER BY data_hora_envio DESC
+        LIMIT 1
+      ) ult ON true
+      LEFT JOIN LATERAL (
+        SELECT COUNT(*) AS qtd
+        FROM mensagens_chat
+        WHERE id_pedido = p.id_pedido
+          AND id_remetente != $1
+          AND COALESCE(lida, false) = false
+      ) nl ON true
+      WHERE p.id_cliente = $1
+         OR os.id_costureira = $1
+         OR EXISTS (
+           SELECT 1 FROM mensagens_chat m
+           WHERE m.id_pedido = p.id_pedido AND m.id_remetente = $1
+         )
+      ORDER BY ult.data_hora_envio DESC;
     `;
     const result = await pool.query(query, [idUsuario]);
     return result.rows;

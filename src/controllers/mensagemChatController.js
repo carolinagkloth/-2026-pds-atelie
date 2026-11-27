@@ -2,7 +2,6 @@ const pool = require('../config/database');
 const MensagemChatModel = require('../models/mensagemChatModel');
 const PedidoModel = require('../models/pedidoModel');
 const notificacaoModel = require('../models/notificacaoModel');
-const OrdemServicoController = require('./ordemServicoController');
 const { dispararNotificacao } = require('../services/notificacaoService');
 
 class MensagemChatController {
@@ -56,7 +55,6 @@ class MensagemChatController {
 
       const textoFinal = (conteudo || '').trim() || '📷 Foto enviada';
 
-      // Garante que toda nova proposta nasça explicitamente com status 'pendente'
       let dadosPropostaTratados = dados_proposta;
       if (tipo_mensagem === 'proposta') {
         const objDados =
@@ -81,8 +79,10 @@ class MensagemChatController {
         anexo_imagem: anexo_imagem || null
       });
 
-      const pedido = await PedidoModel.buscarPorId(id_pedido);
-      const idCostureira = await PedidoModel.buscarCostureiraVinculada(id_pedido);
+      const [pedido, idCostureira] = await Promise.all([
+        PedidoModel.buscarPorId(id_pedido),
+        PedidoModel.buscarCostureiraVinculada(id_pedido)
+      ]);
 
       const idCliente = pedido?.id_cliente;
       const idDestinatario = Number(id_remetente) === Number(idCliente) ? idCostureira : idCliente;
@@ -91,22 +91,22 @@ class MensagemChatController {
         const tipoNotif = tipo_mensagem === 'proposta' ? 'proposta' : 'chat';
         const tituloNotif = tipo_mensagem === 'proposta' ? 'Nova Proposta Recebida' : 'Nova Mensagem no Chat';
 
-        await dispararNotificacao({
+        dispararNotificacao({
           idUsuario: idDestinatario,
           titulo: tituloNotif,
           mensagem: textoFinal,
           tipo: tipoNotif,
           idPedido: id_pedido,
           forcarWhatsapp: false
-        });
+        }).catch((err) => console.error('Erro assíncrono ao notificar chat:', err.message));
       }
 
-      return res.status(201).json({ 
-        message: 'Mensagem enviada com sucesso!', 
+      return res.status(201).json({
+        message: 'Mensagem enviada com sucesso!',
         mensagem: 'Mensagem enviada com sucesso!',
         id_mensagem: novaMensagem.id_mensagem,
         item: novaMensagem,
-        ...novaMensagem 
+        ...novaMensagem
       });
     } catch (error) {
       if (next) return next(error);
@@ -116,20 +116,18 @@ class MensagemChatController {
 
   static async listar(req, res, next) {
     try {
-      await OrdemServicoController.sincronizarProvasVencidas();
-
       const id_pedido = req.params.idPedido || req.params.id_pedido;
       const idUsuarioLeitor = req.query.id_usuario || req.query.idUsuario || req.usuarioId;
 
       if (idUsuarioLeitor && id_pedido) {
-        try {
-          await MensagemChatModel.marcarComoLidas(id_pedido, idUsuarioLeitor);
-          if (typeof notificacaoModel.marcarComoLidasPorPedido === 'function') {
-            await notificacaoModel.marcarComoLidasPorPedido(idUsuarioLeitor, id_pedido);
-          }
-        } catch (errLeitura) {
+        Promise.all([
+          MensagemChatModel.marcarComoLidas(id_pedido, idUsuarioLeitor),
+          typeof notificacaoModel.marcarComoLidasPorPedido === 'function'
+            ? notificacaoModel.marcarComoLidasPorPedido(idUsuarioLeitor, id_pedido)
+            : Promise.resolve()
+        ]).catch((errLeitura) => {
           console.error('Aviso ao marcar mensagens/notificações como lidas:', errLeitura.message);
-        }
+        });
       }
 
       const mensagens = await MensagemChatModel.listarPorPedido(id_pedido);
@@ -142,7 +140,6 @@ class MensagemChatController {
 
   static async listarConversasDoUsuario(req, res) {
     try {
-      await OrdemServicoController.sincronizarProvasVencidas();
       const { idUsuario } = req.params;
       const conversas = await MensagemChatModel.buscarConversasUsuario(idUsuario);
       return res.status(200).json(conversas);
