@@ -16,14 +16,15 @@ router.post('/cancelar-prova', OrdemServicoController.cancelarProva);
 router.post('/concluir', OrdemServicoController.concluirServico);
 router.post('/confirmar-entrega', OrdemServicoController.confirmarEntrega);
 
-// Endpoints Específicos
-router.get('/:id', OrdemServicoController.buscarPorId);
+// Endpoints Específicos (rotas fixas SEMPRE antes de /:id)
 router.get('/usuario/:idUsuario', OrdemServicoController.listarPorUsuario);
+router.get('/pedido/:idPedido/pagamento', OrdemServicoController.buscarPagamentoPorPedido);
+router.put('/pedido/:idPedido/pagamento', OrdemServicoController.atualizarPagamentoPorPedido);
+
+router.get('/:id', OrdemServicoController.buscarPorId);
 router.patch('/:id/status', OrdemServicoController.atualizarStatus);
 router.put('/:idOrdem/status', OrdemServicoController.atualizarStatus);
 router.put('/:idOrdem/pagamento', OrdemServicoController.atualizarPagamento);
-router.get('/pedido/:idPedido/pagamento', OrdemServicoController.buscarPagamentoPorPedido);
-router.put('/pedido/:idPedido/pagamento', OrdemServicoController.atualizarPagamentoPorPedido);
 router.post('/:idOrdem/fotos', OrdemServicoController.adicionarFotoAndamento);
 router.delete('/:idOrdem/fotos/:idFoto', OrdemServicoController.removerFotoAndamento);
 

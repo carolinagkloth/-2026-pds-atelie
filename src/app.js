@@ -20,18 +20,36 @@ const ordemServicoRoutes = require('./routes/ordemServicoRoutes');
 const portfolioRoutes = require('./routes/portfolioRoutes');
 const mensagemChatRoutes = require('./routes/mensagemChatRoutes');
 const avaliacaoRoutes = require('./routes/avaliacaoRoutes');
+const notificacaoRoutes = require('./routes/notificacaoRoutes');
 
 // Importação do Middleware Global de Erro
 const errorMiddleware = require('./middlewares/errorMiddleware');
 
-// Registro das Rotas da API
+// Registro das Rotas da API (com aliases no singular, plural e raiz /api)
 app.use('/api/usuario', usuarioRoutes);
+app.use('/api/usuarios', usuarioRoutes);
 app.use('/api', usuarioRoutes);
+
 app.use('/api/pedidos', pedidoRoutes);
+app.use('/api/pedido', pedidoRoutes);
+
 app.use('/api/ordens-servico', ordemServicoRoutes);
+app.use('/api/ordem-servico', ordemServicoRoutes);
+app.use('/api/ordens', ordemServicoRoutes);
+
 app.use('/api/portfolio', portfolioRoutes);
+app.use('/api/portfolios', portfolioRoutes);
+
 app.use('/api/mensagens', mensagemChatRoutes);
+app.use('/api/mensagem', mensagemChatRoutes);
+app.use('/api/chat', mensagemChatRoutes);
+app.use('/api/conversas', mensagemChatRoutes);
+
 app.use('/api/avaliacoes', avaliacaoRoutes);
+app.use('/api/avaliacao', avaliacaoRoutes);
+
+app.use('/api/notificacoes', notificacaoRoutes);
+app.use('/api/notificacao', notificacaoRoutes);
 
 // Tratamento global de erros das rotas da API
 app.use(errorMiddleware);
