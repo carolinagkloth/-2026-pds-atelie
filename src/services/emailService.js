@@ -1,28 +1,47 @@
-const nodemailer = require('nodemailer');
 const { gerarEmailAlertaLogin, gerarEmailRecuperacao } = require('./emailTemplates');
 
 const EMAIL_OFICIAL = process.env.EMAIL_USER || 'noreply.atelie.entre.linhas@gmail.com';
+const REMETENTE_RESEND = process.env.RESEND_FROM || 'Ateliê Entre Linhas <onboarding@resend.dev>';
 const FRONTEND_URL = (process.env.FRONTEND_URL || 'http://localhost:5173').replace(/\/$/, '');
 
-const transporter = nodemailer.createTransport({
-  host: process.env.EMAIL_HOST || 'smtp.gmail.com',
-  port: Number(process.env.EMAIL_PORT) || 587,
-  secure: false,
-  auth: {
-    user: EMAIL_OFICIAL,
-    pass: process.env.EMAIL_PASS
+async function dispararViaResend({ para, assunto, texto, html, replyTo = null }) {
+  if (!process.env.RESEND_API_KEY) {
+    throw new Error('RESEND_API_KEY não configurada nas variáveis de ambiente!');
   }
-});
+
+  const payload = {
+    from: REMETENTE_RESEND,
+    to: Array.isArray(para) ? para : [para],
+    subject: assunto,
+    text: texto,
+    html: html || texto
+  };
+
+  if (replyTo) {
+    payload.reply_to = replyTo;
+  }
+
+  const response = await fetch('https://api.resend.com/emails', {
+    method: 'POST',
+    headers: {
+      'Authorization': `Bearer ${process.env.RESEND_API_KEY}`,
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify(payload)
+  });
+
+  const data = await response.json();
+
+  if (!response.ok) {
+    throw new Error(data.message || `Erro HTTP ${response.status} ao enviar via Resend`);
+  }
+
+  return data;
+}
 
 async function enviarEmail(para, assunto, texto, html) {
   try {
-    await transporter.sendMail({
-      from: `"Ateliê Entre Linhas" <${EMAIL_OFICIAL}>`,
-      to: para,
-      subject: assunto,
-      text: texto,
-      html: html || texto
-    });
+    await dispararViaResend({ para, assunto, texto, html });
     console.log(`[E-mail] Enviado com sucesso para ${para}`);
   } catch (err) {
     console.error(`[E-mail Erro] Falha ao enviar para ${para}:`, err.message);
@@ -62,26 +81,24 @@ async function enviarEmailNovoAcesso(email, nome, tokenOuLink = null) {
 }
 
 async function enviarEmailRecuperacao(emailUsuario, nomeUsuario, token) {
-  if (!process.env.EMAIL_PASS) throw new Error('Senha de e-mail não configurada no .env!');
-
   const linkRedefinicao = `${FRONTEND_URL}/?tela=redefinirSenha&token=${token}`;
   const html = gerarEmailRecuperacao({
     nomeUsuario,
     linkRedefinicao
   });
 
-  await transporter.sendMail({
-    from: `"Ateliê Entre Linhas" <${EMAIL_OFICIAL}>`,
-    replyTo: EMAIL_OFICIAL,
-    to: emailUsuario,
-    subject: 'Redefinição de Senha - Ateliê Entre Linhas',
-    text: `Olá, ${nomeUsuario}! Acesse o link a seguir (válido por 1 hora) para redefinir sua senha: ${linkRedefinicao}`,
-    html
+  await dispararViaResend({
+    para: emailUsuario,
+    assunto: 'Redefinição de Senha - Ateliê Entre Linhas',
+    texto: `Olá, ${nomeUsuario}! Acesse o link a seguir (válido por 1 hora) para redefinir sua senha: ${linkRedefinicao}`,
+    html,
+    replyTo: EMAIL_OFICIAL
   });
+
+  console.log(`[E-mail] Recuperação enviada com sucesso para ${emailUsuario}`);
 }
 
 module.exports = {
-  transporter,
   EMAIL_OFICIAL,
   enviarEmail,
   enviarEmailNovoAcesso,
