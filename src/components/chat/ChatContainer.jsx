@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import ModalCancelarPedido from './modals/ModalCancelarPedido';
 import ModalAceitarProposta from './modals/ModalAceitarProposta';
 import ModalConfirmarEntrega from './modals/ModalConfirmarEntrega';
@@ -78,6 +78,15 @@ function ChatContainer({ pedido, usuario, idCostureiraProp, onNavigate }) {
   const [statusPagamento, setStatusPagamento] = useState('Aguardando Sinal');
   const [medidas, setMedidas] = useState({ busto: '', cintura: '', quadril: '', observacoes_medidas: '' });
 
+  // Refs para evitar loops de re-renderização e chamadas duplicadas
+  const pedidoDadosRef = useRef(pedidoDados);
+  useEffect(() => {
+    pedidoDadosRef.current = pedidoDados;
+  }, [pedidoDados]);
+
+  const carregandoMsgsRef = useRef(false);
+  const usuarioBuscadoRef = useRef(new Set());
+
   useEffect(() => {
     if (pedido?.descricao) {
       setDescricaoPedido(pedido.descricao);
@@ -89,7 +98,7 @@ function ChatContainer({ pedido, usuario, idCostureiraProp, onNavigate }) {
     ? `${infoDesc.tipo}${infoDesc.descricao ? ` - ${infoDesc.descricao}` : ''}`
     : `Pedido #${idPedido}`;
 
-  // Busca endereço atualizado do/a profissional no banco
+  // Busca endereço atualizado do/a profissional no banco (apenas 1x por ID)
   useEffect(() => {
     const idCost = isCostureira ? idUsuario : idCostureiraChat;
     if (!idCost) return;
@@ -107,16 +116,17 @@ function ChatContainer({ pedido, usuario, idCostureiraProp, onNavigate }) {
       .catch(() => {});
   }, [isCostureira, idUsuario, idCostureiraChat]);
 
-  // RESOLUÇÃO ROBUSTA DO NOME DO/A PROFISSIONAL
+  // RESOLUÇÃO DO NOME DO/A PROFISSIONAL (sem causar recriação em cascata)
   const resolverNomeCostureira = useCallback(async (idCost, msgsList = []) => {
     if (isCostureira) {
-      setCostureiraNome(user?.nome || 'Profissional de Costura');
+      setCostureiraNome((prev) => prev || user?.nome || 'Profissional de Costura');
       return;
     }
 
-    const nomeSalvo = pedidoDados?.costureiraNome || pedidoDados?.costureira_nome || pedido?.costureiraNome || pedido?.costureira_nome;
+    const pedAtual = pedidoDadosRef.current;
+    const nomeSalvo = pedAtual?.costureiraNome || pedAtual?.costureira_nome || pedido?.costureiraNome || pedido?.costureira_nome;
     if (nomeSalvo) {
-      setCostureiraNome(nomeSalvo);
+      setCostureiraNome((prev) => prev || nomeSalvo);
       return;
     }
 
@@ -128,7 +138,8 @@ function ChatContainer({ pedido, usuario, idCostureiraProp, onNavigate }) {
       return;
     }
 
-    if (idCost) {
+    if (idCost && !usuarioBuscadoRef.current.has(`cost_${idCost}`)) {
+      usuarioBuscadoRef.current.add(`cost_${idCost}`);
       try {
         const res = await fetch(`/api/usuarios/${idCost}`);
         const data = await res.json();
@@ -139,28 +150,28 @@ function ChatContainer({ pedido, usuario, idCostureiraProp, onNavigate }) {
         console.error('Erro ao buscar nome do/a profissional:', err);
       }
     }
-  }, [isCostureira, user?.nome, pedidoDados?.costureiraNome, pedidoDados?.costureira_nome, pedido, idUsuario]);
+  }, [isCostureira, user?.nome, pedido?.costureiraNome, pedido?.costureira_nome, idUsuario]);
 
-  // RESOLUÇÃO ROBUSTA DO NOME DO/A CLIENTE
+  // RESOLUÇÃO DO NOME DO/A CLIENTE (sem depender de pedidoDados inteiro)
   const resolverNomeCliente = useCallback(async (pedInfo = {}, msgsList = []) => {
     if (!isCostureira) {
-      if (user?.nome) setClienteNome(user.nome);
+      if (user?.nome) setClienteNome((prev) => prev || user.nome);
       return;
     }
 
+    const pedAtual = pedidoDadosRef.current;
     const nomeSalvo =
       pedInfo?.clienteNome ||
       pedInfo?.cliente_nome ||
       pedInfo?.nomeCliente ||
       pedInfo?.nome_cliente ||
-      pedidoDados?.clienteNome ||
-      pedidoDados?.cliente_nome ||
+      pedAtual?.clienteNome ||
+      pedAtual?.cliente_nome ||
       pedido?.clienteNome ||
       pedido?.cliente_nome;
 
     if (nomeSalvo) {
       setClienteNome(nomeSalvo);
-      setPedidoDados((prev) => ({ ...prev, clienteNome: nomeSalvo, cliente_nome: nomeSalvo }));
       return;
     }
 
@@ -170,132 +181,40 @@ function ChatContainer({ pedido, usuario, idCostureiraProp, onNavigate }) {
     const nomeMsg = msgCliente?.remetente_nome || msgCliente?.nomeRemetente;
     if (nomeMsg) {
       setClienteNome(nomeMsg);
-      setPedidoDados((prev) => ({ ...prev, clienteNome: nomeMsg, cliente_nome: nomeMsg }));
       return;
     }
 
     const idCli =
       pedInfo?.clienteId ||
       pedInfo?.id_cliente ||
-      pedidoDados?.clienteId ||
-      pedidoDados?.id_cliente ||
+      pedAtual?.clienteId ||
+      pedAtual?.id_cliente ||
       pedido?.clienteId ||
       pedido?.id_cliente;
 
-    if (idCli) {
+    if (idCli && !usuarioBuscadoRef.current.has(`cli_${idCli}`)) {
+      usuarioBuscadoRef.current.add(`cli_${idCli}`);
       try {
         const res = await fetch(`/api/usuarios/${idCli}`);
         const data = await res.json();
         if (data && data.nome) {
           setClienteNome(data.nome);
-          setPedidoDados((prev) => ({ ...prev, clienteNome: data.nome, cliente_nome: data.nome }));
         }
       } catch (err) {
         console.error('Erro ao buscar nome do/a cliente:', err);
       }
     }
-  }, [isCostureira, user?.nome, pedidoDados, pedido, idUsuario]);
+  }, [isCostureira, user?.nome, pedido?.clienteNome, pedido?.cliente_nome, pedido?.clienteId, pedido?.id_cliente, idUsuario]);
 
-  // CARREGAMENTO DAS MENSAGENS E DADOS DO CHAT (INICIAL E SILENCIOSO)
-  const carregarMensagens = useCallback(async (silencioso = false) => {
+  // CARREGAMENTO DOS METADADOS DO PEDIDO / AVALIAÇÃO / PAGAMENTO (sob demanda, não a cada 5s)
+  const carregarDadosPedido = useCallback(async (msgsAtuais = []) => {
     if (!idPedido) return;
     try {
-      const params = new URLSearchParams();
-      if (idCostureiraChat) params.append('id_costureira', idCostureiraChat);
-      if (idUsuario) params.append('id_usuario', idUsuario);
-      const queryString = params.toString();
-      const url = `/api/mensagens-chat/${idPedido}${queryString ? `?${queryString}` : ''}`;
-
-      const [resMsgs, resPed, resAval, resPag] = await Promise.all([
-        fetch(url),
+      const [resPed, resAval, resPag] = await Promise.all([
         fetch(`/api/pedidos/${idPedido}`).catch(() => null),
         !isCostureira ? fetch(`/api/avaliacoes/pedido/${idPedido}`).catch(() => null) : Promise.resolve(null),
         fetch(`/api/ordens-servico/pedido/${idPedido}/pagamento`).catch(() => null)
       ]);
-
-      let listaMensagensAtual = [];
-
-      if (resMsgs.ok) {
-        const data = await resMsgs.json();
-        if (Array.isArray(data)) {
-          listaMensagensAtual = data;
-          let houveMudanca = false;
-          setMensagens((prev) => {
-            if (JSON.stringify(prev) === JSON.stringify(data)) {
-              return prev;
-            }
-            houveMudanca = true;
-            return data;
-          });
-
-          if (!silencioso || houveMudanca) {
-            window.dispatchEvent(new Event('notificacoesAtualizadas'));
-          }
-
-          const propostaExistente = [...data].reverse().find(
-            (m) => m.tipo_mensagem === 'proposta' || (m.conteudo && m.conteudo.includes('Proposta de Orçamento:'))
-          );
-
-          let costureiraIdIdentificado = idCostureiraChat;
-
-          if (propostaExistente) {
-            let dados = propostaExistente.dados_proposta || {};
-            if (typeof dados === 'string') {
-              try { dados = JSON.parse(dados); } catch { dados = {}; }
-            }
-
-            if (dados.idCostureira) {
-              costureiraIdIdentificado = dados.idCostureira;
-              if (!idCostureiraChat) setIdCostureiraChat(dados.idCostureira);
-            }
-
-            setOrcamentoAtual((prev) => ({
-              ...prev,
-              total: dados.valorTotal || propostaExistente.valorProposta || 0,
-              entrada: dados.valorEntrada || propostaExistente.valorEntrada || 0,
-              prazo: dados.previsaoEntrega || '',
-              horarioEntrega: dados.horarioEntrega || ''
-            }));
-          }
-
-          // Sincroniza estado da última proposta de prova
-          const ultimaPropostaProva = [...data].reverse().find(
-            (m) => m.tipo_mensagem === 'proposta_prova' || (m.conteudo && m.conteudo.includes('Proposta de Agendamento de Prova:'))
-          );
-
-          if (ultimaPropostaProva) {
-            let dadosProvaMsg = ultimaPropostaProva.dados_proposta || {};
-            if (typeof dadosProvaMsg === 'string') {
-              try { dadosProvaMsg = JSON.parse(dadosProvaMsg); } catch { dadosProvaMsg = {}; }
-            }
-            const statusProvaMsg = dadosProvaMsg.status || 'pendente';
-
-            if (statusProvaMsg === 'aceita') {
-              setProvaAgendada({
-                dataProva: dadosProvaMsg.dataProva || '',
-                horarioProva: dadosProvaMsg.horarioProva || '',
-                semPreferenciaHorario: Boolean(dadosProvaMsg.semPreferenciaHorario),
-                local: dadosProvaMsg.local || '',
-                observacao: dadosProvaMsg.observacao || ''
-              });
-              setTemProvaPendente(false);
-            } else if (statusProvaMsg === 'pendente') {
-              setProvaAgendada(null);
-              setTemProvaPendente(true);
-            } else {
-              setProvaAgendada(null);
-              setTemProvaPendente(false);
-            }
-          } else {
-            setProvaAgendada(null);
-            setTemProvaPendente(false);
-          }
-
-          resolverNomeCostureira(costureiraIdIdentificado, data);
-        }
-      } else if (!silencioso) {
-        console.error('Erro HTTP ao carregar mensagens:', resMsgs.status);
-      }
 
       let pedData = null;
       if (resPed && resPed.ok) {
@@ -331,7 +250,7 @@ function ChatContainer({ pedido, usuario, idCostureiraProp, onNavigate }) {
         if (pedData.descricao) setDescricaoPedido((prev) => prev || pedData.descricao);
       }
 
-      resolverNomeCliente(pedData || {}, listaMensagensAtual);
+      resolverNomeCliente(pedData || {}, msgsAtuais);
 
       if (resAval && resAval.ok) {
         const avalData = await resAval.json();
@@ -355,40 +274,165 @@ function ChatContainer({ pedido, usuario, idCostureiraProp, onNavigate }) {
         }
       }
     } catch (err) {
-      if (!silencioso) console.error('Erro ao carregar chat:', err);
+      console.error('Erro ao carregar dados do pedido:', err);
     }
-  }, [idPedido, idCostureiraChat, idUsuario, isCostureira, resolverNomeCostureira, resolverNomeCliente]);
+  }, [idPedido, isCostureira, resolverNomeCliente]);
 
-  // Carga inicial + polling silencioso a cada 5 segundos
+  // CARREGAMENTO RÁPIDO DAS MENSAGENS DO CHAT
+  const carregarMensagens = useCallback(async (silencioso = false, atualizarPedidoTambem = false) => {
+    if (!idPedido) return;
+    if (silencioso && carregandoMsgsRef.current) return;
+
+    carregandoMsgsRef.current = true;
+    try {
+      const params = new URLSearchParams();
+      if (idCostureiraChat) params.append('id_costureira', idCostureiraChat);
+      if (idUsuario) params.append('id_usuario', idUsuario);
+      const queryString = params.toString();
+      const url = `/api/mensagens-chat/${idPedido}${queryString ? `?${queryString}` : ''}`;
+
+      const resMsgs = await fetch(url);
+
+      if (resMsgs.ok) {
+        const data = await resMsgs.json();
+        if (Array.isArray(data)) {
+          let houveMudanca = false;
+
+          setMensagens((prev) => {
+            const ultimaPrev = prev[prev.length - 1];
+            const ultimaNova = data[data.length - 1];
+            const idPrev = ultimaPrev?.id_mensagem || ultimaPrev?.id;
+            const idNova = ultimaNova?.id_mensagem || ultimaNova?.id;
+
+            if (
+              prev.length === data.length &&
+              idPrev === idNova &&
+              JSON.stringify(ultimaPrev?.dados_proposta) === JSON.stringify(ultimaNova?.dados_proposta)
+            ) {
+              return prev;
+            }
+            houveMudanca = true;
+            return data;
+          });
+
+          if (!silencioso || houveMudanca) {
+            window.dispatchEvent(new Event('notificacoesAtualizadas'));
+          }
+
+          if (!silencioso || houveMudanca) {
+            const propostaExistente = [...data].reverse().find(
+              (m) => m.tipo_mensagem === 'proposta' || (m.conteudo && m.conteudo.includes('Proposta de Orçamento:'))
+            );
+
+            let costureiraIdIdentificado = idCostureiraChat;
+
+            if (propostaExistente) {
+              let dados = propostaExistente.dados_proposta || {};
+              if (typeof dados === 'string') {
+                try { dados = JSON.parse(dados); } catch { dados = {}; }
+              }
+
+              if (dados.idCostureira) {
+                costureiraIdIdentificado = dados.idCostureira;
+                if (!idCostureiraChat) setIdCostureiraChat(dados.idCostureira);
+              }
+
+              setOrcamentoAtual((prev) => ({
+                ...prev,
+                total: dados.valorTotal || propostaExistente.valorProposta || 0,
+                entrada: dados.valorEntrada || propostaExistente.valorEntrada || 0,
+                prazo: dados.previsaoEntrega || '',
+                horarioEntrega: dados.horarioEntrega || ''
+              }));
+            }
+
+            const ultimaPropostaProva = [...data].reverse().find(
+              (m) => m.tipo_mensagem === 'proposta_prova' || (m.conteudo && m.conteudo.includes('Proposta de Agendamento de Prova:'))
+            );
+
+            if (ultimaPropostaProva) {
+              let dadosProvaMsg = ultimaPropostaProva.dados_proposta || {};
+              if (typeof dadosProvaMsg === 'string') {
+                try { dadosProvaMsg = JSON.parse(dadosProvaMsg); } catch { dadosProvaMsg = {}; }
+              }
+              const statusProvaMsg = dadosProvaMsg.status || 'pendente';
+
+              if (statusProvaMsg === 'aceita') {
+                setProvaAgendada({
+                  dataProva: dadosProvaMsg.dataProva || '',
+                  horarioProva: dadosProvaMsg.horarioProva || '',
+                  semPreferenciaHorario: Boolean(dadosProvaMsg.semPreferenciaHorario),
+                  local: dadosProvaMsg.local || '',
+                  observacao: dadosProvaMsg.observacao || ''
+                });
+                setTemProvaPendente(false);
+              } else if (statusProvaMsg === 'pendente') {
+                setProvaAgendada(null);
+                setTemProvaPendente(true);
+              } else {
+                setProvaAgendada(null);
+                setTemProvaPendente(false);
+              }
+            } else {
+              setProvaAgendada(null);
+              setTemProvaPendente(false);
+            }
+
+            resolverNomeCostureira(costureiraIdIdentificado, data);
+            resolverNomeCliente({}, data);
+
+            if (atualizarPedidoTambem || (silencioso && houveMudanca)) {
+              carregarDadosPedido(data);
+            }
+          } else if (atualizarPedidoTambem) {
+            carregarDadosPedido(data);
+          }
+        }
+      } else if (!silencioso) {
+        console.error('Erro HTTP ao carregar mensagens:', resMsgs.status);
+      }
+    } catch (err) {
+      if (!silencioso) console.error('Erro ao carregar chat:', err);
+    } finally {
+      carregandoMsgsRef.current = false;
+    }
+  }, [idPedido, idCostureiraChat, idUsuario, resolverNomeCostureira, resolverNomeCliente, carregarDadosPedido]);
+
+  const carregarMensagensRef = useRef(carregarMensagens);
   useEffect(() => {
-    carregarMensagens(false);
-
-    const intervalo = setInterval(() => {
-      carregarMensagens(true);
-    }, 5000);
-
-    return () => clearInterval(intervalo);
+    carregarMensagensRef.current = carregarMensagens;
   }, [carregarMensagens]);
 
-  // Carrega Ficha de Medidas do/a Cliente
+  // Carga inicial + polling silencioso estável a cada 6 segundos (sem loops)
   useEffect(() => {
-    const targetId = isCostureira ? (pedidoDados?.clienteId || pedidoDados?.id_cliente) : idUsuario;
-    if (targetId) {
-      fetch(`/api/usuarios/${targetId}/medidas`)
-        .then((res) => res.json())
-        .then((data) => {
-          if (data && !data.erro) {
-            setMedidas({
-              busto: data.busto || '',
-              cintura: data.cintura || '',
-              quadril: data.quadril || '',
-              observacoes_medidas: data.observacoes_medidas || ''
-            });
-          }
-        })
-        .catch(() => {});
-    }
-  }, [isCostureira, pedidoDados?.clienteId, pedidoDados?.id_cliente, idUsuario]);
+    if (!idPedido) return;
+    carregarMensagensRef.current(false, true);
+
+    const intervalo = setInterval(() => {
+      carregarMensagensRef.current(true, false);
+    }, 6000);
+
+    return () => clearInterval(intervalo);
+  }, [idPedido, idCostureiraChat]);
+
+  // Carrega Ficha de Medidas do/a Cliente
+  const idClienteMedidas = isCostureira ? (pedidoDados?.clienteId || pedidoDados?.id_cliente) : idUsuario;
+  useEffect(() => {
+    if (!idClienteMedidas) return;
+    fetch(`/api/usuarios/${idClienteMedidas}/medidas`)
+      .then((res) => res.json())
+      .then((data) => {
+        if (data && !data.erro) {
+          setMedidas({
+            busto: data.busto || '',
+            cintura: data.cintura || '',
+            quadril: data.quadril || '',
+            observacoes_medidas: data.observacoes_medidas || ''
+          });
+        }
+      })
+      .catch(() => {});
+  }, [idClienteMedidas]);
 
   const handleEnviarMensagem = async (texto, imagemBase64 = null) => {
     if (!texto && !imagemBase64) return;
@@ -410,7 +454,7 @@ function ChatContainer({ pedido, usuario, idCostureiraProp, onNavigate }) {
         alert(data.error || data.erro || 'Não foi possível enviar a mensagem/foto.');
         return;
       }
-      carregarMensagens(false);
+      carregarMensagens(false, false);
     } catch (err) {
       alert(err.message);
     }
@@ -441,7 +485,7 @@ function ChatContainer({ pedido, usuario, idCostureiraProp, onNavigate }) {
 
       if (res.ok) {
         setMostrarProposta(false);
-        carregarMensagens(false);
+        carregarMensagens(false, true);
       }
     } catch (err) {
       alert(err.message);
@@ -482,7 +526,7 @@ function ChatContainer({ pedido, usuario, idCostureiraProp, onNavigate }) {
       if (res.ok) {
         setMostrarProva(false);
         setTemProvaPendente(true);
-        carregarMensagens(false);
+        carregarMensagens(false, true);
       }
     } catch (err) {
       alert(err.message);
@@ -515,7 +559,7 @@ function ChatContainer({ pedido, usuario, idCostureiraProp, onNavigate }) {
         });
         setTemProvaPendente(false);
         setOrcamentoAtual((prev) => ({ ...prev, status: 'Aguardando Prova' }));
-        carregarMensagens(false);
+        carregarMensagens(false, true);
       }
     } catch (err) {
       alert(err.message);
@@ -536,7 +580,7 @@ function ChatContainer({ pedido, usuario, idCostureiraProp, onNavigate }) {
       });
       if (res.ok) {
         setTemProvaPendente(false);
-        carregarMensagens(false);
+        carregarMensagens(false, true);
       }
     } catch (err) {
       alert(err.message);
@@ -564,7 +608,7 @@ function ChatContainer({ pedido, usuario, idCostureiraProp, onNavigate }) {
       setTemProvaPendente(false);
       setOrcamentoAtual((prev) => ({ ...prev, status: 'Em Produção' }));
       setMostrarCancelarProva(false);
-      carregarMensagens(false);
+      carregarMensagens(false, true);
     } finally {
       setCancelandoProva(false);
     }
@@ -602,7 +646,7 @@ function ChatContainer({ pedido, usuario, idCostureiraProp, onNavigate }) {
 
       setOrcamentoAtual((prev) => ({ ...prev, status: 'Em Produção' }));
       setPropostaParaAceitar(null);
-      carregarMensagens(false);
+      carregarMensagens(false, true);
     } finally {
       setAceitandoProposta(false);
     }
@@ -620,7 +664,7 @@ function ChatContainer({ pedido, usuario, idCostureiraProp, onNavigate }) {
           id_costureira: Number(idRemetenteProposta || idCostureiraChat)
         })
       });
-      if (res.ok) carregarMensagens(false);
+      if (res.ok) carregarMensagens(false, true);
     } catch (err) {
       alert(err.message);
     }
@@ -641,7 +685,7 @@ function ChatContainer({ pedido, usuario, idCostureiraProp, onNavigate }) {
       }
       alert('Peça concluída! O/a cliente foi notificado(a).');
       setOrcamentoAtual((prev) => ({ ...prev, status: 'Concluído' }));
-      carregarMensagens(false);
+      carregarMensagens(false, true);
     } catch (err) { alert(err.message); }
   };
 
@@ -660,7 +704,7 @@ function ChatContainer({ pedido, usuario, idCostureiraProp, onNavigate }) {
       setIdOrdemServicoAvaliacao(data.id_ordem_servico);
       setOrcamentoAtual((prev) => ({ ...prev, status: 'Entregue' }));
       setMostrarConfirmarEntrega(false);
-      carregarMensagens(false);
+      carregarMensagens(false, true);
       setMostrarAvaliacao(true);
     } finally {
       setConfirmandoEntrega(false);
@@ -685,7 +729,7 @@ function ChatContainer({ pedido, usuario, idCostureiraProp, onNavigate }) {
       }
       setOrcamentoAtual((prev) => ({ ...prev, status: 'Cancelado' }));
       setMostrarCancelar(false);
-      carregarMensagens(false);
+      carregarMensagens(false, true);
     } finally {
       setCancelandoPedido(false);
     }
@@ -730,7 +774,7 @@ function ChatContainer({ pedido, usuario, idCostureiraProp, onNavigate }) {
         return;
       }
       setStatusPagamento(novoStatusPagamento);
-      carregarMensagens(false);
+      carregarMensagens(false, true);
     } catch (err) {
       alert(err.message);
     }
