@@ -1,5 +1,5 @@
 const express = require('express');
-const compression = require('compression'); 
+const compression = require('compression');
 const cors = require('cors');
 const path = require('path');
 const QRCode = require('qrcode');
@@ -21,6 +21,11 @@ app.use(compression());
 app.use(cors());
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ limit: '10mb', extended: true }));
+
+// Rota leve de healthcheck e pré-aquecimento
+app.get('/api/health', (req, res) => {
+  res.status(200).json({ status: 'ok', uptime: process.uptime() });
+});
 
 // Servir arquivos estáticos (upload de fotos e anexos)
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
@@ -113,4 +118,9 @@ app.use(express.static(distPath, {
 app.get(/^(?!\/api).*/, (req, res) => {
   res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
   res.sendFile(path.join(distPath, 'index.html'));
+});
+
+const PORT = Number(process.env.PORT) || 3000;
+app.listen(PORT, '0.0.0.0', () => {
+  console.log(`Servidor rodando em 0.0.0.0:${PORT}`);
 });
