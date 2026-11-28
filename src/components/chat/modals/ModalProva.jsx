@@ -1,10 +1,11 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 
-function ModalProva({ isOpen, onClose, onEnviar, enderecoCostureira, onIrParaPerfil }) {
+function ModalProva({ isOpen, onClose, onEnviar, enderecoCostureira, onIrParaPerfil, carregando = false }) {
   const [dataProva, setDataProva] = useState('');
   const [horarioProva, setHorarioProva] = useState('14:00');
   const [observacao, setObservacao] = useState('');
   const [erro, setErro] = useState('');
+  const submetendoRef = useRef(false);
 
   const agora = new Date();
   const hoje = `${agora.getFullYear()}-${String(agora.getMonth() + 1).padStart(2, '0')}-${String(agora.getDate()).padStart(2, '0')}`;
@@ -16,15 +17,24 @@ function ModalProva({ isOpen, onClose, onEnviar, enderecoCostureira, onIrParaPer
       setHorarioProva('14:00');
       setObservacao('');
       setErro('');
+      submetendoRef.current = false;
     }
   }, [isOpen]);
+
+  useEffect(() => {
+    if (!carregando) {
+      submetendoRef.current = false;
+    }
+  }, [carregando]);
 
   if (!isOpen) return null;
 
   const enderecoLimpo = (enderecoCostureira || '').trim();
+  const bloqueado = !enderecoLimpo || carregando;
 
   const handleSubmit = (e) => {
     e.preventDefault();
+    if (carregando || submetendoRef.current) return;
     setErro('');
 
     if (!enderecoLimpo) {
@@ -47,6 +57,7 @@ function ModalProva({ isOpen, onClose, onEnviar, enderecoCostureira, onIrParaPer
       return;
     }
 
+    submetendoRef.current = true;
     onEnviar({
       dataProva,
       horarioProva,
@@ -71,6 +82,7 @@ function ModalProva({ isOpen, onClose, onEnviar, enderecoCostureira, onIrParaPer
                 type="date"
                 min={hoje}
                 value={dataProva}
+                disabled={carregando}
                 onChange={(e) => setDataProva(e.target.value)}
                 style={{ width: '100%', padding: '9px', borderRadius: '6px', border: '1px solid #ccc', boxSizing: 'border-box' }}
                 required
@@ -83,6 +95,7 @@ function ModalProva({ isOpen, onClose, onEnviar, enderecoCostureira, onIrParaPer
                 type="time"
                 min={dataProva === hoje ? horaAtual : undefined}
                 value={horarioProva}
+                disabled={carregando}
                 onChange={(e) => setHorarioProva(e.target.value)}
                 style={{ width: '100%', padding: '9px', borderRadius: '6px', border: '1px solid #ccc', boxSizing: 'border-box' }}
                 required
@@ -90,7 +103,6 @@ function ModalProva({ isOpen, onClose, onEnviar, enderecoCostureira, onIrParaPer
             </div>
           </div>
 
-          {/* Local automático puxado do endereço cadastrado */}
           <div
             style={{
               background: enderecoLimpo ? '#FAF6FA' : '#FFF8E1',
@@ -139,6 +151,7 @@ function ModalProva({ isOpen, onClose, onEnviar, enderecoCostureira, onIrParaPer
             <textarea
               rows="2"
               value={observacao}
+              disabled={carregando}
               onChange={(e) => setObservacao(e.target.value)}
               placeholder="Ex: Traga o sapato que usará com a peça..."
               style={{ width: '100%', padding: '9px', borderRadius: '6px', border: '1px solid #ccc', boxSizing: 'border-box' }}
@@ -152,12 +165,17 @@ function ModalProva({ isOpen, onClose, onEnviar, enderecoCostureira, onIrParaPer
           )}
 
           <div style={{ display: 'flex', gap: '10px', justifyContent: 'flex-end' }}>
-            <button type="button" onClick={onClose} style={{ padding: '9px 16px', background: '#757575', color: '#fff', border: 'none', borderRadius: '6px', cursor: 'pointer' }}>
+            <button
+              type="button"
+              disabled={carregando}
+              onClick={onClose}
+              style={{ padding: '9px 16px', background: '#757575', color: '#fff', border: 'none', borderRadius: '6px', cursor: carregando ? 'not-allowed' : 'pointer', opacity: carregando ? 0.6 : 1 }}
+            >
               Cancelar
             </button>
             <button
               type="submit"
-              disabled={!enderecoLimpo}
+              disabled={bloqueado}
               style={{
                 padding: '9px 16px',
                 background: '#2E7D32',
@@ -165,11 +183,11 @@ function ModalProva({ isOpen, onClose, onEnviar, enderecoCostureira, onIrParaPer
                 border: 'none',
                 borderRadius: '6px',
                 fontWeight: 'bold',
-                cursor: enderecoLimpo ? 'pointer' : 'not-allowed',
-                opacity: enderecoLimpo ? 1 : 0.6
+                cursor: !bloqueado ? 'pointer' : 'not-allowed',
+                opacity: !bloqueado ? 1 : 0.6
               }}
             >
-              Enviar Sugestão de Prova
+              {carregando ? 'Enviando...' : 'Enviar Sugestão de Prova'}
             </button>
           </div>
         </form>

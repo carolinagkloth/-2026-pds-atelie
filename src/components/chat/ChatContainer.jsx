@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import ChatHeader from './ChatHeader';
 import ChatMessageList from './ChatMessageList';
 import ChatSidebar from './ChatSidebar';
@@ -26,11 +26,14 @@ function ChatContainer({ pedido, usuario, idCostureiraProp, onNavigate }) {
     propostaAceitar: null
   });
   const [carregandoModal, setCarregandoModal] = useState(false);
+  const executandoRef = useRef(false);
 
   const fecharModal = (chave, valor = false) =>
     setModais((prev) => ({ ...prev, [chave]: valor }));
 
   const executarComLoading = async (fn, onSucesso) => {
+    if (executandoRef.current) return;
+    executandoRef.current = true;
     setCarregandoModal(true);
     try {
       await fn();
@@ -38,6 +41,7 @@ function ChatContainer({ pedido, usuario, idCostureiraProp, onNavigate }) {
     } catch (err) {
       alert(err.message);
     } finally {
+      executandoRef.current = false;
       setCarregandoModal(false);
     }
   };
@@ -48,6 +52,14 @@ function ChatContainer({ pedido, usuario, idCostureiraProp, onNavigate }) {
       return;
     }
     fecharModal('proposta', true);
+  };
+
+  const handleAbrirProva = () => {
+    if (chat.temProvaPendente || chat.provaComLocalFallback) {
+      alert('Já existe uma proposta de prova pendente ou agendada para este pedido.');
+      return;
+    }
+    fecharModal('prova', true);
   };
 
   const prazoSolicitadoCliente =
@@ -102,7 +114,7 @@ function ChatContainer({ pedido, usuario, idCostureiraProp, onNavigate }) {
           temProvaPendente={chat.temProvaPendente}
           temPropostaAtiva={chat.temPropostaAtiva}
           onOpenProposta={handleAbrirProposta}
-          onOpenProva={() => fecharModal('prova', true)}
+          onOpenProva={handleAbrirProva}
           onCancelarProva={() => fecharModal('cancelarProva', true)}
           onConcluirServico={chat.acoes.concluirServico}
           onConfirmarEntrega={() => fecharModal('confirmarEntrega', true)}
@@ -124,6 +136,7 @@ function ChatContainer({ pedido, usuario, idCostureiraProp, onNavigate }) {
             () => fecharModal('proposta', false)
           )
         }
+        carregando={carregandoModal}
         descricaoInicial={chat.infoDesc.descricao}
         tipoInicial={chat.infoDesc.tipo}
         prazoDesejado={prazoSolicitadoCliente}
@@ -131,7 +144,7 @@ function ChatContainer({ pedido, usuario, idCostureiraProp, onNavigate }) {
       />
 
       <ModalProva
-        isOpen={modais.prova}
+        isOpen={modais.prova && !chat.temProvaPendente && !chat.provaComLocalFallback}
         onClose={() => fecharModal('prova', false)}
         onEnviar={(dados) =>
           executarComLoading(
@@ -139,6 +152,7 @@ function ChatContainer({ pedido, usuario, idCostureiraProp, onNavigate }) {
             () => fecharModal('prova', false)
           )
         }
+        carregando={carregandoModal}
         enderecoCostureira={chat.costureiraEndereco}
         onIrParaPerfil={
           onNavigate
@@ -203,8 +217,14 @@ function ChatContainer({ pedido, usuario, idCostureiraProp, onNavigate }) {
       <ModalMedidas
         isOpen={modais.medidas}
         onClose={() => fecharModal('medidas', false)}
-        medidas={chat.medidas}
-        clienteNome={chat.clienteNome}
+        medidasAtuais={chat.medidas}
+        carregando={carregandoModal}
+        onSalvar={(novasMedidas) =>
+          executarComLoading(
+            () => chat.acoes.salvarMedidas(novasMedidas),
+            () => fecharModal('medidas', false)
+          )
+        }
       />
 
       <ModalAvaliacao

@@ -52,6 +52,7 @@ export function useChatPedido({ pedido, usuario, idCostureiraProp }) {
 
   const carregandoMsgsRef = useRef(false);
   const usuarioBuscadoRef = useRef(new Set());
+  const enviandoProvaRef = useRef(false);
 
   useEffect(() => {
     if (!pedido) return;
@@ -328,23 +329,32 @@ export function useChatPedido({ pedido, usuario, idCostureiraProp }) {
   };
 
   const enviarPropostaProva = async (dadosForm) => {
-    const [ano, mes, dia] = dadosForm.dataProva.split('-');
-    const obs = (dadosForm.observacao || '').trim();
-    const conteudo = `Proposta de Agendamento de Prova:\nData: ${dia}/${mes}/${ano}\nHorário: ${dadosForm.horarioProva}\nLocal: ${dadosForm.local}${obs ? `\nObservações: ${obs}` : ''}`;
+    if (enviandoProvaRef.current || temProvaPendente || orcamentoAtual.status === 'Aguardando Prova') {
+      return;
+    }
 
-    await apiRequest('/api/mensagens-chat', {
-      method: 'POST',
-      body: JSON.stringify({
-        id_pedido: Number(idPedido),
-        id_remetente: Number(idUsuario),
-        id_costureira: Number(idCostureiraChat),
-        conteudo,
-        tipo_mensagem: 'proposta_prova',
-        dados_proposta: { ...dadosForm, idCostureira: idCostureiraChat, status: 'pendente' }
-      })
-    });
-    setTemProvaPendente(true);
-    carregarMensagens(false, true);
+    enviandoProvaRef.current = true;
+    try {
+      const [ano, mes, dia] = dadosForm.dataProva.split('-');
+      const obs = (dadosForm.observacao || '').trim();
+      const conteudo = `Proposta de Agendamento de Prova:\nData: ${dia}/${mes}/${ano}\nHorário: ${dadosForm.horarioProva}\nLocal: ${dadosForm.local}${obs ? `\nObservações: ${obs}` : ''}`;
+
+      await apiRequest('/api/mensagens-chat', {
+        method: 'POST',
+        body: JSON.stringify({
+          id_pedido: Number(idPedido),
+          id_remetente: Number(idUsuario),
+          id_costureira: Number(idCostureiraChat),
+          conteudo,
+          tipo_mensagem: 'proposta_prova',
+          dados_proposta: { ...dadosForm, idCostureira: idCostureiraChat, status: 'pendente' }
+        })
+      });
+      setTemProvaPendente(true);
+      await carregarMensagens(false, true);
+    } finally {
+      enviandoProvaRef.current = false;
+    }
   };
 
   const aceitarProva = async (idMensagem, dadosProva, idRemetenteProva) => {
@@ -472,6 +482,32 @@ export function useChatPedido({ pedido, usuario, idCostureiraProp }) {
     }
   };
 
+  const salvarMedidas = async (novasMedidas) => {
+    const idAlvo = idClienteMedidas || pedidoDados?.clienteId || pedidoDados?.id_cliente || (!isCostureira ? idUsuario : null);
+    if (!idAlvo) {
+      throw new Error('Não foi possível identificar o cliente para salvar as medidas.');
+    }
+
+    const payload = {
+      busto: novasMedidas.busto || '',
+      cintura: novasMedidas.cintura || '',
+      quadril: novasMedidas.quadril || '',
+      observacoes_medidas: novasMedidas.observacoes_medidas || ''
+    };
+
+    await apiRequest(`/api/usuarios/${idAlvo}/medidas`, {
+      method: 'PUT',
+      body: JSON.stringify(payload)
+    });
+
+    setMedidas(payload);
+
+    if (!isCostureira && Number(idAlvo) === Number(idUsuario)) {
+      const salvo = JSON.parse(localStorage.getItem('usuarioAtelie') || '{}');
+      localStorage.setItem('usuarioAtelie', JSON.stringify({ ...salvo, ...payload }));
+    }
+  };
+
   const infoDesc = parsePedidoDescricao(descricaoPedido);
 
   return {
@@ -508,7 +544,8 @@ export function useChatPedido({ pedido, usuario, idCostureiraProp }) {
       concluirServico,
       confirmarEntrega,
       cancelarPedido,
-      alterarPagamento
+      alterarPagamento,
+      salvarMedidas
     }
   };
 }

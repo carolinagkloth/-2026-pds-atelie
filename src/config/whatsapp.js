@@ -1,5 +1,4 @@
 const { Client, LocalAuth } = require('whatsapp-web.js');
-const qrcode = require('qrcode-terminal');
 
 let reinicializando = false;
 
@@ -8,11 +7,11 @@ const whatsappClient = new Client({
   puppeteer: {
     executablePath: process.env.PUPPETEER_EXECUTABLE_PATH || undefined,
     headless: true,
-    protocolTimeout: 120000, // 2 minutos para evitar "Runtime.callFunctionOn timed out" sob carga
+    protocolTimeout: 180000, // 3 minutos para evitar "Runtime.callFunctionOn timed out" sob carga
     args: [
       '--no-sandbox',
       '--disable-setuid-sandbox',
-      '--disable-dev-shm-usage',
+      '--disable-dev-shm-usage', // evita travar por falta de memória /dev/shm no container
       '--disable-accelerated-2d-canvas',
       '--no-first-run',
       '--no-zygote',

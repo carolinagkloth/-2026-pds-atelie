@@ -27,7 +27,7 @@ class MensagemChatController {
         return res.status(400).json({ error: 'Informe uma mensagem ou anexe uma foto.' });
       }
 
-      // Regra de negócio: só permite enviar um novo orçamento se o anterior foi recusado
+      // Regra de negócio 1: só permite enviar um novo orçamento se o anterior foi recusado
       if (tipo_mensagem === 'proposta') {
         const propostaAtivaRes = await pool.query(
           `SELECT id_mensagem,
@@ -53,10 +53,35 @@ class MensagemChatController {
         }
       }
 
+      // Regra de negócio 2: bloqueia proposta de prova duplicada se já houver uma pendente ou aceita
+      if (tipo_mensagem === 'proposta_prova') {
+        const provaAtivaRes = await pool.query(
+          `SELECT id_mensagem,
+                  LOWER(COALESCE(dados_proposta::jsonb->>'status', 'pendente')) AS status_prova
+           FROM mensagens_chat
+           WHERE id_pedido = $1
+             AND tipo_mensagem = 'proposta_prova'
+             AND LOWER(COALESCE(dados_proposta::jsonb->>'status', 'pendente')) NOT IN ('recusada', 'cancelada')
+           ORDER BY id_mensagem DESC
+           LIMIT 1;`,
+          [id_pedido]
+        );
+
+        if (provaAtivaRes.rows.length > 0) {
+          const statusProva = provaAtivaRes.rows[0].status_prova;
+          const msgErro =
+            statusProva === 'aceita'
+              ? 'Já existe uma prova agendada para este pedido.'
+              : 'Já existe uma proposta de agendamento de prova aguardando resposta.';
+
+          return res.status(400).json({ error: msgErro, erro: msgErro });
+        }
+      }
+
       const textoFinal = (conteudo || '').trim() || '📷 Foto enviada';
 
       let dadosPropostaTratados = dados_proposta;
-      if (tipo_mensagem === 'proposta') {
+      if (tipo_mensagem === 'proposta' || tipo_mensagem === 'proposta_prova') {
         const objDados =
           typeof dados_proposta === 'string'
             ? JSON.parse(dados_proposta || '{}')
@@ -88,8 +113,13 @@ class MensagemChatController {
       const idDestinatario = Number(id_remetente) === Number(idCliente) ? idCostureira : idCliente;
 
       if (idDestinatario) {
-        const tipoNotif = tipo_mensagem === 'proposta' ? 'proposta' : 'chat';
-        const tituloNotif = tipo_mensagem === 'proposta' ? 'Nova Proposta Recebida' : 'Nova Mensagem no Chat';
+        const tipoNotif = tipo_mensagem === 'proposta' || tipo_mensagem === 'proposta_prova' ? 'proposta' : 'chat';
+        const tituloNotif =
+          tipo_mensagem === 'proposta'
+            ? 'Nova Proposta Recebida'
+            : tipo_mensagem === 'proposta_prova'
+              ? 'Agendamento de Prova Recebido'
+              : 'Nova Mensagem no Chat';
 
         dispararNotificacao({
           idUsuario: idDestinatario,
