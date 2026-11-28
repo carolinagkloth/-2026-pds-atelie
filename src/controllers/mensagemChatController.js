@@ -53,27 +53,33 @@ class MensagemChatController {
         }
       }
 
-      // Regra de negócio 2: bloqueia proposta de prova duplicada se já houver uma pendente ou aceita
+      // Regra de negócio 2: bloqueia proposta de prova apenas se já houver uma pendente ou se o pedido já estiver "Aguardando Prova"
       if (tipo_mensagem === 'proposta_prova') {
-        const provaAtivaRes = await pool.query(
-          `SELECT id_mensagem,
-                  LOWER(COALESCE(dados_proposta::jsonb->>'status', 'pendente')) AS status_prova
-           FROM mensagens_chat
-           WHERE id_pedido = $1
-             AND tipo_mensagem = 'proposta_prova'
-             AND LOWER(COALESCE(dados_proposta::jsonb->>'status', 'pendente')) NOT IN ('recusada', 'cancelada')
-           ORDER BY id_mensagem DESC
-           LIMIT 1;`,
-          [id_pedido]
-        );
+        const [provaPendenteRes, pedidoAtual] = await Promise.all([
+          pool.query(
+            `SELECT id_mensagem
+             FROM mensagens_chat
+             WHERE id_pedido = $1
+               AND tipo_mensagem = 'proposta_prova'
+               AND LOWER(COALESCE(dados_proposta::jsonb->>'status', 'pendente')) = 'pendente'
+             ORDER BY id_mensagem DESC
+             LIMIT 1;`,
+            [id_pedido]
+          ),
+          PedidoModel.buscarPorId(id_pedido)
+        ]);
 
-        if (provaAtivaRes.rows.length > 0) {
-          const statusProva = provaAtivaRes.rows[0].status_prova;
-          const msgErro =
-            statusProva === 'aceita'
-              ? 'Já existe uma prova agendada para este pedido.'
-              : 'Já existe uma proposta de agendamento de prova aguardando resposta.';
+        const statusPedidoAtual = String(
+          pedidoAtual?.status_kanban || pedidoAtual?.status_pedido || pedidoAtual?.status || ''
+        ).toLowerCase();
 
+        if (statusPedidoAtual === 'aguardando prova') {
+          const msgErro = 'Já existe uma prova agendada para este pedido (status: Aguardando Prova).';
+          return res.status(400).json({ error: msgErro, erro: msgErro });
+        }
+
+        if (provaPendenteRes.rows.length > 0) {
+          const msgErro = 'Já existe uma proposta de agendamento de prova aguardando resposta do cliente.';
           return res.status(400).json({ error: msgErro, erro: msgErro });
         }
       }
