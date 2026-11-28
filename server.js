@@ -1,5 +1,6 @@
 require('dotenv').config();
 const express = require('express');
+const compression = require('compression'); 
 const cors = require('cors');
 
 // Inicialização de serviços e jobs em segundo plano
@@ -23,6 +24,7 @@ const app = express();
 const PORT = process.env.PORT || 3000;
 
 // Middlewares Globais
+app.use(compression());
 app.use(cors());
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ limit: '10mb', extended: true }));

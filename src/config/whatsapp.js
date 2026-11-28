@@ -67,8 +67,10 @@ whatsappClient.on('auth_failure', (msg) => {
   console.error('❌ Falha na autenticação do WhatsApp:', msg);
 });
 
-whatsappClient.initialize().catch((err) => {
-  console.error('⚠️ Aviso: Falha na inicialização do WhatsApp Web:', err.message);
-});
+setTimeout(() => {
+  whatsappClient.initialize().catch((err) => {
+    console.error('⚠️ Aviso: Falha na inicialização do WhatsApp Web:', err.message);
+  });
+}, 15000);
 
 module.exports = whatsappClient;

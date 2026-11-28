@@ -143,8 +143,8 @@ class UsuarioController {
         }
       });
     } catch (error) {
-      console.error('Erro no login:', error);
-      return res.status(500).json({ erro: 'Erro interno no servidor.' });
+      console.error('Erro ao gerar token de segurança no login:', err.message);
+      enviarEmailNovoAcesso(usuario.email, usuario.nome).catch(() => {});
     }
   }
 

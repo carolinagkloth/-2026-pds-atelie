@@ -1,4 +1,5 @@
 const express = require('express');
+const compression = require('compression'); 
 const cors = require('cors');
 const path = require('path');
 const QRCode = require('qrcode');
@@ -16,6 +17,7 @@ process.on('unhandledRejection', (reason) => {
 });
 
 // Middlewares globais
+app.use(compression());
 app.use(cors());
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ limit: '10mb', extended: true }));
@@ -89,12 +91,26 @@ app.use('/api', (req, res) => {
   res.status(404).json({ error: `Rota da API não encontrada: ${req.method} ${req.originalUrl}` });
 });
 
-// Servir o Front-end React (build do Vite) em produção
+// Servir o Front-end React (build do Vite) em produção com cache inteligente
 const distPath = path.join(__dirname, '..', 'dist');
-app.use(express.static(distPath));
+
+// Arquivos compilados (JS/CSS com hash no nome) ficam em cache por 1 ano
+app.use('/assets', express.static(path.join(distPath, 'assets'), {
+  maxAge: '365d',
+  immutable: true
+}));
+
+// Demais arquivos estáticos (ícones, manifest, etc.) ficam em cache por 7 dias
+app.use(express.static(distPath, {
+  maxAge: '7d',
+  setHeaders: (res, filePath) => {
+    if (filePath.endsWith('index.html')) {
+      res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
+    }
+  }
+}));
+
 app.get(/^(?!\/api).*/, (req, res) => {
+  res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
   res.sendFile(path.join(distPath, 'index.html'));
 });
-
-const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => console.log(`Servidor rodando na porta ${PORT}`));

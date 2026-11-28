@@ -40,6 +40,7 @@ function ChatSidebar({
   jaAvaliado,
   provaAgendada,
   temProvaPendente,
+  temPropostaAtiva,
   onOpenProposta,
   onOpenProva,
   onCancelarProva,
@@ -168,9 +169,32 @@ function ChatSidebar({
         )}
 
         {podeEnviarProposta && (
-          <button onClick={onOpenProposta} style={{ width: '100%', padding: '10px', background: '#3E2445', color: '#fff', border: 'none', borderRadius: '6px', fontWeight: 'bold', fontSize: '13px', marginBottom: '10px', cursor: 'pointer' }}>
-            + Enviar Orçamento
-          </button>
+          <div style={{ marginBottom: '10px' }}>
+            <button
+              type="button"
+              disabled={temPropostaAtiva}
+              onClick={onOpenProposta}
+              style={{
+                width: '100%',
+                padding: '10px',
+                background: temPropostaAtiva ? '#BDBDBD' : '#3E2445',
+                color: '#fff',
+                border: 'none',
+                borderRadius: '6px',
+                fontWeight: 'bold',
+                fontSize: '13px',
+                cursor: temPropostaAtiva ? 'not-allowed' : 'pointer',
+                opacity: temPropostaAtiva ? 0.85 : 1
+              }}
+            >
+              {temPropostaAtiva ? 'Orçamento Enviado (Aguardando)' : '+ Enviar Orçamento'}
+            </button>
+            {temPropostaAtiva && (
+              <span style={{ display: 'block', fontSize: '11.5px', color: '#666', marginTop: '5px', lineHeight: '1.35' }}>
+                Já existe um orçamento aguardando resposta. Você poderá enviar outro apenas se o anterior for recusado.
+              </span>
+            )}
+          </div>
         )}
 
         {/* Botões da área de costura (visíveis apenas após proposta aceita / contrato em andamento) */}

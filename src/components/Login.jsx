@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { GoogleLogin, GoogleOAuthProvider } from '@react-oauth/google';
 import "../styles/Login.css";
 
@@ -16,6 +16,29 @@ const IconOlhoFechado = () => (
   </svg>
 );
 
+async function postComTimeout(url, body, timeoutMs = 25000) {
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), timeoutMs);
+
+  try {
+    const response = await fetch(url, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(body),
+      signal: controller.signal
+    });
+    const data = await response.json().catch(() => ({}));
+    return { response, data };
+  } catch (err) {
+    if (err.name === 'AbortError') {
+      throw new Error('O servidor demorou para responder (estava inicializando). Clique novamente para entrar.');
+    }
+    throw err;
+  } finally {
+    clearTimeout(timer);
+  }
+}
+
 function LoginContent({ onNavigate, onLoginSucesso }) {
   const [identificador, setIdentificador] = useState('');
   const [senha, setSenha] = useState('');
@@ -23,18 +46,20 @@ function LoginContent({ onNavigate, onLoginSucesso }) {
   const [erro, setErro] = useState('');
   const [carregando, setCarregando] = useState(false);
 
+  // Acorda o servidor no Railway em segundo plano assim que a tela de login abre
+  useEffect(() => {
+    fetch('/api/usuarios/0').catch(() => {});
+  }, []);
+
   const handleGoogleSuccess = async (credentialResponse) => {
+    if (carregando) return;
     setErro('');
     setCarregando(true);
 
     try {
-      const response = await fetch('/api/auth/google', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ token: credentialResponse.credential })
+      const { response, data } = await postComTimeout('/api/auth/google', {
+        token: credentialResponse.credential
       });
-
-      const data = await response.json();
 
       if (!response.ok) {
         throw new Error(data.erro || 'Falha na autenticação via Google.');
@@ -56,17 +81,16 @@ function LoginContent({ onNavigate, onLoginSucesso }) {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    if (carregando) return;
     setErro('');
     setCarregando(true);
 
     try {
-      const response = await fetch('/api/login', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ identificador, email: identificador, senha })
+      const { response, data } = await postComTimeout('/api/login', {
+        identificador,
+        email: identificador,
+        senha
       });
-
-      const data = await response.json();
 
       if (!response.ok) {
         throw new Error(data.erro || 'Falha ao autenticar.');
@@ -86,7 +110,7 @@ function LoginContent({ onNavigate, onLoginSucesso }) {
 
       {erro && <div style={{ background: '#ffebee', color: '#c62828', padding: '10px 14px', borderRadius: '6px', marginBottom: '15px', fontSize: '14px' }}>{erro}</div>}
 
-      <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '15px' }}>
+      <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '15px', opacity: carregando ? 0.6 : 1, pointerEvents: carregando ? 'none' : 'auto' }}>
         <GoogleLogin
           onSuccess={handleGoogleSuccess}
           onError={() => setErro('Erro ao comunicar com a conta Google.')}

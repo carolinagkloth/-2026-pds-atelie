@@ -5,13 +5,10 @@ const isInternal = process.env.DATABASE_URL?.includes('railway.internal');
 
 const pool = new Pool({
   connectionString: process.env.DATABASE_URL,
-  ssl: isInternal ? false : { rejectUnauthorized: false },
-  max: 10,
-  min: 0,
-  idleTimeoutMillis: 10000,          // Descarta conexões ociosas em 10s (antes do proxy do Railway cortar)
-  connectionTimeoutMillis: 30000,    // Dá 30s caso o banco do Railway precise acordar (cold start)
-  keepAlive: true,
-  keepAliveInitialDelayMillis: 5000  // Envia pacotes TCP keep-alive a cada 5s
+  ssl: process.env.NODE_ENV === 'production' ? { rejectUnauthorized: false } : false,
+  max: 10,                  // evita estourar o limite de conexões do plano
+  idleTimeoutMillis: 30000, // fecha conexões ociosas antes do proxy derrubar
+  connectionTimeoutMillis: 5000
 });
 
 pool.on('error', (err) => {
