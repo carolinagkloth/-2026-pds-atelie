@@ -231,15 +231,30 @@ function ChatContainer({ pedido, usuario, idCostureiraProp, onNavigate }) {
       <ModalAvaliacao
         isOpen={modais.avaliacao}
         onClose={() => fecharModal('avaliacao', false)}
-        idOrdemServico={chat.idOrdemServicoAvaliacao}
-        idPedido={chat.idPedido}
-        idCliente={chat.idUsuario}
-        idCostureira={chat.idCostureiraChat}
-        costureiraNome={chat.costureiraNome}
-        onAvaliado={() => {
-          chat.setJaAvaliado(true);
-          fecharModal('avaliacao', false);
-        }}
+        carregando={carregandoModal}
+        onEnviar={({ nota, comentario }) =>
+          executarComLoading(
+            async () => {
+              const res = await fetch('/api/avaliacoes', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                  id_ordem_servico: chat.idOrdemServicoAvaliacao,
+                  id_pedido: chat.idPedido,
+                  id_avaliador: chat.idUsuario,
+                  id_avaliado: chat.idCostureiraChat,
+                  nota,
+                  comentario
+                })
+              });
+              const data = await res.json().catch(() => ({}));
+              if (!res.ok) throw new Error(data.erro || data.error || 'Erro ao enviar avaliação.');
+              chat.setJaAvaliado(true);
+              alert('Avaliação enviada com sucesso! Obrigada pelo feedback.');
+            },
+            () => fecharModal('avaliacao', false)
+          )
+        }
       />
     </div>
   );

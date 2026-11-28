@@ -9,6 +9,11 @@ async function enviarMensagemWhatsapp(telefone, texto) {
   try {
     if (!telefone || !whatsappClient) return;
 
+    if (!whatsappClient.estaPronto) {
+      console.log(`[WhatsApp] Ignorando envio para ${telefone}: cliente aguardando leitura do QR Code.`);
+      return;
+    }
+
     let limpo = telefone.replace(/\D/g, '');
 
     if (limpo.length === 10 || limpo.length === 11) {

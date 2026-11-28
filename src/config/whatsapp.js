@@ -1,75 +1,73 @@
 const { Client, LocalAuth } = require('whatsapp-web.js');
 
-let reinicializando = false;
-
 const whatsappClient = new Client({
-  authStrategy: new LocalAuth(),
+  authStrategy: new LocalAuth({
+    dataPath: './.wwebjs_auth'
+  }),
   puppeteer: {
-    executablePath: process.env.PUPPETEER_EXECUTABLE_PATH || undefined,
     headless: true,
-    protocolTimeout: 180000, // 3 minutos para evitar "Runtime.callFunctionOn timed out" sob carga
+    executablePath: process.env.PUPPETEER_EXECUTABLE_PATH || undefined,
+    protocolTimeout: 180000,
     args: [
       '--no-sandbox',
       '--disable-setuid-sandbox',
-      '--disable-dev-shm-usage', // evita travar por falta de memória /dev/shm no container
+      '--disable-dev-shm-usage',
       '--disable-accelerated-2d-canvas',
       '--no-first-run',
       '--no-zygote',
-      '--disable-gpu',
-      '--disable-extensions',
-      '--disable-background-networking',
-      '--disable-default-apps',
-      '--disable-sync',
-      '--metrics-recording-only',
-      '--mute-audio',
-      '--js-flags=--max-old-space-size=256'
+      '--disable-gpu'
     ]
   }
 });
 
 whatsappClient.ultimoQr = null;
+whatsappClient.estaPronto = false;
+
+let reinicializando = false;
 
 whatsappClient.on('qr', (qr) => {
   whatsappClient.ultimoQr = qr;
+  whatsappClient.estaPronto = false;
   console.log('📲 Novo QR Code gerado! Acesse /qr-whatsapp no navegador para escanear.');
 });
 
 whatsappClient.on('ready', () => {
   whatsappClient.ultimoQr = null;
+  whatsappClient.estaPronto = true;
   reinicializando = false;
   console.log('✅ WhatsApp do Ateliê conectado com sucesso e pronto para envio!');
 });
 
+whatsappClient.on('auth_failure', (msg) => {
+  whatsappClient.estaPronto = false;
+  console.error('❌ Falha na autenticação do WhatsApp:', msg);
+});
+
 whatsappClient.on('disconnected', async (reason) => {
-  console.log('⚠️ WhatsApp desconectado:', reason);
+  whatsappClient.estaPronto = false;
+  console.warn('⚠️ WhatsApp desconectado:', reason);
+
   if (reinicializando) return;
   reinicializando = true;
 
   try {
     await whatsappClient.destroy();
   } catch (err) {
-    console.error('Erro ao encerrar navegador do WhatsApp:', err.message);
+    console.error('Erro ao destruir sessão antiga do WhatsApp:', err.message);
   }
 
   setTimeout(() => {
     whatsappClient
       .initialize()
-      .catch((err) => console.error('Erro ao reativar WhatsApp:', err.message))
+      .catch((err) => console.error('Erro ao reinicializar WhatsApp:', err.message))
       .finally(() => {
         reinicializando = false;
       });
   }, 5000);
 });
 
-whatsappClient.on('auth_failure', (msg) => {
-  reinicializando = false;
-  console.error('❌ Falha na autenticação do WhatsApp:', msg);
+whatsappClient.initialize().catch((err) => {
+  console.error('Erro na inicialização do WhatsApp:', err.message);
 });
-
-setTimeout(() => {
-  whatsappClient.initialize().catch((err) => {
-    console.error('⚠️ Aviso: Falha na inicialização do WhatsApp Web:', err.message);
-  });
-}, 15000);
 
 module.exports = whatsappClient;
