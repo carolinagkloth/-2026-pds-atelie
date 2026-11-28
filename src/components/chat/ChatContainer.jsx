@@ -55,7 +55,8 @@ function ChatContainer({ pedido, usuario, idCostureiraProp, onNavigate }) {
   };
 
   const handleAbrirProva = () => {
-    if (chat.temProvaPendente || chat.provaComLocalFallback) {
+    const aguardandoProva = chat.orcamentoAtual.status === 'Aguardando Prova';
+    if (chat.temProvaPendente || aguardandoProva) {
       alert('Já existe uma proposta de prova pendente ou agendada para este pedido.');
       return;
     }
@@ -144,7 +145,7 @@ function ChatContainer({ pedido, usuario, idCostureiraProp, onNavigate }) {
       />
 
       <ModalProva
-        isOpen={modais.prova && !chat.temProvaPendente && !chat.provaComLocalFallback}
+        isOpen={modais.prova && !chat.temProvaPendente && chat.orcamentoAtual.status !== 'Aguardando Prova'}
         onClose={() => fecharModal('prova', false)}
         onEnviar={(dados) =>
           executarComLoading(
