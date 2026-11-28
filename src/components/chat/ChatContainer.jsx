@@ -250,7 +250,7 @@ function ChatContainer({ pedido, usuario, idCostureiraProp, onNavigate }) {
               const data = await res.json().catch(() => ({}));
               if (!res.ok) throw new Error(data.erro || data.error || 'Erro ao enviar avaliação.');
               chat.setJaAvaliado(true);
-              alert('Avaliação enviada com sucesso! Obrigada pelo feedback.');
+              alert('Avaliação enviada com sucesso! Obrigado pelo feedback.');
             },
             () => fecharModal('avaliacao', false)
           )
